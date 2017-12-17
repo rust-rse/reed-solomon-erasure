@@ -12,6 +12,11 @@ and the following to your crate root :
 extern crate reed_solomon_erasure;
 ```
 
+## Test
+```sh
+cargo test
+```
+
 ## Example
 ```rust
 #[macro_use(shards)]
