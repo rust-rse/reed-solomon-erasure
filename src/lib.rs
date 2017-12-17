@@ -26,6 +26,24 @@ pub enum Error {
 /// Base unit of data processing
 pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
+#[macro_export]
+macro_rules! shard {
+    (
+        $( $x:expr ),*
+    ) => {
+        boxed_u8_into_shard(Box::new([ $( $x ),* ]))
+    }
+}
+
+#[macro_export]
+macro_rules! shards {
+    (
+        $( [ $( $x:expr ),* ] ),*
+    ) => {{
+        vec![ $( boxed_u8_into_shard(Box::new([ $( $x ),* ])) ),* ]
+    }}
+}
+
 mod helper {
     use super::*;
 
@@ -643,16 +661,6 @@ mod tests {
                 fill_random(s);
             }
 
-            shards
-        }}
-    }
-
-    macro_rules! shards {
-        (
-            $( [ $( $x:expr ),* ] ),*
-        ) => {{
-            let shards : Vec<Shard> =
-                vec![ $( boxed_u8_into_shard(Box::new([ $( $x ),* ])) ),* ];
             shards
         }}
     }
