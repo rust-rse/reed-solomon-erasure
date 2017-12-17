@@ -80,6 +80,7 @@ impl ReedSolomon {
         vandermonde.multiply(&top.invert().unwrap())
     }
 
+    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
     pub fn new(data_shards : usize, parity_shards : usize) -> ReedSolomon {
         if 256 < data_shards + parity_shards {
             panic!("Too many shards, max is 256")
@@ -293,6 +294,7 @@ impl ReedSolomon {
         }
     }
 
+    /// 
     pub fn encode_parity(&self,
                          shards     : &mut Vec<Shard>,
                          offset     : Option<usize>,
@@ -359,10 +361,10 @@ impl ReedSolomon {
 
     /// Transforms vector of shards to vector of option shards
     ///
-    /// Each shard is cloned rather than moved, which may be slow
+    /// Each shard is cloned rather than moved, which may be slow.
     ///
     /// This is mainly useful when you want to repair a vector
-    /// of shards
+    /// of shards using `decode_missing`.
     pub fn shards_to_option_shards(shards : &Vec<Shard>)
                                    -> Vec<Option<Shard>> {
         let mut result = Vec::with_capacity(shards.len());
@@ -376,10 +378,10 @@ impl ReedSolomon {
 
     /// Transforms vector of shards into vector of option shards
     ///
-    /// Each shard is moved rather than cloned
+    /// Each shard is moved rather than cloned.
     ///
     /// This is mainly useful when you want to repair a vector
-    /// of shards using ```decode_missing```
+    /// of shards using `decode_missing`.
     pub fn shards_into_option_shards(shards : Vec<Shard>)
                                      -> Vec<Option<Shard>> {
         let mut result = Vec::with_capacity(shards.len());
@@ -392,12 +394,12 @@ impl ReedSolomon {
 
     /// Transforms a section of vector of option shards to vector of shards
     ///
-    /// Each shard is cloned rather than moved, which may be slow
+    /// Each shard is cloned rather than moved, which may be slow.
     ///
     /// This is mainly useful when you want to convert result of
-    /// ```decode_missing``` to the normal arrangement
+    /// `decode_missing` to the normal and more usable arrangement.
     ///
-    /// Panics when any of the shards is missing or the range exceeds number of shards provided
+    /// Panics when any of the shards is missing or the range exceeds number of shards provided.
     pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
                                    offset : Option<usize>,
                                    count  : Option<usize>)
@@ -425,6 +427,12 @@ impl ReedSolomon {
         result
     }
 
+    /// Transforms vector of option shards into vector of shards
+    ///
+    /// Each shard is moved rather than cloned
+    ///
+    /// This is mainly useful when you want to convert result of
+    /// `decode_missing` to the normal and more usable arrangement.
     pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
                                      -> Vec<Shard> {
         let mut result = Vec::with_capacity(shards.len());
@@ -440,6 +448,13 @@ impl ReedSolomon {
     }
 
     /// Reconstruct missing shards
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` defaults to 0
+    /// * `byte_count` defaults to shards' length
+    ///
+    /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required
     pub fn decode_missing(&self,
                           shards     : &mut Vec<Option<Shard>>,
                           offset     : Option<usize>,
