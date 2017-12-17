@@ -45,7 +45,7 @@ fn main () {
     // Convert back to normal shard arrangement
     let result = option_shards_into_shards(shards);
     
-    assert!(r.is_parity_correct(result, None, None));
+    assert!(r.is_parity_correct(&result, None, None));
     assert_eq!(master_copy, result);
 }
 ```
