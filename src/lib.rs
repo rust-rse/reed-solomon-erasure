@@ -306,6 +306,8 @@ impl ReedSolomon {
 
     /// Constructs parity shards
     ///
+    /// # Remarks
+    ///
     /// This overwrites data in the parity shard slots
     pub fn encode_parity(&self,
                          shards     : &mut Vec<Shard>,
@@ -373,6 +375,8 @@ impl ReedSolomon {
 
     /// Transforms vector of shards to vector of option shards
     ///
+    /// # Remarks
+    ///
     /// Each shard is cloned rather than moved, which may be slow.
     ///
     /// This is mainly useful when you want to repair a vector
@@ -390,6 +394,8 @@ impl ReedSolomon {
 
     /// Transforms vector of shards into vector of option shards
     ///
+    /// # Remarks
+    ///
     /// Each shard is moved rather than cloned.
     ///
     /// This is mainly useful when you want to repair a vector
@@ -405,6 +411,13 @@ impl ReedSolomon {
     }
 
     /// Transforms a section of vector of option shards to vector of shards
+    ///
+    /// # Arguments
+    ///
+    /// * `start` - start of range of option shards you want to use
+    /// * `count` - number of option shards you want to use
+    ///
+    /// # Remarks
     ///
     /// Each shard is cloned rather than moved, which may be slow.
     ///
@@ -441,7 +454,9 @@ impl ReedSolomon {
 
     /// Transforms vector of option shards into vector of shards
     ///
-    /// Each shard is moved rather than cloned
+    /// # Remarks
+    ///
+    /// Each shard is moved rather than cloned.
     ///
     /// This is mainly useful when you want to convert result of
     /// `decode_missing` to the normal and more usable arrangement.
@@ -460,6 +475,8 @@ impl ReedSolomon {
     }
 
     /// Reconstruct missing shards
+    ///
+    /// # Remarks
     ///
     /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required
     pub fn decode_missing(&self,
