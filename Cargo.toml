@@ -16,7 +16,7 @@ repository    = "https://github.com/darrenldl/reed-solomon-erasure"
 
 readme = "README.md"
 
-keywords   = ["reed solomon", "erasure"]
+keywords   = ["reed-solomon", "erasure"]
 
 categories = ["encoding"]
 
