@@ -1,5 +1,3 @@
-//! Notes about usage of `offset` and `byte_count` for all methods/functions below
-//! `offset` 
 #![allow(dead_code)]
 mod galois;
 mod matrix;
@@ -45,6 +43,16 @@ pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
     result
 }
 
+/// # Remarks
+/// Notes about usage of `offset` and `byte_count` for all methods/functions below
+///
+/// `offset` refers to start of the shard you want to as starting point for encoding/decoding.
+///
+/// `offset` defaults to 0 if it is `None`
+///
+///  `byte_count` refers to number of bytes, starting from `offset` to use for encoding/decoding.
+///
+///  `byte_count` defaults to length of shard if it is `None`
 pub struct ReedSolomon {
     data_shard_count   : usize,
     parity_shard_count : usize,
@@ -298,11 +306,6 @@ impl ReedSolomon {
 
     /// Constructs parity shards
     ///
-    /// # Arguments
-    ///
-    /// * `offset` - start defaults to 0
-    /// * `byte_count` defaults to shards' length
-    ///
     /// This overwrites data in the parity shard slots
     pub fn encode_parity(&self,
                          shards     : &mut Vec<Shard>,
@@ -351,11 +354,6 @@ impl ReedSolomon {
     }
 
     /// Verify correctness of parity shards
-    ///
-    /// # Arguments
-    ///
-    /// * `offset` defaults to 0
-    /// * `byte_count` defaults to shards' length
     pub fn is_parity_correct(&self,
                              shards     : &Vec<Shard>,
                              offset     : Option<usize>,
@@ -462,11 +460,6 @@ impl ReedSolomon {
     }
 
     /// Reconstruct missing shards
-    ///
-    /// # Arguments
-    ///
-    /// * `offset` defaults to 0
-    /// * `byte_count` defaults to shards' length
     ///
     /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required
     pub fn decode_missing(&self,
