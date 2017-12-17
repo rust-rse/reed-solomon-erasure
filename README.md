@@ -12,11 +12,6 @@ and the following to your crate root :
 extern crate reed_solomon_erasure;
 ```
 
-## Test
-```sh
-cargo test
-```
-
 ## Example
 ```rust
 #[macro_use(shards)]
@@ -53,6 +48,11 @@ fn main () {
     assert!(r.is_parity_correct(result, None, None));
     assert_eq!(master_copy, result);
 }
+```
+
+## Test
+```sh
+cargo test
 ```
 
 ## Notes
