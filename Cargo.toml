@@ -22,6 +22,7 @@ categories = ["encoding"]
 
 license = "MIT"
 
+[badges]
 maintenance = { status = "actively-developed" }
 
 [dependencies]
