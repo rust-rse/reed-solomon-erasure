@@ -13,6 +13,7 @@ pub enum Error {
     NotEnoughShards
 }
 
+/// Base unit of data processing
 pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
 mod helper {
@@ -183,6 +184,8 @@ pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
     result
 }
 
+/// Reed-Solomon erasure code encoder/decoder
+///
 /// # Remarks
 /// Notes about usage of `offset` and `byte_count` for all methods/functions below
 ///
