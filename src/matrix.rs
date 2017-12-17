@@ -204,20 +204,19 @@ impl Matrix {
     }
 }
 
-#[macro_export]
-macro_rules! matrix {
-    (
-        $(
-            [ $( $x:expr ),+ ]
-        ),*
-    ) => (
-        Matrix::new_with_data(vec![ $( vec![$( $x ),*].into_boxed_slice() ),* ])
-    );
-    ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
-}
-
 #[cfg(test)]
 mod tests {
+    macro_rules! matrix {
+        (
+            $(
+                [ $( $x:expr ),+ ]
+            ),*
+        ) => (
+            Matrix::new_with_data(vec![ $( vec![$( $x ),*].into_boxed_slice() ),* ])
+        );
+        ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
+    }
+
     use super::Matrix;
 
     #[test]
