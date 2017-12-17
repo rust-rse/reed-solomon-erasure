@@ -56,6 +56,7 @@ pub fn boxed_u8_into_shard(b : Box<[u8]>) -> Shard {
     Rc::new(RefCell::new(b))
 }
 
+/// Make shard with byte array of zero length
 pub fn make_zero_len_shard() -> Shard {
     boxed_u8_into_shard(Box::new([]))
 }
@@ -68,6 +69,7 @@ pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
     result
 }
 
+/// Make shard with byte array filled with zeros of some length
 pub fn make_blank_shard(size : usize) -> Shard {
     boxed_u8_into_shard(vec![0; size].into_boxed_slice())
 }
