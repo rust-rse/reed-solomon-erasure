@@ -28,8 +28,11 @@ fn main () {
                                   [0, 0,  0,  0], // last 2 rows are parity shards
                                   [0, 0,  0,  0]);
 
+    // Construct the parity shards
     r.encode_parity(&mut master_copy, None, None);
     
+    // Make a copy and transform it into option shards arrangement
+    // for feeding into decode_missing
     let mut shards = shards_into_option_shards(master_copy.clone());
 
     // We can remove up to 2 shards, which may be data or parity shards
