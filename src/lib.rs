@@ -1,3 +1,5 @@
+//! Notes about usage of `offset` and `byte_count` for all methods/functions below
+//! `offset` 
 #![allow(dead_code)]
 mod galois;
 mod matrix;
@@ -294,7 +296,14 @@ impl ReedSolomon {
         }
     }
 
-    /// 
+    /// Constructs parity shards
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - start defaults to 0
+    /// * `byte_count` defaults to shards' length
+    ///
+    /// This overwrites data in the parity shard slots
     pub fn encode_parity(&self,
                          shards     : &mut Vec<Shard>,
                          offset     : Option<usize>,
@@ -342,6 +351,11 @@ impl ReedSolomon {
     }
 
     /// Verify correctness of parity shards
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` defaults to 0
+    /// * `byte_count` defaults to shards' length
     pub fn is_parity_correct(&self,
                              shards     : &Vec<Shard>,
                              offset     : Option<usize>,
@@ -401,10 +415,10 @@ impl ReedSolomon {
     ///
     /// Panics when any of the shards is missing or the range exceeds number of shards provided.
     pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
-                                   offset : Option<usize>,
+                                   start  : Option<usize>,
                                    count  : Option<usize>)
                                    -> Vec<Shard> {
-        let offset = Self::calc_offset(offset);
+        let offset = Self::calc_offset(start);
         let count  = match count {
             None    => shards.len(),
             Some(x) => x
