@@ -22,7 +22,7 @@ categories = ["encoding"]
 
 license = "MIT"
 
-maintenance = { stats = "actively-developed" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 rand = "0.3"
