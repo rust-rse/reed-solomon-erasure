@@ -162,7 +162,7 @@ impl ReedSolomon {
         }
 
         if shard_length < offset + byte_count {
-            panic!("Buffers too small, shard_length : {}, offset + byte_count : {}", shard_length, offset + byte_count);
+            panic!("Shards too small, shard length : Some({}), offset + byte_count : {}", x, offset + byte_count);
         }
     }
 
@@ -189,7 +189,7 @@ impl ReedSolomon {
 
         if let Some(x) = shard_length {
             if x < offset + byte_count {
-                panic!("Shards too small, shard_length : Some({}), offset + byte_count : {}", x, offset + byte_count);
+                panic!("Shards too small, shard length : Some({}), offset + byte_count : {}", x, offset + byte_count);
             }
         }
     }
