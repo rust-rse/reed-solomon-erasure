@@ -15,6 +15,43 @@ pub enum Error {
 
 pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
+mod helper {
+    use super::*;
+
+    pub fn calc_offset(offset : Option<usize>) -> usize {
+        match offset {
+            Some(x) => x,
+            None    => 0
+        }
+    }
+
+    pub fn calc_byte_count(shards     : &[Shard],
+                           byte_count : Option<usize>) -> usize {
+        match byte_count {
+            Some(x) => x,
+            None    => shards[0].borrow().len()
+        }
+    }
+
+    pub fn calc_byte_count_option_shards(shards     : &[Option<Shard>],
+                                         offset     : usize,
+                                         byte_count : Option<usize>) -> usize {
+        match byte_count {
+            Some(x) => x,
+            None    => {
+                for v in shards.iter() {
+                    match *v {
+                        Some(ref x) => return x.borrow().len() - offset,
+                        None    => {},
+                    }
+                };
+                0
+            }
+        }
+    }
+}
+
+
 pub fn boxed_u8_into_shard(b : Box<[u8]>) -> Shard {
     Rc::new(RefCell::new(b))
 }
@@ -39,6 +76,107 @@ pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
         result.push(make_blank_shard(size));
+    }
+    result
+}
+
+/// Transforms vector of shards to vector of option shards
+///
+/// # Remarks
+///
+/// Each shard is cloned rather than moved, which may be slow.
+///
+/// This is mainly useful when you want to repair a vector
+/// of shards using `decode_missing`.
+pub fn shards_to_option_shards(shards : &Vec<Shard>)
+                               -> Vec<Option<Shard>> {
+    let mut result = Vec::with_capacity(shards.len());
+
+    for v in shards.iter() {
+        let inner : RefCell<Box<[u8]>> = v.deref().clone();
+        result.push(Some(Rc::new(inner)));
+    }
+    result
+}
+
+/// Transforms vector of shards into vector of option shards
+///
+/// # Remarks
+///
+/// Each shard is moved rather than cloned.
+///
+/// This is mainly useful when you want to repair a vector
+/// of shards using `decode_missing`.
+pub fn shards_into_option_shards(shards : Vec<Shard>)
+                                 -> Vec<Option<Shard>> {
+    let mut result = Vec::with_capacity(shards.len());
+
+    for v in shards.into_iter() {
+        result.push(Some(v));
+    }
+    result
+}
+
+/// Transforms a section of vector of option shards to vector of shards
+///
+/// # Arguments
+///
+/// * `start` - start of range of option shards you want to use
+/// * `count` - number of option shards you want to use
+///
+/// # Remarks
+///
+/// Each shard is cloned rather than moved, which may be slow.
+///
+/// This is mainly useful when you want to convert result of
+/// `decode_missing` to the normal and more usable arrangement.
+///
+/// Panics when any of the shards is missing or the range exceeds number of shards provided.
+pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
+                               start  : Option<usize>,
+                               count  : Option<usize>)
+                               -> Vec<Shard> {
+    let offset = helper::calc_offset(start);
+    let count  = match count {
+        None    => shards.len(),
+        Some(x) => x
+    };
+
+    if shards.len() < offset + count {
+        panic!("Too few shards, number of shards : {}, offset + count : {}", shards.len(), offset + count);
+    }
+
+    let mut result = Vec::with_capacity(shards.len());
+
+    for i in offset..offset + count {
+        let shard = match shards[i] {
+            Some(ref x) => x,
+            None        => panic!("Missing shard, index : {}", i),
+        };
+        let inner : RefCell<Box<[u8]>> = shard.deref().clone();
+        result.push(Rc::new(inner));
+    }
+    result
+}
+
+/// Transforms vector of option shards into vector of shards
+///
+/// # Remarks
+///
+/// Each shard is moved rather than cloned.
+///
+/// This is mainly useful when you want to convert result of
+/// `decode_missing` to the normal and more usable arrangement.
+pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
+                                 -> Vec<Shard> {
+    let mut result = Vec::with_capacity(shards.len());
+
+    for shard in shards.into_iter() {
+        let shard = match shard {
+            Some(x) => x,
+            None    => panic!("Missing shard"),
+        };
+        result.push(shard);
     }
     result
 }
@@ -111,38 +249,6 @@ impl ReedSolomon {
             total_shard_count  : total_shards,
             matrix,
             parity_rows
-        }
-    }
-
-    fn calc_offset(offset : Option<usize>) -> usize {
-        match offset {
-            Some(x) => x,
-            None    => 0
-        }
-    }
-
-    fn calc_byte_count(shards     : &[Shard],
-                       byte_count : Option<usize>) -> usize {
-        match byte_count {
-            Some(x) => x,
-            None    => shards[0].borrow().len()
-        }
-    }
-
-    fn calc_byte_count_option_shards(shards     : &[Option<Shard>],
-                                     offset     : usize,
-                                     byte_count : Option<usize>) -> usize {
-        match byte_count {
-            Some(x) => x,
-            None    => {
-                for v in shards.iter() {
-                    match *v {
-                        Some(ref x) => return x.borrow().len() - offset,
-                        None    => {},
-                    }
-                };
-                0
-            }
         }
     }
 
@@ -313,8 +419,8 @@ impl ReedSolomon {
                          shards     : &mut Vec<Shard>,
                          offset     : Option<usize>,
                          byte_count : Option<usize>) {
-        let offset     = Self::calc_offset(offset);
-        let byte_count = Self::calc_byte_count(shards, byte_count);
+        let offset     = helper::calc_offset(offset);
+        let byte_count = helper::calc_byte_count(shards, byte_count);
 
         self.check_buffer_and_sizes(shards, offset, byte_count);
 
@@ -360,8 +466,8 @@ impl ReedSolomon {
                              shards     : &Vec<Shard>,
                              offset     : Option<usize>,
                              byte_count : Option<usize>) -> bool {
-        let offset     = Self::calc_offset(offset);
-        let byte_count = Self::calc_byte_count(shards, byte_count);
+        let offset     = helper::calc_offset(offset);
+        let byte_count = helper::calc_byte_count(shards, byte_count);
 
         self.check_buffer_and_sizes(shards, offset, byte_count);
 
@@ -371,107 +477,6 @@ impl ReedSolomon {
                                 data_shards, self.data_shard_count,
                                 to_check,    self.parity_shard_count,
                                 offset, byte_count)
-    }
-
-    /// Transforms vector of shards to vector of option shards
-    ///
-    /// # Remarks
-    ///
-    /// Each shard is cloned rather than moved, which may be slow.
-    ///
-    /// This is mainly useful when you want to repair a vector
-    /// of shards using `decode_missing`.
-    pub fn shards_to_option_shards(shards : &Vec<Shard>)
-                                   -> Vec<Option<Shard>> {
-        let mut result = Vec::with_capacity(shards.len());
-
-        for v in shards.iter() {
-            let inner : RefCell<Box<[u8]>> = v.deref().clone();
-            result.push(Some(Rc::new(inner)));
-        }
-        result
-    }
-
-    /// Transforms vector of shards into vector of option shards
-    ///
-    /// # Remarks
-    ///
-    /// Each shard is moved rather than cloned.
-    ///
-    /// This is mainly useful when you want to repair a vector
-    /// of shards using `decode_missing`.
-    pub fn shards_into_option_shards(shards : Vec<Shard>)
-                                     -> Vec<Option<Shard>> {
-        let mut result = Vec::with_capacity(shards.len());
-
-        for v in shards.into_iter() {
-            result.push(Some(v));
-        }
-        result
-    }
-
-    /// Transforms a section of vector of option shards to vector of shards
-    ///
-    /// # Arguments
-    ///
-    /// * `start` - start of range of option shards you want to use
-    /// * `count` - number of option shards you want to use
-    ///
-    /// # Remarks
-    ///
-    /// Each shard is cloned rather than moved, which may be slow.
-    ///
-    /// This is mainly useful when you want to convert result of
-    /// `decode_missing` to the normal and more usable arrangement.
-    ///
-    /// Panics when any of the shards is missing or the range exceeds number of shards provided.
-    pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
-                                   start  : Option<usize>,
-                                   count  : Option<usize>)
-                                   -> Vec<Shard> {
-        let offset = Self::calc_offset(start);
-        let count  = match count {
-            None    => shards.len(),
-            Some(x) => x
-        };
-
-        if shards.len() < offset + count {
-            panic!("Too few shards, number of shards : {}, offset + count : {}", shards.len(), offset + count);
-        }
-
-        let mut result = Vec::with_capacity(shards.len());
-
-        for i in offset..offset + count {
-            let shard = match shards[i] {
-                Some(ref x) => x,
-                None        => panic!("Missing shard, index : {}", i),
-            };
-            let inner : RefCell<Box<[u8]>> = shard.deref().clone();
-            result.push(Rc::new(inner));
-        }
-        result
-    }
-
-    /// Transforms vector of option shards into vector of shards
-    ///
-    /// # Remarks
-    ///
-    /// Each shard is moved rather than cloned.
-    ///
-    /// This is mainly useful when you want to convert result of
-    /// `decode_missing` to the normal and more usable arrangement.
-    pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
-                                     -> Vec<Shard> {
-        let mut result = Vec::with_capacity(shards.len());
-
-        for shard in shards.into_iter() {
-            let shard = match shard {
-                Some(x) => x,
-                None    => panic!("Missing shard"),
-            };
-            result.push(shard);
-        }
-        result
     }
 
     /// Reconstruct missing shards
@@ -484,10 +489,10 @@ impl ReedSolomon {
                           offset     : Option<usize>,
                           byte_count : Option<usize>)
                           -> Result<(), Error> {
-        let offset     = Self::calc_offset(offset);
-        let byte_count = Self::calc_byte_count_option_shards(shards,
-                                                             offset,
-                                                             byte_count);
+        let offset     = helper::calc_offset(offset);
+        let byte_count = helper::calc_byte_count_option_shards(shards,
+                                                               offset,
+                                                               byte_count);
 
         self.check_buffer_and_sizes_option_shards(shards, offset, byte_count);
 
@@ -729,13 +734,13 @@ mod tests {
 
         let master_copy = shards.clone();
 
-        let mut shards = ReedSolomon::shards_to_option_shards(&shards);
+        let mut shards = shards_to_option_shards(&shards);
 
         // Try to decode with all shards present
         r.decode_missing(&mut shards,
                          None, None).unwrap();
         {
-            let shards = ReedSolomon::option_shards_to_shards(&shards, None, None);
+            let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
             assert_eq!(shards, master_copy);
         }
@@ -747,19 +752,19 @@ mod tests {
         r.decode_missing(&mut shards,
                          None, None).unwrap();
         {
-            let shards = ReedSolomon::option_shards_to_shards(&shards, None, None);
+            let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
             assert_eq!(shards, master_copy);
         }
 
-	      // Try to deocde with 6 data and 4 parity shards
+        // Try to deocde with 6 data and 4 parity shards
         shards[0] = None;
         shards[2] = None;
         shards[12] = None;
         r.decode_missing(&mut shards,
                          None, None).unwrap();
         {
-            let shards = ReedSolomon::option_shards_to_shards(&shards, None, None);
+            let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
             assert_eq!(shards, master_copy);
         }
