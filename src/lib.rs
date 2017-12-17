@@ -27,6 +27,12 @@ pub enum Error {
 pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
 #[macro_export]
+/// Constructs a shard
+///
+/// # Example
+/// ```rust
+/// let shard = shard!(1, 2, 3);
+/// ```
 macro_rules! shard {
     (
         $( $x:expr ),*
@@ -36,6 +42,13 @@ macro_rules! shard {
 }
 
 #[macro_export]
+/// Constructs vector of shards
+///
+/// # Example
+/// ```rust
+/// let shards = shards!([1, 2, 3],
+///                      [4, 5, 6]);
+/// ```
 macro_rules! shards {
     (
         $( [ $( $x:expr ),* ] ),*
@@ -448,6 +461,8 @@ impl ReedSolomon {
     /// # Remarks
     ///
     /// This overwrites data in the parity shard slots
+    ///
+    /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required
     pub fn encode_parity(&self,
                          shards     : &mut Vec<Shard>,
                          offset     : Option<usize>,
