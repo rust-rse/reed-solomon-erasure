@@ -8,5 +8,21 @@ exclude = [
     "KlausPost_reedsolomon/*",
 ]
 
+description = "Rust implementation of Reed-Solomon erasure coding"
+
+documentation = "https://docs.rs/reed-solomon-erasure"
+homepage      = "https://github.com/darrenldl/reed-solomon-erasure"
+repository    = "https://github.com/darrenldl/reed-solomon-erasure"
+
+readme = "README.md"
+
+keywords   = ["reed solomon", "erasure"]
+
+categories = ["encoding"]
+
+license = "MIT"
+
+maintenance = { stats = "actively-developed" }
+
 [dependencies]
 rand = "0.3"
