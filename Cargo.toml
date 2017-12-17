@@ -1,0 +1,8 @@
+[package]
+name = "reed-solomon-erasure"
+version = "0.9.0"
+authors = ["Darren Ldl <darrenldldev@gmail.com>"]
+build   = "build.rs"
+
+[dependencies]
+rand = "0.3"
