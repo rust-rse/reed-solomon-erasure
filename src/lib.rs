@@ -26,13 +26,17 @@ pub enum Error {
 /// Base unit of data processing
 pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
-#[macro_export]
 /// Constructs a shard
 ///
 /// # Example
 /// ```rust
+/// # #[macro_use] extern crate reed_solomon_erasure;
+/// # use reed_solomon_erasure::*;
+/// # fn main () {
 /// let shard = shard!(1, 2, 3);
+/// # }
 /// ```
+#[macro_export]
 macro_rules! shard {
     (
         $( $x:expr ),*
@@ -41,14 +45,18 @@ macro_rules! shard {
     }
 }
 
-#[macro_export]
 /// Constructs vector of shards
 ///
 /// # Example
 /// ```rust
+/// # #[macro_use] extern crate reed_solomon_erasure;
+/// # use reed_solomon_erasure::*;
+/// # fn main () {
 /// let shards = shards!([1, 2, 3],
 ///                      [4, 5, 6]);
+/// # }
 /// ```
+#[macro_export]
 macro_rules! shards {
     (
         $( [ $( $x:expr ),* ] ),*
