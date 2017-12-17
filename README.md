@@ -1,6 +1,17 @@
 # reed-solomon-erasure
 Rust implementation of Reed-Solomon erasure coding
 
+## Usage
+Add the following to your `Cargo.toml` :
+```toml
+[dependencies]
+reed-solomon-erasure = "0.9.1"
+```
+and the following to your crate root :
+```rust
+extern crate reed_solomon_erasure;
+```
+
 ## Notes
 Reed-Solomon implementation closely follows [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), and the test suite mirrors [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
