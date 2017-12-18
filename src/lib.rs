@@ -852,6 +852,17 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_option_shards_to_shards_too_few_shards() {
+        let shards = make_random_shards!(1_000, 10);
+        let option_shards = shards_into_option_shards(shards);
+
+        option_shards_to_shards(&option_shards,
+                                None,
+                                Some(11));
+    }
+
+    #[test]
     fn test_encoding() {
         let per_shard = 50_000;
 
