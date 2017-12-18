@@ -784,6 +784,18 @@ mod tests {
     }
 
     #[test]
+    fn test_shards_into_option_shards_into_shards() {
+        for _ in 0..100 {
+            let shards = make_random_shards!(10, 1_000);
+            let expect = shards.clone();
+            let inter  = shards_into_option_shards(shards);
+            let result = option_shards_into_shards(inter);
+
+            assert_eq!(expect, result);
+        }
+    }
+
+    #[test]
     fn test_encoding() {
         let per_shard = 50_000;
 
