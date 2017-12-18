@@ -696,7 +696,7 @@ mod tests {
         }}
     }
 
-    fn is_increasing_and_contains_data_row(indices : &Vec<usize>) -> bool {
+    /*fn is_increasing_and_contains_data_row(indices : &Vec<usize>) -> bool {
         let cols = indices.len();
         for i in 0..cols-1 {
             if indices[i] >= indices[i+1] {
@@ -704,9 +704,9 @@ mod tests {
             }
         }
         return indices[0] < cols
-    }
+    }*/
 
-    fn increment_indices(indices : &mut Vec<usize>,
+    /*fn increment_indices(indices : &mut Vec<usize>,
                          index_bound : usize) -> bool {
         for i in (0..indices.len()).rev() {
             indices[i] += 1;
@@ -722,9 +722,9 @@ mod tests {
         }
 
         return true
-    }
+    }*/
 
-    fn increment_indices_until_increasing_and_contains_data_row(indices : &mut Vec<usize>, max_index : usize) -> bool {
+    /*fn increment_indices_until_increasing_and_contains_data_row(indices : &mut Vec<usize>, max_index : usize) -> bool {
         loop {
             let valid = increment_indices(indices, max_index);
             if !valid {
@@ -735,9 +735,9 @@ mod tests {
                 return true
             }
         }
-    }
+    }*/
 
-    fn find_singular_sub_matrix(m : Matrix) -> Option<Matrix> {
+    /*fn find_singular_sub_matrix(m : Matrix) -> Option<Matrix> {
         let rows = m.row_count();
         let cols = m.column_count();
         let mut row_indices = Vec::with_capacity(cols);
@@ -756,7 +756,7 @@ mod tests {
             };
         }
         None
-    }
+    }*/
 
     fn fill_random(arr : &mut Shard) {
         for a in arr.borrow_mut().iter_mut() {
