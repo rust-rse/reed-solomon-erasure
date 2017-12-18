@@ -127,6 +127,7 @@ addons:
       - libiberty-dev
 
 after_success: |
+  if [[ $TRAVIS_OS_NAME == "linux" ]]; then
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
   cd kcov-master &&
@@ -142,3 +143,4 @@ after_success: |
   echo "Uploaded code coverage to Codecov" &&
   for file in target/debug/reed_solomon_erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   echo "Uploaded code coverage to Coveralls"
+  fi
