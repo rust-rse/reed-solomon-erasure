@@ -832,6 +832,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_option_shards_into_missing_shards() {
         let shards = make_random_shards!(1_000, 10);
         let mut option_shards = shards_into_option_shards(shards);
