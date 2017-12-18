@@ -872,6 +872,12 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_reedsolomon_too_many_shards() {
+        ReedSolomon::new(256, 1);
+    }
+
+    #[test]
     fn test_encoding() {
         let per_shard = 50_000;
 
