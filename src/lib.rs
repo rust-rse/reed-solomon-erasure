@@ -213,7 +213,7 @@ pub fn shards_into_option_shards(shards : Vec<Shard>)
 /// Each shard is cloned rather than moved, which may be slow.
 ///
 /// This is mainly useful when you want to convert result of
-/// `decode_missing` to the normal and more usable arrangement.
+/// `decode_missing` to the more usable arrangement.
 ///
 /// Panics when any of the shards is missing or the range exceeds number of shards provided.
 pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
@@ -250,7 +250,9 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
 /// Each shard is moved rather than cloned.
 ///
 /// This is mainly useful when you want to convert result of
-/// `decode_missing` to the normal and more usable arrangement.
+/// `decode_missing` to the more usable arrangement.
+///
+/// Panics when any of the shards is missing or the range exceeds number of shards provided.
 pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
                                  -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
@@ -272,11 +274,11 @@ pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
 ///
 /// `offset` refers to start of the shard you want to as starting point for encoding/decoding.
 ///
-/// `offset` defaults to 0 if it is `None`
+/// `offset` defaults to 0 if it is `None`.
 ///
 ///  `byte_count` refers to number of bytes, starting from `offset` to use for encoding/decoding.
 ///
-///  `byte_count` defaults to length of shard if it is `None`
+///  `byte_count` defaults to length of shard if it is `None`.
 #[derive(PartialEq, Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
@@ -507,9 +509,9 @@ impl ReedSolomon {
     ///
     /// # Remarks
     ///
-    /// This overwrites data in the parity shard slots
+    /// This overwrites data in the parity shard slots.
     ///
-    /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required
+    /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required.
     pub fn encode_parity(&self,
                          shards     : &mut Vec<Shard>,
                          offset     : Option<usize>,
@@ -580,7 +582,7 @@ impl ReedSolomon {
     ///
     /// # Remarks
     ///
-    /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required
+    /// Panics when the shards are of different sizes, number of shards does not match codec's configuration, or when the shards' length is shorter than required.
     pub fn decode_missing(&self,
                           shards     : &mut Vec<Option<Shard>>,
                           offset     : Option<usize>,
