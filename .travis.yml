@@ -6,10 +6,6 @@ language: rust
 services: docker
 sudo: required
 
-rust:
-  - stable
-  - beta
-
 env:
   global:
     - CRATE_NAME=reed-solomon-erasure
