@@ -287,6 +287,9 @@ impl ReedSolomon {
         if data_shards == 0 {
             panic!("Too few data shards")
         }
+        if parity_shards == 0 {
+            panic!("Too few pairty shards")
+        }
         if 256 < data_shards + parity_shards {
             panic!("Too many shards, max is 256")
         }
@@ -770,8 +773,8 @@ mod tests {
     fn test_shard_count() {
         let mut rng = thread_rng();
         for _ in 0..10 {
-            let data_shard_count   = rng.gen_range(0, 128);
-            let parity_shard_count = rng.gen_range(0, 128);
+            let data_shard_count   = rng.gen_range(1, 128);
+            let parity_shard_count = rng.gen_range(1, 128);
 
             let total_shard_count = data_shard_count + parity_shard_count;
 
