@@ -245,6 +245,7 @@ pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
 ///  `byte_count` refers to number of bytes, starting from `offset` to use for encoding/decoding.
 ///
 ///  `byte_count` defaults to length of shard if it is `None`
+#[derive(PartialEq, Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
     parity_shard_count : usize,
@@ -860,6 +861,14 @@ mod tests {
         option_shards_to_shards(&option_shards,
                                 None,
                                 Some(11));
+    }
+
+    #[test]
+    fn test_reedsolomon_clone() {
+        let r1 = ReedSolomon::new(10, 3);
+        let r2 = r1.clone();
+
+        assert_eq!(r1, r2);
     }
 
     #[test]
