@@ -18,7 +18,7 @@ use std::ops::Deref;
 
 use matrix::Matrix;
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum Error {
     NotEnoughShards
 }
@@ -1019,11 +1019,9 @@ mod tests {
         shards[10] = None;
         shards[11] = None;
         shards[12] = None;
-        match r.decode_missing(&mut shards,
-                               None, None) {
-            Err(Error::NotEnoughShards) => {},
-            Ok(()) => panic!("Should fail due to not enough shards"),
-        }
+        assert_eq!(r.decode_missing(&mut shards,
+                                    None, None).unwrap_err(),
+                   Error::NotEnoughShards);
     }
 
     #[test]
