@@ -303,15 +303,15 @@ mod tests {
     #[should_panic]
     fn test_matrix_inverse_non_square() {
         // Test case with a non-square matrix.
-        matrix!([56, 23],
-                [3, 100],
-                [45, 201]).invert().unwrap();
+        let _ = matrix!([56, 23],
+                        [3, 100],
+                        [45, 201]).invert().unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_matrix_inverse_singular() {
-        matrix!([4, 2],
-                [12, 6]).invert().unwrap();
+        let _ = matrix!([4, 2],
+                        [12, 6]).invert().unwrap();
     }
 }
