@@ -295,23 +295,19 @@ mod tests {
                                  [0, 0, 0, 1, 0]);
             assert_eq!(m, expect);
         }
-        {
-        }
     }
 
     #[test]
     #[should_panic]
     fn test_matrix_inverse_non_square() {
         // Test case with a non-square matrix.
-        let _ = matrix!([56, 23],
-                        [3, 100],
-                        [45, 201]).invert().unwrap();
-    }
+        matrix!([56, 23],
+                [3, 100],
+                [45, 201]).invert().unwrap(); }
 
     #[test]
     #[should_panic]
     fn test_matrix_inverse_singular() {
-        let _ = matrix!([4, 2],
-                        [12, 6]).invert().unwrap();
-    }
+        matrix!([4, 2],
+                [12, 6]).invert().unwrap(); }
 }

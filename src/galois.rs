@@ -210,5 +210,6 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_div_b_is_0() { div(1, 0); }
+    fn test_div_b_is_0() {
+        div(1, 0); }
 }

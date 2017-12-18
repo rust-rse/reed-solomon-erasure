@@ -830,18 +830,16 @@ mod tests {
     fn test_calc_byte_count_byte_count_is_zero_case1() {
         let shards = make_random_shards!(1_000, 1);
 
-        let _ = helper::calc_byte_count(shards.as_slice(),
-                                        Some(0));
-    }
+        helper::calc_byte_count(shards.as_slice(),
+                                Some(0)); }
 
     #[test]
     #[should_panic]
     fn test_calc_byte_count_byte_count_is_zero_case2() {
         let shards = make_random_shards!(1_000, 0);
 
-        let _ = helper::calc_byte_count(shards.as_slice(),
-                                        None);
-    }
+        helper::calc_byte_count(shards.as_slice(),
+                                None); }
 
     #[test]
     #[should_panic]
@@ -849,9 +847,8 @@ mod tests {
         let shards = make_random_shards!(1_000, 1);
         let option_shards = shards_into_option_shards(shards);
 
-        let _ = helper::calc_byte_count_option_shards(option_shards.as_slice(),
-                                                      Some(0));
-    }
+        helper::calc_byte_count_option_shards(option_shards.as_slice(),
+                                              Some(0)); }
 
     #[test]
     #[should_panic]
@@ -859,9 +856,8 @@ mod tests {
         let shards = make_random_shards!(1_000, 0);
         let option_shards = shards_into_option_shards(shards);
 
-        let _ = helper::calc_byte_count_option_shards(option_shards.as_slice(),
-                                                      None);
-    }
+        helper::calc_byte_count_option_shards(option_shards.as_slice(),
+                                              None); }
 
     #[test]
     #[should_panic]
@@ -873,9 +869,8 @@ mod tests {
         option_shards[0] = None;
         option_shards[1] = None;
 
-        let _ = helper::calc_byte_count_option_shards(option_shards.as_slice(),
-                                                      None);
-    }
+        helper::calc_byte_count_option_shards(option_shards.as_slice(),
+                                              None); }
 
     #[test]
     fn test_shards_into_option_shards_into_shards() {
@@ -958,8 +953,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_reedsolomon_too_many_shards() {
-        let _ = ReedSolomon::new(256, 1);
-    }
+        ReedSolomon::new(256, 1); }
 
     #[test]
     #[should_panic]
