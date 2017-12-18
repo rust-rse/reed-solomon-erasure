@@ -1,7 +1,7 @@
 ## 1.0.1
   - Added more tests
   - Fixed decode_missing
-    - Previously may fill in the missing shards with incorrect length
+    - Previously may reconstruct the missing shards with incorrect length
 
 ## 1.0.0
   - Added more tests
