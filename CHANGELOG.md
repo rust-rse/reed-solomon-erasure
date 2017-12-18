@@ -1,7 +1,8 @@
 ## 1.0.0
   - Added more tests
-  - Added integration with Codecov
+  - Added integration with Codecov (via kcov)
   - Code refactoring
+  - Added integration with Coveralls (via kcov)
 
 ## 0.9.1
   - Code restructuring
