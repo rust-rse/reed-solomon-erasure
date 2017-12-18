@@ -799,14 +799,12 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_no_data_shards() {
-        ReedSolomon::new(0, 1);
-    }
+        ReedSolomon::new(0, 1); }
 
     #[test]
     #[should_panic]
     fn test_no_parity_shards() {
-        ReedSolomon::new(1, 0);
-    }
+        ReedSolomon::new(1, 0); }
 
     #[test]
     fn test_shard_count() {
