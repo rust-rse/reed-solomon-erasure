@@ -23,7 +23,7 @@ pub enum Error {
     NotEnoughShards
 }
 
-/// Base unit of data processing
+/// Main data type used by this library
 pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
 /// Constructs a shard
