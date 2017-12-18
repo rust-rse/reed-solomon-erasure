@@ -77,27 +77,59 @@ mod helper {
 
     pub fn calc_byte_count(shards     : &[Shard],
                            byte_count : Option<usize>) -> usize {
-        match byte_count {
+        let result = match byte_count {
             Some(x) => x,
             None    => shards[0].borrow().len()
-        }
+        };
+
+        if result == 0 { panic!("Byte count is zero"); }
+
+        result
+    }
+
+    pub fn calc_offset_and_byte_count(offset : Option<usize>,
+                                      shards : &[Shard],
+                                      byte_count : Option<usize>)
+                                      -> (usize, usize) {
+        let offset     = calc_offset(offset);
+        let byte_count = calc_byte_count(shards, byte_count);
+
+        (offset, byte_count)
     }
 
     pub fn calc_byte_count_option_shards(shards     : &[Option<Shard>],
-                                         offset     : usize,
                                          byte_count : Option<usize>) -> usize {
-        match byte_count {
+        let result = match byte_count {
             Some(x) => x,
             None    => {
+                let mut value = None;
                 for v in shards.iter() {
                     match *v {
-                        Some(ref x) => return x.borrow().len() - offset,
-                        None    => {},
+                        Some(ref x) => { value = Some(x.borrow().len());
+                                         break; },
+                        None        => {},
                     }
                 };
-                0
+                match value {
+                    Some(v) => v,
+                    None    => panic!("No shards are present")
+                }
             }
-        }
+        };
+
+        if result == 0 { panic!("Byte count is zero"); }
+
+        result
+    }
+
+    pub fn calc_offset_and_byte_count_option_shards(offset : Option<usize>,
+                                                    shards : &[Option<Shard>],
+                                                    byte_count : Option<usize>)
+                                                    -> (usize, usize) {
+        let offset     = calc_offset(offset);
+        let byte_count = calc_byte_count_option_shards(shards, byte_count);
+
+        (offset, byte_count)
     }
 }
 
@@ -482,8 +514,8 @@ impl ReedSolomon {
                          shards     : &mut Vec<Shard>,
                          offset     : Option<usize>,
                          byte_count : Option<usize>) {
-        let offset     = helper::calc_offset(offset);
-        let byte_count = helper::calc_byte_count(shards, byte_count);
+        let (offset, byte_count) =
+            helper::calc_offset_and_byte_count(offset, shards, byte_count);
 
         self.check_buffer_and_sizes(shards, offset, byte_count);
 
@@ -552,10 +584,10 @@ impl ReedSolomon {
                           offset     : Option<usize>,
                           byte_count : Option<usize>)
                           -> Result<(), Error> {
-        let offset     = helper::calc_offset(offset);
-        let byte_count = helper::calc_byte_count_option_shards(shards,
-                                                               offset,
-                                                               byte_count);
+        let (offset, byte_count) =
+            helper::calc_offset_and_byte_count_option_shards(offset,
+                                                             shards.as_slice(),
+                                                             byte_count);
 
         self.check_buffer_and_sizes_option_shards(shards, offset, byte_count);
 
@@ -794,6 +826,58 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_calc_byte_count_byte_count_is_zero_case1() {
+        let shards = make_random_shards!(1_000, 1);
+
+        let _ = helper::calc_byte_count(shards.as_slice(),
+                                        Some(0));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_calc_byte_count_byte_count_is_zero_case2() {
+        let shards = make_random_shards!(1_000, 0);
+
+        let _ = helper::calc_byte_count(shards.as_slice(),
+                                        None);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_calc_byte_count_option_shards_byte_count_is_zero_case1() {
+        let shards = make_random_shards!(1_000, 1);
+        let option_shards = shards_into_option_shards(shards);
+
+        let _ = helper::calc_byte_count_option_shards(option_shards.as_slice(),
+                                                      Some(0));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_calc_byte_count_option_shards_byte_count_is_zero_case2() {
+        let shards = make_random_shards!(1_000, 0);
+        let option_shards = shards_into_option_shards(shards);
+
+        let _ = helper::calc_byte_count_option_shards(option_shards.as_slice(),
+                                                      None);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_calc_byte_count_option_shards_no_shards_present() {
+        let shards = make_random_shards!(1_000, 2);
+
+        let mut option_shards = shards_into_option_shards(shards);
+
+        option_shards[0] = None;
+        option_shards[1] = None;
+
+        let _ = helper::calc_byte_count_option_shards(option_shards.as_slice(),
+                                                      None);
+    }
+
+    #[test]
     fn test_shards_into_option_shards_into_shards() {
         for _ in 0..100 {
             let shards = make_random_shards!(1_000, 10);
@@ -874,7 +958,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_reedsolomon_too_many_shards() {
-        ReedSolomon::new(256, 1);
+        let _ = ReedSolomon::new(256, 1);
     }
 
     #[test]
