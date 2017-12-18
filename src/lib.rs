@@ -770,6 +770,12 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_no_parity_shards() {
+        ReedSolomon::new(1, 0);
+    }
+
+    #[test]
     fn test_shard_count() {
         let mut rng = thread_rng();
         for _ in 0..10 {
