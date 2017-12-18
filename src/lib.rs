@@ -284,6 +284,9 @@ impl ReedSolomon {
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
     pub fn new(data_shards : usize, parity_shards : usize) -> ReedSolomon {
+        if data_shards == 0 {
+            panic!("Too few data shards")
+        }
         if 256 < data_shards + parity_shards {
             panic!("Too many shards, max is 256")
         }
@@ -672,6 +675,7 @@ mod tests {
     extern crate rand;
 
     use super::*;
+    use self::rand::{thread_rng, Rng};
 
     macro_rules! make_random_shards {
         ($size:expr, $per_shard:expr) => {{
@@ -753,6 +757,29 @@ mod tests {
     fn fill_random(arr : &mut Shard) {
         for a in arr.borrow_mut().iter_mut() {
             *a = rand::random::<u8>();
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_no_data_shards() {
+        ReedSolomon::new(0, 1);
+    }
+
+    #[test]
+    fn test_shard_count() {
+        let mut rng = thread_rng();
+        for _ in 0..10 {
+            let data_shard_count   = rng.gen_range(0, 128);
+            let parity_shard_count = rng.gen_range(0, 128);
+
+            let total_shard_count = data_shard_count + parity_shard_count;
+
+            let r = ReedSolomon::new(data_shard_count, parity_shard_count);
+
+            assert_eq!(data_shard_count,   r.data_shard_count());
+            assert_eq!(parity_shard_count, r.parity_shard_count());
+            assert_eq!(total_shard_count,  r.total_shard_count());
         }
     }
 
