@@ -810,6 +810,38 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_option_shards_to_shards_missing_shards_case1() {
+        let shards = make_random_shards!(1_000, 10);
+        let mut option_shards = shards_into_option_shards(shards);
+
+        option_shards[0] = None;
+
+        option_shards_to_shards(&option_shards, None, None);
+    }
+
+    #[test]
+    fn test_option_shards_to_shards_missing_shards_case2() {
+        let shards = make_random_shards!(1_000, 10);
+        let mut option_shards = shards_into_option_shards(shards);
+
+        option_shards[0] = None;
+        option_shards[9] = None;
+
+        option_shards_to_shards(&option_shards, Some(1), Some(8));
+    }
+
+    #[test]
+    fn test_option_shards_into_missing_shards() {
+        let shards = make_random_shards!(1_000, 10);
+        let mut option_shards = shards_into_option_shards(shards);
+
+        option_shards[2] = None;
+
+        option_shards_into_shards(option_shards);
+    }
+
+    #[test]
     fn test_encoding() {
         let per_shard = 50_000;
 
