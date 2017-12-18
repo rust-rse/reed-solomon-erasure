@@ -38,11 +38,6 @@ after_success: |
   make install DESTDIR=../../kcov-build &&
   cd ../.. &&
   rm -rf kcov-master &&
-  ls -l &&
-  ls -l kcov-build &&
-  ls -l kcov-build/usr &&
-  ls -l kcov-build/usr/local &&
-  ls -l kcov-build/usr/local/bin &&
-  for file in target/debug/reed-solomon-erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/reed-solomon-erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ../../kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
   echo "Uploaded code coverage"
