@@ -561,8 +561,10 @@ impl ReedSolomon {
                              shards     : &Vec<Shard>,
                              offset     : Option<usize>,
                              byte_count : Option<usize>) -> bool {
-        let offset     = helper::calc_offset(offset);
-        let byte_count = helper::calc_byte_count(shards, byte_count);
+        let (offset, byte_count) =
+            helper::calc_offset_and_byte_count(offset,
+                                               shards.as_slice(),
+                                               byte_count);
 
         self.check_buffer_and_sizes(shards, offset, byte_count);
 
@@ -590,6 +592,9 @@ impl ReedSolomon {
                                                              byte_count);
 
         self.check_buffer_and_sizes_option_shards(shards, offset, byte_count);
+
+        let shard_length = helper::calc_byte_count_option_shards(&shards,
+                                                                 None);
 
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
