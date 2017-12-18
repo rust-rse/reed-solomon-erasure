@@ -878,6 +878,41 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_check_buffer_and_sizes_total_shard_count() {
+        let r = ReedSolomon::new(10, 3);
+        let shards = make_random_shards!(1_000, 12);
+
+        r.check_buffer_and_sizes(&shards, 0, 12);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_check_buffer_and_sizes_shards_same_size() {
+        let r = ReedSolomon::new(3, 2);
+        let shards = shards!([0, 1, 2],
+                             [0, 1, 2, 4],
+                             [0, 1, 2],
+                             [0, 1, 2],
+                             [0, 1, 2]);
+
+        r.check_buffer_and_sizes(&shards, 0, 3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_check_buffer_and_sizes_shards_too_small() {
+        let r = ReedSolomon::new(3, 2);
+        let shards = shards!([0, 1, 2],
+                             [0, 1, 2],
+                             [0, 1, 2],
+                             [0, 1, 2],
+                             [0, 1, 2]);
+
+        r.check_buffer_and_sizes(&shards, 0, 4);
+    }
+
+    #[test]
     fn test_encoding() {
         let per_shard = 50_000;
 
