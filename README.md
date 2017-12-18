@@ -9,7 +9,7 @@ Rust implementation of Reed-Solomon erasure coding
 Add the following to your `Cargo.toml` :
 ```toml
 [dependencies]
-reed-solomon-erasure = "1.0.0"
+reed-solomon-erasure = "1.0.1"
 ```
 and the following to your crate root :
 ```rust
