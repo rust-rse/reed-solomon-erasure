@@ -658,7 +658,7 @@ impl ReedSolomon {
             make_zero_len_shards(self.parity_shard_count);
         {
             let mut outputs : Vec<Shard> =
-                make_blank_shards(offset + byte_count,
+                make_blank_shards(shard_length,
                                   self.parity_shard_count);
             let mut output_count = 0;
             for i_shard in 0..self.data_shard_count {
@@ -686,7 +686,7 @@ impl ReedSolomon {
         // data shards were missing.
         {
             let mut outputs : Vec<Shard> =
-                make_blank_shards(offset + byte_count,
+                make_blank_shards(shard_length,
                                   self.parity_shard_count);
             let mut output_count = 0;
             for i_shard in self.data_shard_count..self.total_shard_count {
@@ -833,7 +833,7 @@ mod tests {
     fn test_calc_byte_count_byte_count_is_zero_case1() {
         let shards = make_random_shards!(1_000, 1);
 
-        helper::calc_byte_count(shards,
+        helper::calc_byte_count(&shards,
                                 Some(0)); }
 
     #[test]
@@ -841,7 +841,7 @@ mod tests {
     fn test_calc_byte_count_byte_count_is_zero_case2() {
         let shards = make_random_shards!(1_000, 0);
 
-        helper::calc_byte_count(shards,
+        helper::calc_byte_count(&shards,
                                 None); }
 
     #[test]
@@ -850,7 +850,7 @@ mod tests {
         let shards = make_random_shards!(1_000, 1);
         let option_shards = shards_into_option_shards(shards);
 
-        helper::calc_byte_count_option_shards(option_shards,
+        helper::calc_byte_count_option_shards(&option_shards,
                                               Some(0)); }
 
     #[test]
@@ -859,7 +859,7 @@ mod tests {
         let shards = make_random_shards!(1_000, 0);
         let option_shards = shards_into_option_shards(shards);
 
-        helper::calc_byte_count_option_shards(option_shards,
+        helper::calc_byte_count_option_shards(&option_shards,
                                               None); }
 
     #[test]
@@ -872,7 +872,7 @@ mod tests {
         option_shards[0] = None;
         option_shards[1] = None;
 
-        helper::calc_byte_count_option_shards(option_shards,
+        helper::calc_byte_count_option_shards(&option_shards,
                                               None); }
 
     #[test]
@@ -1044,6 +1044,18 @@ mod tests {
 
         r.encode_parity(&mut shards, None, None);
         assert!(r.is_parity_correct(&shards, None, None));
+    }
+
+    #[test]
+    fn test_encoding_with_range() {
+        let per_shard = 50_000;
+
+        let r = ReedSolomon::new(10, 3);
+
+        let mut shards = make_random_shards!(per_shard, 13);
+
+        r.encode_parity(&mut shards, Some(1), Some(1));
+        assert!(r.is_parity_correct(&shards, Some(1), Some(1)));
     }
 
     #[test]
