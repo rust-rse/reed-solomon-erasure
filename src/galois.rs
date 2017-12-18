@@ -202,4 +202,15 @@ mod tests {
         assert_eq!(exp(5, 20), 235);
         assert_eq!(exp(13, 7), 43);
     }
+
+    #[test]
+    fn test_div_a_is_0() {
+        assert_eq!(0, div(0, 100));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_div_b_is_0() {
+        let _ = div(1, 0);
+    }
 }
