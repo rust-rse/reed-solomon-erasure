@@ -39,5 +39,5 @@ after_success: |
   cd ../.. &&
   rm -rf kcov-master &&
   for file in target/debug/reed_solomon_erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-  bash <(curl -s https://codecov.io/bash) &&
+  bash <(curl -s https://codecov.io/bash) -X fix &&
   echo "Uploaded code coverage"
