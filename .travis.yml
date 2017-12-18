@@ -12,6 +12,10 @@ script:
   - cargo build --verbose --all
   - cargo test  --verbose --all
 
+env:
+  global:
+  - RUSTFLAGS="-C link-dead-code"
+
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
@@ -28,6 +32,6 @@ after_success: |
   ls -l kcov-build/usr &&
   ls -l kcov-build/usr/local &&
   ls -l kcov-build/usr/local/bin &&
-  for file in target/debug/reed-solomon-erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+  for file in target/debug/reed-solomon-erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
   echo "Uploaded code coverage"
