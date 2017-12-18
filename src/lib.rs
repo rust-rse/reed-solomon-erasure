@@ -800,7 +800,12 @@ mod tests {
         for _ in 0..100 {
             let shards = make_random_shards!(1_000, 10);
             let expect = shards.clone();
-            let buffer = make_blank_shards(1_000, 10);
+            let option_shards =
+                shards_to_option_shards(&shards);
+            let result        =
+                option_shards_to_shards(&option_shards, None, None);
+
+            assert_eq!(expect, result);
         }
     }
 
