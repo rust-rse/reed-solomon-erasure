@@ -23,7 +23,7 @@ categories = ["encoding"]
 license = "MIT"
 
 [badges]
-maintenance = { status = "actively-developed" }
+travis-ci   = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
 rand = "0.3"
