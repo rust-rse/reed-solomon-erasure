@@ -1,4 +1,6 @@
 # reed-solomon-erasure
+[![Build Status](https://travis-ci.org/darrenldl/reed-solomon-erasure.svg?branch=master)](https://travis-ci.org/darrenldl/reed-solomon-erasure)
+
 Rust implementation of Reed-Solomon erasure coding
 
 ## Usage
