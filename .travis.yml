@@ -15,20 +15,20 @@ matrix:
     # Android
     - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
     - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1
-    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=0
+    - env: TARGET=armv7-linux-androideabi
     - env: TARGET=i686-linux-android DISABLE_TESTS=1
-    - env: TARGET=x86_64-linux-android DISABLE_TESTS=0
+    - env: TARGET=x86_64-linux-android
 
     # iOS
     - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1
       os: osx
-    - env: TARGET=armv7-apple-ios DISABLE_TESTS=0
+    - env: TARGET=armv7-apple-ios
       os: osx
-    - env: TARGET=armv7s-apple-ios DISABLE_TESTS=0
+    - env: TARGET=armv7s-apple-ios
       os: osx
     - env: TARGET=i386-apple-ios DISABLE_TESTS=1
       os: osx
-    - env: TARGET=x86_64-apple-ios DISABLE_TESTS=0
+    - env: TARGET=x86_64-apple-ios
       os: osx
 
     # Linux
@@ -56,8 +56,8 @@ matrix:
 
     # *BSD
     - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
-    - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=0
-    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=0
+    - env: TARGET=x86_64-unknown-freebsd
+    - env: TARGET=x86_64-unknown-netbsd
 
     # Windows
     - env: TARGET=x86_64-pc-windows-gnu
@@ -121,7 +121,7 @@ addons:
       - libiberty-dev
 
 after_success: |
-  if [[ $TARGET == *-unknown-linux-* ]]; then
+  if [[ $TARGET == *-unknown-linux-* && -z $DISABLE_TESTS ]]; then
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
   cd kcov-master &&
