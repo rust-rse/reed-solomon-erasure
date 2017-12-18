@@ -678,7 +678,7 @@ mod tests {
     use self::rand::{thread_rng, Rng};
 
     macro_rules! make_random_shards {
-        ($size:expr, $per_shard:expr) => {{
+        ($per_shard:expr, $size:expr) => {{
             let mut shards = Vec::with_capacity(13);
             for _ in 0..$size {
                 shards.push(make_blank_shard($per_shard));
@@ -786,7 +786,7 @@ mod tests {
     #[test]
     fn test_shards_into_option_shards_into_shards() {
         for _ in 0..100 {
-            let shards = make_random_shards!(10, 1_000);
+            let shards = make_random_shards!(1_000, 10);
             let expect = shards.clone();
             let inter  = shards_into_option_shards(shards);
             let result = option_shards_into_shards(inter);
@@ -796,12 +796,21 @@ mod tests {
     }
 
     #[test]
+    fn test_shards_to_option_shards_to_shards() {
+        for _ in 0..100 {
+            let shards = make_random_shards!(1_000, 10);
+            let expect = shards.clone();
+            let buffer = make_blank_shards(1_000, 10);
+        }
+    }
+
+    #[test]
     fn test_encoding() {
         let per_shard = 50_000;
 
         let r = ReedSolomon::new(10, 3);
 
-        let mut shards = make_random_shards!(13, per_shard);
+        let mut shards = make_random_shards!(per_shard, 13);
 
         r.encode_parity(&mut shards, None, None);
         assert!(r.is_parity_correct(&shards, None, None));
@@ -813,7 +822,7 @@ mod tests {
 
         let r = ReedSolomon::new(8, 5);
 
-        let mut shards = make_random_shards!(13, per_shard);
+        let mut shards = make_random_shards!(per_shard, 13);
 
         r.encode_parity(&mut shards, None, None);
 
@@ -874,7 +883,7 @@ mod tests {
 
         let r = ReedSolomon::new(10, 4);
 
-        let mut shards = make_random_shards!(14, per_shard);
+        let mut shards = make_random_shards!(per_shard, 14);
 
         r.encode_parity(&mut shards, None, None);
         assert!(r.is_parity_correct(&shards, None, None));
