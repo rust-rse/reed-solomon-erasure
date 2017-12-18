@@ -75,7 +75,7 @@ mod helper {
         }
     }
 
-    pub fn calc_byte_count(shards     : &[Shard],
+    pub fn calc_byte_count(shards     : &Vec<Shard>,
                            byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
@@ -88,7 +88,7 @@ mod helper {
     }
 
     pub fn calc_offset_and_byte_count(offset : Option<usize>,
-                                      shards : &[Shard],
+                                      shards : &Vec<Shard>,
                                       byte_count : Option<usize>)
                                       -> (usize, usize) {
         let offset     = calc_offset(offset);
@@ -97,7 +97,7 @@ mod helper {
         (offset, byte_count)
     }
 
-    pub fn calc_byte_count_option_shards(shards     : &[Option<Shard>],
+    pub fn calc_byte_count_option_shards(shards     : &Vec<Option<Shard>>,
                                          byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
@@ -123,7 +123,7 @@ mod helper {
     }
 
     pub fn calc_offset_and_byte_count_option_shards(offset : Option<usize>,
-                                                    shards : &[Option<Shard>],
+                                                    shards : &Vec<Option<Shard>>,
                                                     byte_count : Option<usize>)
                                                     -> (usize, usize) {
         let offset     = calc_offset(offset);
@@ -563,7 +563,7 @@ impl ReedSolomon {
                              byte_count : Option<usize>) -> bool {
         let (offset, byte_count) =
             helper::calc_offset_and_byte_count(offset,
-                                               shards.as_slice(),
+                                               shards,
                                                byte_count);
 
         self.check_buffer_and_sizes(shards, offset, byte_count);
@@ -588,7 +588,7 @@ impl ReedSolomon {
                           -> Result<(), Error> {
         let (offset, byte_count) =
             helper::calc_offset_and_byte_count_option_shards(offset,
-                                                             shards.as_slice(),
+                                                             shards,
                                                              byte_count);
 
         self.check_buffer_and_sizes_option_shards(shards, offset, byte_count);
@@ -833,7 +833,7 @@ mod tests {
     fn test_calc_byte_count_byte_count_is_zero_case1() {
         let shards = make_random_shards!(1_000, 1);
 
-        helper::calc_byte_count(shards.as_slice(),
+        helper::calc_byte_count(shards,
                                 Some(0)); }
 
     #[test]
@@ -841,7 +841,7 @@ mod tests {
     fn test_calc_byte_count_byte_count_is_zero_case2() {
         let shards = make_random_shards!(1_000, 0);
 
-        helper::calc_byte_count(shards.as_slice(),
+        helper::calc_byte_count(shards,
                                 None); }
 
     #[test]
@@ -850,7 +850,7 @@ mod tests {
         let shards = make_random_shards!(1_000, 1);
         let option_shards = shards_into_option_shards(shards);
 
-        helper::calc_byte_count_option_shards(option_shards.as_slice(),
+        helper::calc_byte_count_option_shards(option_shards,
                                               Some(0)); }
 
     #[test]
@@ -859,7 +859,7 @@ mod tests {
         let shards = make_random_shards!(1_000, 0);
         let option_shards = shards_into_option_shards(shards);
 
-        helper::calc_byte_count_option_shards(option_shards.as_slice(),
+        helper::calc_byte_count_option_shards(option_shards,
                                               None); }
 
     #[test]
@@ -872,7 +872,7 @@ mod tests {
         option_shards[0] = None;
         option_shards[1] = None;
 
-        helper::calc_byte_count_option_shards(option_shards.as_slice(),
+        helper::calc_byte_count_option_shards(option_shards,
                                               None); }
 
     #[test]
