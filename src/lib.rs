@@ -1187,7 +1187,7 @@ mod tests {
         shards[11] = None;
         shards[12] = None;
         assert_eq!(r.decode_missing(&mut shards,
-                                    None, None).unwrap_err(),
+                                    op_offset, op_byte_count).unwrap_err(),
                    Error::NotEnoughShards);
     }
 
@@ -1210,6 +1210,32 @@ mod tests {
         r.encode_parity(&mut shards, None, None);
         fill_random(&mut shards[1]);
         assert!(!r.is_parity_correct(&shards, None, None));
+    }
+
+    #[test]
+    fn test_is_parity_correct_with_range() {
+        let per_shard = 33_333;
+
+        let offset = 7;
+        let byte_count = 100;
+        let op_offset = Some(offset);
+        let op_byte_count = Some(byte_count);
+
+        let r = ReedSolomon::new(10, 4);
+
+        let mut shards = make_random_shards!(per_shard, 14);
+
+        r.encode_parity(&mut shards, op_offset, op_byte_count);
+        assert!(r.is_parity_correct(&shards, op_offset, op_byte_count));
+
+        // corrupt shards
+        fill_random(&mut shards[5]);
+        assert!(!r.is_parity_correct(&shards, op_offset, op_byte_count));
+
+        // Re-encode
+        r.encode_parity(&mut shards, op_offset, op_byte_count);
+        fill_random(&mut shards[1]);
+        assert!(!r.is_parity_correct(&shards, op_offset, op_byte_count));
     }
 
     #[test]
