@@ -40,4 +40,6 @@ after_success: |
   rm -rf kcov-master &&
   for file in target/debug/reed_solomon_erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage"
+  echo "Uploaded code coverage to Codecov" &&
+  kcov --coveralls-id=$TRAVIS_JOB_ID . executable
+  echo "Uploaded code coverage to Coveralls"
