@@ -220,6 +220,35 @@ mod tests {
     use super::Matrix;
 
     #[test]
+    #[should_panic]
+    fn test_inconsistent_row_sizes() {
+        let m = matrix!([1, 0, 0],
+                        [0, 1],
+                        [0, 0, 1]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_incompatible_multiply() {
+        let m1 = matrix!([0, 1],
+                         [0, 1],
+                         [0, 1]);
+        let m2 = matrix!([0, 1, 2]);
+
+        m1.multiply(&m2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_incompatible_augment() {
+        let m1 = matrix!([0, 1]);
+        let m2 = matrix!([0, 1],
+                         [2, 3]);
+
+        m1.augment(&m2);
+    }
+
+    #[test]
     fn test_matrix_identity() {
         let m1 = Matrix::identity(3);
         let m2 = matrix!([1, 0, 0],
