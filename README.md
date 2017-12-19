@@ -6,12 +6,12 @@
 Rust implementation of Reed-Solomon erasure coding
 
 ## Usage
-Add the following to your `Cargo.toml` :
+Add the following to your `Cargo.toml`
 ```toml
 [dependencies]
 reed-solomon-erasure = "1.1.0"
 ```
-and the following to your crate root :
+and the following to your crate root
 ```rust
 extern crate reed_solomon_erasure;
 ```
@@ -55,7 +55,7 @@ fn main () {
 ```
 
 ## Test
-The entire test suite contains 55 tests which you can run via the following command :
+The entire test suite contains 55 tests which you can run via the following command
 ```sh
 cargo test
 ```
