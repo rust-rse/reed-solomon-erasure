@@ -138,7 +138,7 @@ pub fn boxed_u8_into_shard(b : Box<[u8]>) -> Shard {
     Rc::new(RefCell::new(b))
 }
 
-/// Make shard with byte array of zero length
+/// Makes shard with byte array of zero length
 pub fn make_zero_len_shard() -> Shard {
     boxed_u8_into_shard(Box::new([]))
 }
@@ -151,7 +151,7 @@ pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
     result
 }
 
-/// Make shard with byte array filled with zeros of some length
+/// Makes shard with byte array filled with zeros of some length
 pub fn make_blank_shard(size : usize) -> Shard {
     boxed_u8_into_shard(vec![0; size].into_boxed_slice())
 }
@@ -263,6 +263,55 @@ pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
             None    => panic!("Missing shard"),
         };
         result.push(shard);
+    }
+    result
+}
+
+/// Deep copies vector of shards
+///
+/// # Remarks
+///
+/// Normally doing `shards.clone()` (where `shards` is a `Vec<Shard>`) is okay,
+/// but the `Rc` in `Shard`'s definition will cause it to be a shallow copy, rather
+/// than a deep copy.
+///
+/// If the shards are used immutably, then a shallow copy is desirable, as it
+/// has significantly lower overhead.
+///
+/// If the shards are used mutably, then a deep copy may be desirable, as this
+/// will avoid unexpected bugs caused by multiple ownership.
+pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
+    let mut result = Vec::with_capacity(shards.len());
+
+    for v in shards.iter() {
+        let inner : RefCell<Box<[u8]>> = v.deref().clone();
+        result.push(Rc::new(inner));
+    }
+    result
+}
+
+/// Deep copies vector of option shards
+///
+/// # Remarks
+///
+/// Normally doing `shards.clone()` (where `shards` is a `Vec<Option<Shard>>`) is okay,
+/// but the `Rc` in `Shard`'s definition will cause it to be a shallow copy, rather
+/// than a deep copy.
+///
+/// If the shards are used immutably, then a shallow copy is desirable, as it
+/// has significantly lower overhead.
+///
+/// If the shards are used mutably, then a deep copy may be desirable, as this
+/// will avoid unexpected bugs caused by multiple ownership.
+pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shard>> {
+    let mut result = Vec::with_capacity(shards.len());
+
+    for v in shards.iter() {
+        let inner = match v {
+            Some(ref x) => x.deref().clone(),
+            None        => None
+        };
+        result.push(inner);
     }
     result
 }
