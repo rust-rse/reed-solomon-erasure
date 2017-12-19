@@ -1,13 +1,41 @@
 use galois;
+use std::rc::Rc;
+use std::ops::Deref;
 
 #[derive(Debug)]
 pub enum Error {
     SingularMatrix,
 }
 
+pub type Row = Rc<Box<[u8]>>;
+
+pub fn make_zero_len_row() -> Row {
+    Rc::new(Box::new([]))
+}
+
+pub fn make_zero_len_rows(count : usize) -> Vec<Row> {
+    let mut result = Vec::with_capacity(count);
+    for _ in 0..count {
+        result.push(make_zero_len_row());
+    }
+    result
+}
+
+pub fn make_blank_row(size : usize) -> Row {
+    Rc::new(vec![0; size].into_boxed_slice())
+}
+
+pub fn make_blank_rows(size : usize, count : usize) -> Vec<Row> {
+    let mut result = Vec::with_capacity(count);
+    for _ in 0..count {
+        result.push(make_blank_row(size));
+    }
+    result
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct Matrix {
-    data : Vec<Box<[u8]>>
+    data : Vec<Row>
 }
 
 impl Matrix {
@@ -19,7 +47,7 @@ impl Matrix {
             for _ in 0..cols {
                 row.push(0);
             }
-            data.push(row.into_boxed_slice());
+            data.push(Rc::new(row.into_boxed_slice()));
         }
 
         Matrix { data }
@@ -35,7 +63,7 @@ impl Matrix {
             if r.len() != cols {
                 panic!("Inconsistent row sizes")
             }
-            data.push(r);
+            data.push(Rc::new(r));
         }
 
         Matrix { data }
@@ -44,7 +72,7 @@ impl Matrix {
     pub fn identity(size : usize) -> Matrix {
         let mut result = Self::new(size, size);
         for i in 0..size {
-            result.data[i][i] = 1;
+            Rc::get_mut(&mut result.data[i]).unwrap()[i] = 1;
         }
         result
     }
@@ -62,7 +90,7 @@ impl Matrix {
     }
 
     pub fn set(&mut self, r : usize, c : usize, val : u8) {
-        self.data[r][c] = val;
+        Rc::get_mut(&mut self.data[r]).unwrap()[c] = val;
     }
 
     pub fn multiply(&self, rhs : &Matrix) -> Matrix {
@@ -91,11 +119,13 @@ impl Matrix {
                                    self.column_count() + rhs.column_count());
         for r in 0..self.row_count() {
             for c in 0..self.column_count() {
-                result.data[r][c] = self.data[r][c];
+                Rc::get_mut(&mut result.data[r]).unwrap()[c] =
+                    self.data[r][c];
             }
             let self_column_count = self.column_count();
             for c in 0..rhs.column_count() {
-                result.data[r][self_column_count + c] = rhs.data[r][c];
+                Rc::get_mut(&mut result.data[r])
+                    .unwrap()[self_column_count + c] = rhs.data[r][c];
             }
         }
 
@@ -106,13 +136,18 @@ impl Matrix {
         let mut result = Self::new(rmax - rmin, cmax - cmin);
         for r in rmin..rmax {
             for c in cmin..cmax {
-                result.data[r - rmin][c - cmin] = self.data[r][c];
+                Rc::get_mut(&mut result.data[r - rmin])
+                    .unwrap()[c - cmin] = self.data[r][c];
             }
         }
         result
     }
 
-    pub fn get_row(&self, row : usize) -> Box<[u8]> {
+    pub fn get_row_deep_clone(&self, row : usize) -> Box<[u8]> {
+        self.data[row].deref().clone()
+    }
+
+    pub fn get_row_shallow_clone(&self, row : usize) -> Rc<Box<[u8]>> {
         self.data[row].clone()
     }
 
@@ -142,7 +177,8 @@ impl Matrix {
             if self.data[r][r] != 1 {
                 let scale = galois::div(1, self.data[r][r]);
                 for c in 0..self.column_count() {
-                    self.data[r][c] = galois::mul(self.data[r][c], scale);
+                    Rc::get_mut(&mut self.data[r])
+                        .unwrap()[c] = galois::mul(self.data[r][c], scale);
                 }
             }
             // Make everything below the 1 be a 0 by subtracting
@@ -152,8 +188,9 @@ impl Matrix {
                 if self.data[r_below][r] != 0 {
                     let scale = self.data[r_below][r];
                     for c in 0..self.column_count() {
-                        self.data[r_below][c] ^= galois::mul(scale,
-                                                             self.data[r][c]);
+                        Rc::get_mut(&mut self.data[r_below])
+                            .unwrap()[c] ^= galois::mul(scale,
+                                                        self.data[r][c]);
                     }
                 }
             }
@@ -165,8 +202,9 @@ impl Matrix {
                 if self.data[r_above][d] != 0 {
                     let scale = self.data[r_above][d];
                     for c in 0..self.column_count() {
-                        self.data[r_above][c] ^= galois::mul(scale,
-                                                             self.data[d][c]);
+                        Rc::get_mut(&mut self.data[r_above])
+                            .unwrap()[c] ^= galois::mul(scale,
+                                                        self.data[d][c]);
                     }
                 }
             }
@@ -197,7 +235,8 @@ impl Matrix {
 
         for r in 0..rows {
             for c in 0..cols {
-                result.data[r][c] = galois::exp(r as u8, c);
+                Rc::get_mut(&mut result.data[r])
+                    .unwrap()[c] = galois::exp(r as u8, c);
             }
         }
         result

@@ -16,7 +16,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
 
-use matrix::Matrix;
+use matrix::{Matrix, Row};
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
@@ -335,7 +335,7 @@ pub struct ReedSolomon {
     parity_shard_count : usize,
     total_shard_count  : usize,
     matrix             : Matrix,
-    parity_rows        : Vec<Shard>,
+    parity_rows        : Vec<Row>,
 }
 
 impl Clone for ReedSolomon {
@@ -344,7 +344,7 @@ impl Clone for ReedSolomon {
             Vec::with_capacity(self.parity_rows.len());
 
         for shard in self.parity_rows.iter() {
-            let inner : RefCell<Box<[u8]>> = shard.deref().clone();
+            let inner : Box<[u8]> = shard.deref().clone();
             parity_rows.push(Rc::new(inner));
         }
 
@@ -384,8 +384,7 @@ impl ReedSolomon {
         let mut parity_rows  = Vec::with_capacity(parity_shards);
         for i in 0..parity_shards {
             parity_rows.push(
-                Rc::new(
-                    RefCell::new(matrix.get_row(data_shards + i))));
+                matrix.get_row_shallow_clone(data_shards + i));
         }
 
         ReedSolomon {
@@ -457,7 +456,7 @@ impl ReedSolomon {
     }
 
     #[inline]
-    fn code_first_input_shard(matrix_rows  : &Vec<Shard>,
+    fn code_first_input_shard(matrix_rows  : &Vec<Row>,
                               outputs      : &mut [Shard],
                               output_count : usize,
                               offset       : usize,
@@ -469,7 +468,7 @@ impl ReedSolomon {
         for i_output in 0..output_count {
             let mut output_shard =
                 outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output].borrow();
+            let matrix_row       = matrix_rows[i_output].clone();
             let mult_table_row   = table[matrix_row[i_input] as usize];
             for i_byte in offset..offset + byte_count {
                 output_shard[i_byte] =
@@ -479,7 +478,7 @@ impl ReedSolomon {
     }
 
     #[inline]
-    fn code_other_input_shard(matrix_rows  : &Vec<Shard>,
+    fn code_other_input_shard(matrix_rows  : &Vec<Row>,
                               outputs      : &mut [Shard],
                               output_count : usize,
                               offset       : usize,
@@ -490,7 +489,7 @@ impl ReedSolomon {
 
         for i_output in 0..output_count {
             let mut output_shard = outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output].borrow();
+            let matrix_row       = matrix_rows[i_output].clone();
             let mult_table_row   = &table[matrix_row[i_input] as usize];
             for i_byte in offset..offset + byte_count {
                 output_shard[i_byte] ^= mult_table_row[input_shard[i_byte] as usize];
@@ -499,7 +498,7 @@ impl ReedSolomon {
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
-    fn code_some_shards(matrix_rows  : &Vec<Shard>,
+    fn code_some_shards(matrix_rows  : &Vec<Row>,
                         inputs       : &[Shard],
                         input_count  : usize,
                         outputs      : &mut [Shard],
@@ -524,7 +523,7 @@ impl ReedSolomon {
         }
     }
 
-    fn code_some_option_shards(matrix_rows  : &Vec<Shard>,
+    fn code_some_option_shards(matrix_rows  : &Vec<Row>,
                                inputs       : &[Option<Shard>],
                                input_count  : usize,
                                outputs      : &mut [Shard],
@@ -580,7 +579,7 @@ impl ReedSolomon {
     }
 
     // Translated from CodingLoopBase.java
-    fn check_some_shards(matrix_rows : &Vec<Shard>,
+    fn check_some_shards(matrix_rows : &Vec<Row>,
                          inputs      : &[Shard],
                          input_count : usize,
                          to_check    : &[Shard],
@@ -592,7 +591,7 @@ impl ReedSolomon {
 
         for i_byte in offset..offset + byte_count {
             for i_output in 0..check_count {
-                let matrix_row = matrix_rows[i_output as usize].borrow();
+                let matrix_row = matrix_rows[i_output as usize].clone();
                 let mut value = 0;
                 for i_input in 0..input_count {
                     value ^=
@@ -706,8 +705,8 @@ impl ReedSolomon {
         // The input to the coding is all of the shards we actually
         // have, and the output is the missing data shards.  The computation
         // is done using the special decode matrix we just built.
-        let mut matrix_rows : Vec<Shard> =
-            make_zero_len_shards(self.parity_shard_count);
+        let mut matrix_rows : Vec<Row> =
+            matrix::make_zero_len_rows(self.parity_shard_count);
         {
             let mut outputs : Vec<Shard> =
                 make_blank_shards(shard_length,
@@ -719,8 +718,8 @@ impl ReedSolomon {
                     shards[i_shard] =
                         Some(Rc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
-                        boxed_u8_into_shard(
-                            data_decode_matrix.get_row(i_shard));
+                        data_decode_matrix
+                        .get_row_shallow_clone(i_shard);
                     output_count += 1;
                 }
             }
