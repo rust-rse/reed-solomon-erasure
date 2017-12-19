@@ -1162,7 +1162,7 @@ mod tests {
 
     #[test]
     fn test_deep_clone_option_shards() {
-        let shards1 =
+        let mut shards1 =
             shards_into_option_shards(
                 make_random_shards!(1_000, 10));
 
@@ -1184,6 +1184,16 @@ mod tests {
                 assert_eq!(1, Rc::strong_count(x));
             }
         }
+
+        shards1[0] = None;
+        shards1[4] = None;
+        shards1[7] = None;
+
+        let shards3 = deep_clone_option_shards(&shards1);
+
+        assert_eq!(None, shards3[0]);
+        assert_eq!(None, shards3[4]);
+        assert_eq!(None, shards3[7]);
     }
 
     #[test]
