@@ -9,7 +9,7 @@ Rust implementation of Reed-Solomon erasure coding
 
 This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon) and [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
-See [Notes](#Notes) and [License](#License) section for details.
+See [Notes](#notes) and [License](#license) section for details.
 
 ## Usage
 Add the following to your `Cargo.toml`
