@@ -1,6 +1,8 @@
 ## 1.1.1
   - Documentation polish
   - Added documentation badge to README
+  - Optimised internal matrix related operations
+    - This largely means `decode_missing` is faster
 
 ## 1.1.0
   - Added more helper functions
