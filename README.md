@@ -55,7 +55,7 @@ fn main () {
 ```
 
 ## Test
-The entire test suite contains 55 tests which you can run via `cargo`
+The entire test suite contains 55 tests which you can run via the following command :
 ```sh
 cargo test
 ```
