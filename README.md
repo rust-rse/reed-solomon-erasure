@@ -16,6 +16,15 @@ and the following to your crate root :
 extern crate reed_solomon_erasure;
 ```
 
+## Stability
+#### Metrics
+The test suite contains 55 tests, checking internal computations and also behaviours of exposed functions/methods.
+
+The code coverage percentage is >= 99%, as computed by `kcov`. You can see the results via the badges above.
+
+#### Final notes
+This crate was originally developed for [rust-SeqBox](https://github.com/darrenldl/rust-SeqBox), which aims to be a long term maintained backup utility. So stability and robustness have always been the goal.
+
 ## Example
 ```rust
 #[macro_use(shards)]
