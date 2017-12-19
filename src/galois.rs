@@ -108,7 +108,7 @@ mod tests {
 
     #[test]
     fn log_table_same_as_backblaze () {
-        for i in 1..256 { // ignore first value
+        for i in 0..256 {
             assert_eq!(LOG_TABLE[i], BACKBLAZE_LOG_TABLE[i]);
         }
     }
