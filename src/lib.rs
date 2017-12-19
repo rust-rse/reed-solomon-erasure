@@ -1204,6 +1204,8 @@ mod tests {
         shards[0] = None;
         shards[4] = None;
 
+        // the new shards constructed by decode_missing
+        // will have rc count of just 1
         r.decode_missing(&mut shards, None, None).unwrap();
         
         let result = option_shards_into_shards(shards);
