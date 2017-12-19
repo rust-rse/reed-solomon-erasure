@@ -63,7 +63,7 @@ cargo test
 ```
 
 ## Notes
-Reed-Solomon implementation closely follows [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), and the test suite mirrors [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
+The implementation closely follows [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), and the test suite mirrors [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
 ## License
 #### BackBlaze Java Reed-Solomon implementation
