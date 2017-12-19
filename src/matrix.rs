@@ -147,7 +147,7 @@ impl Matrix {
         self.data[row].deref().clone()
     }
 
-    pub fn get_row_shallow_clone(&self, row : usize) -> Rc<Box<[u8]>> {
+    pub fn get_row_shallow_clone(&self, row : usize) -> Row {
         self.data[row].clone()
     }
 
