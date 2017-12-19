@@ -275,10 +275,10 @@ pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
 /// but the `Rc` in `Shard`'s definition will cause it to be a shallow copy, rather
 /// than a deep copy.
 ///
-/// If the shards are used immutably, then a shallow copy is desirable, as it
+/// If the shards are used immutably, then a shallow copy is more desirable, as it
 /// has significantly lower overhead.
 ///
-/// If the shards are used mutably, then a deep copy may be desirable, as this
+/// If the shards are used mutably, then a deep copy may be more desirable, as this
 /// will avoid unexpected bugs caused by multiple ownership.
 pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
@@ -298,10 +298,10 @@ pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
 /// but the `Rc` in `Shard`'s definition will cause it to be a shallow copy, rather
 /// than a deep copy.
 ///
-/// If the shards are used immutably, then a shallow copy is desirable, as it
+/// If the shards are used immutably, then a shallow copy is more desirable, as it
 /// has significantly lower overhead.
 ///
-/// If the shards are used mutably, then a deep copy may be desirable, as this
+/// If the shards are used mutably, then a deep copy may be more desirable, as this
 /// will avoid unexpected bugs caused by multiple ownership.
 pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
