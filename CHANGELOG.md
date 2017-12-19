@@ -1,3 +1,7 @@
+## 1.1.1
+  - Documentation polish
+  - Added documentation badge to README
+
 ## 1.1.0
   - Added more helper functions
   - Added more tests
