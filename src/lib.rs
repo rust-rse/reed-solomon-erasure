@@ -252,7 +252,7 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
 /// This is mainly useful when you want to convert result of
 /// `decode_missing` to the more usable arrangement.
 ///
-/// Panics when any of the shards is missing or the range exceeds number of shards provided.
+/// Panics when any of the shards is missing.
 pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
                                  -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
