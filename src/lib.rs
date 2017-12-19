@@ -769,6 +769,7 @@ mod tests {
 
     use super::*;
     use self::rand::{thread_rng, Rng};
+    use std::rc::Rc;
 
     macro_rules! make_random_shards {
         ($per_shard:expr, $size:expr) => {{
@@ -1095,6 +1096,42 @@ mod tests {
                         [0, 1, 2]));
 
         r.check_buffer_and_sizes_option_shards(&shards, 0, 4);
+    }
+
+    #[test]
+    fn test_shallow_clone_shards() {
+        let shards1 = make_random_shards!(1_000, 10);
+
+        for v in shards1.iter() {
+            assert_eq!(1, Rc::strong_count(v));
+        }
+
+        let shards2 = shards1.clone();
+
+        for v in shards1.iter() {
+            assert_eq!(2, Rc::strong_count(v));
+        }
+        for v in shards2.iter() {
+            assert_eq!(2, Rc::strong_count(v));
+        }
+    }
+
+    #[test]
+    fn test_deep_clone_shards() {
+        let shards1 = make_random_shards!(1_000, 10);
+
+        for v in shards1.iter() {
+            assert_eq!(1, Rc::strong_count(v));
+        }
+
+        let shards2 = deep_clone_shards(&shards1);
+
+        for v in shards1.iter() {
+            assert_eq!(1, Rc::strong_count(v));
+        }
+        for v in shards2.iter() {
+            assert_eq!(1, Rc::strong_count(v));
+        }
     }
 
     #[test]
