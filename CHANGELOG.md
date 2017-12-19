@@ -1,3 +1,7 @@
+## 1.1.0
+  - Added more helper functions
+  - Added more tests
+ 
 ## 1.0.1
   - Added more tests
   - Fixed decode_missing
