@@ -4,6 +4,10 @@ rust:
   - beta
   - nightly
 
+branches:
+  except:
+    - test
+
 matrix:
   allow_features:
     - rust: nightly
