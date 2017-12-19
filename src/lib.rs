@@ -307,8 +307,9 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner = match v {
-            Some(ref x) => x.deref().clone(),
+        let inner = match *v {
+            Some(ref x) => { let inner = x.deref().clone();
+                             Some(Rc::new(inner)) },
             None        => None
         };
         result.push(inner);
