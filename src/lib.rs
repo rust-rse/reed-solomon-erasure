@@ -170,16 +170,16 @@ mod helper {
         (offset, byte_count)
     }
 
-    pub fn split_slice<'a, T> (slice      : &'a mut [T],
-                           chunk_size : usize) -> Vec<&'a mut [T]> {
-        fn split_slice_helper<'a, T>(slice      : &'a mut [T],
-                                     chunk_size : usize,
-                                     mut result : Vec<&'a mut [T]>)
-                                     -> Vec<&'a mut [T]> {
+    pub fn split_slice_mut<'a, T> (slice      : &'a mut [T],
+                                   chunk_size : usize) -> Vec<&'a mut [T]> {
+        fn helper<'a, T>(slice      : &'a mut [T],
+                         chunk_size : usize,
+                         mut result : Vec<&'a mut [T]>)
+                         -> Vec<&'a mut [T]> {
             if chunk_size < slice.len() {
                 let (l, r) = slice.split_at_mut(chunk_size);
                 result.push(l);
-                split_slice_helper(r, chunk_size, result)
+                helper(r, chunk_size, result)
             }
             else {
                 result.push(slice);
@@ -188,11 +188,33 @@ mod helper {
         }
 
         let result = Vec::with_capacity(slice.len() / chunk_size + 1);
-        split_slice_helper(slice,
-                           chunk_size,
-                           result)
+        helper(slice,
+               chunk_size,
+               result)
     }
 
+    pub fn split_slice<'a, T> (slice      : &'a [T],
+                               chunk_size : usize) -> Vec<&'a [T]> {
+        fn helper<'a, T>(slice      : &'a [T],
+                         chunk_size : usize,
+                         mut result : Vec<&'a [T]>)
+                         -> Vec<&'a [T]> {
+            if chunk_size < slice.len() {
+                let (l, r) = slice.split_at(chunk_size);
+                result.push(l);
+                helper(r, chunk_size, result)
+            }
+            else {
+                result.push(slice);
+                result
+            }
+        }
+
+        let result = Vec::with_capacity(slice.len() / chunk_size + 1);
+        helper(slice,
+               chunk_size,
+               result)
+    }
 }
 
 
