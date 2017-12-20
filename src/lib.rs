@@ -17,6 +17,8 @@ mod matrix;
 extern crate threadpool;
 use threadpool::ThreadPool;
 
+extern crate num_cpus;
+
 use std::sync::{Arc, RwLock};
 
 use matrix::Matrix;
@@ -375,9 +377,9 @@ pub struct ReedSolomon {
 
 impl Clone for ReedSolomon {
     fn clone(&self) -> ReedSolomon {
-        ReedSolomon::new(self.data_shard_count,
-                         self.parity_shard_count,
-                         self.threadpool.max_count())
+        ReedSolomon::new_with_tc(self.data_shard_count,
+                                 self.parity_shard_count,
+                                 self.threadpool.max_count())
     }
 }
 
@@ -400,10 +402,17 @@ impl ReedSolomon {
         vandermonde.multiply(&top.invert().unwrap())
     }
 
+    pub fn new(data_shards : usize,
+               parity_shards : usize) -> ReedSolomon {
+        Self::new_with_tc(data_shards,
+                          parity_shards,
+                          num_cpus::get())
+    }
+
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
-    pub fn new(data_shards   : usize,
-               parity_shards : usize,
-               thread_count  : usize) -> ReedSolomon {
+    pub fn new_with_tc(data_shards   : usize,
+                       parity_shards : usize,
+                       thread_count  : usize) -> ReedSolomon {
         if data_shards == 0 {
             panic!("Too few data shards")
         }
