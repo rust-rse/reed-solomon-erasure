@@ -12,14 +12,16 @@
 mod galois;
 mod matrix;
 
-//extern crate rayon;
-//use rayon::prelude::*;
+extern crate rayon;
+use rayon::prelude::*;
 extern crate threadpool;
 use threadpool::ThreadPool;
 
 extern crate num_cpus;
 
 use std::sync::{Arc, RwLock};
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use matrix::Matrix;
 
@@ -559,10 +561,16 @@ impl ReedSolomon {
                 outputs[i_output].write().unwrap();
             let matrix_row       = matrix_rows[i_output];
             let mult_table_row   = table[matrix_row[i_input] as usize];
-            for i_byte in offset..offset + byte_count {
-                output_shard[i_byte] =
-                    mult_table_row[input_shard[i_byte] as usize];
-            }
+            let output_shard_pieces =
+                helper::split_slice_mut(output_shard.deref_mut(),
+                                        BYTES_PER_ENCODE);
+            output_shard_pieces.into_par_iter()
+                .for_each(|out| {
+                    for i in 0..out.len() {
+                        out[i] =
+                            mult_table_row[input_shard[i] as usize];
+                    }
+                })
         }
     }
 
