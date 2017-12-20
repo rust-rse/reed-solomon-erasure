@@ -23,6 +23,8 @@ use std::sync::{Arc, RwLock};
 
 use matrix::Matrix;
 
+static BYTES_PER_ENCODE : usize = 4096;
+
 #[derive(PartialEq, Debug)]
 pub enum Error {
     NotEnoughShards
@@ -493,6 +495,29 @@ impl ReedSolomon {
                 panic!("Shards too small, shard length : Some({}), offset + byte_count : {}", x, offset + byte_count);
             }
         }
+    }
+
+    fn split_bytes<'a> (bytes      : &'a mut [u8],
+                        chunk_size : usize) -> Vec<&'a mut [u8]> {
+        fn split_bytes_helper<'a>(bytes      : &'a mut [u8],
+                                  chunk_size : usize,
+                                  mut result : Vec<&'a mut [u8]>)
+                                  -> Vec<&'a mut [u8]> {
+            if chunk_size < bytes.len() {
+                let (l, r) = bytes.split_at_mut(chunk_size);
+                result.push(l);
+                split_bytes_helper(r, chunk_size, result)
+            }
+            else {
+                result.push(bytes);
+                result
+            }
+        }
+
+        let result = Vec::with_capacity(bytes.len() / chunk_size + 1);
+        split_bytes_helper(bytes,
+                           chunk_size,
+                           result)
     }
 
     #[inline(always)]
