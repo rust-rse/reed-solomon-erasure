@@ -446,7 +446,7 @@ impl ReedSolomon {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn code_first_input_shard(matrix_rows  : &Vec<&[u8]>,
                               outputs      : &mut [Shard],
                               output_count : usize,
@@ -468,7 +468,7 @@ impl ReedSolomon {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn code_other_input_shard(matrix_rows  : &Vec<&[u8]>,
                               outputs      : &mut [Shard],
                               output_count : usize,
