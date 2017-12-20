@@ -1,7 +1,4 @@
 use galois;
-use std::rc::Rc;
-use std::ops::Deref;
-
 #[derive(Debug)]
 pub enum Error {
     SingularMatrix,
@@ -56,23 +53,36 @@ pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
 pub struct Matrix {
     row_count : usize,
     col_count : usize,
-    data      : Vec<u8>  // store in flattened structure
+    data      : Vec<u8> // store in flattened structure
+}
+
+fn calc_matrix_row_start_end(col_count : usize,
+                             row : usize)
+                             -> (usize, usize) {
+    let start = row * col_count;
+    let end   = start + col_count;
+
+    (start, end)
 }
 
 impl Matrix {
     fn calc_row_start_end(&self, row : usize) -> (usize, usize) {
-        let start = row * self.col_count;
-        let end   = start + self.col_count;
-
-        (start, end)
+        calc_matrix_row_start_end(self.col_count, row)
     }
 
     pub fn new(rows : usize, cols : usize) -> Matrix {
         let data = vec![0; rows * cols];
 
+        let mut data_rows = Vec::with_capacity(rows);
+        for i in 0..rows {
+            let (s, e) = calc_matrix_row_start_end(cols, i);
+            data_rows.push(&data[s..e])
+        }
+
         Matrix { row_count : rows,
                  col_count : cols,
-                 data }
+                 data,
+                 data_rows }
     }
 
     pub fn new_with_data(init_data : Vec<Vec<u8>>) -> Matrix {
@@ -87,9 +97,16 @@ impl Matrix {
 
         let data = flatten(init_data);
 
+        let mut data_rows = Vec::with_capacity(rows);
+        for i in 0..rows {
+            let (s, e) = calc_matrix_row_start_end(cols, i);
+            data_rows.push(&data[s..e])
+        }
+
         Matrix { row_count : rows,
                  col_count : cols,
-                 data }
+                 data,
+                 data_rows }
     }
 
     pub fn identity(size : usize) -> Matrix {
@@ -153,7 +170,11 @@ impl Matrix {
         result
     }
 
-    pub fn sub_matrix(&self, rmin : usize, cmin : usize, rmax : usize, cmax : usize) -> Matrix {
+    pub fn sub_matrix(&self,
+                      rmin : usize,
+                      cmin : usize,
+                      rmax : usize,
+                      cmax : usize) -> Matrix {
         let mut result = Self::new(rmax - rmin, cmax - cmin);
         for r in rmin..rmax {
             for c in cmin..cmax {
@@ -162,10 +183,6 @@ impl Matrix {
         }
         result
     }
-
-    /*pub fn get_row_clone(&self, row : usize) -> Box<[u8]> {
-        let
-    }*/
 
     pub fn get_row(&self, row : usize) -> &[u8] {
         let (start, end) = self.calc_row_start_end(row);
