@@ -25,7 +25,7 @@ use std::ops::DerefMut;
 
 use matrix::Matrix;
 
-static BYTES_PER_ENCODE : usize = 4096;
+static BYTES_PER_ENCODE : usize = 500_000;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
@@ -589,10 +589,16 @@ impl ReedSolomon {
             let mut output_shard = outputs[i_output].write().unwrap();
             let matrix_row       = matrix_rows[i_output];
             let mult_table_row   = &table[matrix_row[i_input] as usize];
-            for i_byte in offset..offset + byte_count {
-                output_shard[i_byte] ^=
-                    mult_table_row[input_shard[i_byte] as usize];
-            }
+            let output_shard_pieces =
+                helper::split_slice_mut(output_shard.deref_mut(),
+                                        BYTES_PER_ENCODE);
+            output_shard_pieces.into_par_iter()
+                .for_each(|out| {
+                    for i in 0..out.len() {
+                        out[i] ^=
+                            mult_table_row[input_shard[i] as usize];
+                    }
+                })
         }
     }
 
