@@ -56,7 +56,7 @@ pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
 pub struct Matrix {
     row_count : usize,
     col_count : usize,
-    data : Vec<u8>  // store in flattened structure
+    data      : Vec<u8>  // store in flattened structure
 }
 
 impl Matrix {
