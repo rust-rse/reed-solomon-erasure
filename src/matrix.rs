@@ -21,6 +21,14 @@ pub fn make_zero_len_rows(count : usize) -> Vec<Row> {
     result
 }*/
 
+macro_rules! acc {
+    ($m:ident, $r:expr, $c:expr)
+        =>
+    {
+        $m.data[$r * $m.col_count + $c]
+    }
+}
+
 pub fn make_blank_row(size : usize) -> Row {
     vec![0; size].into_boxed_slice()
 }
@@ -33,11 +41,12 @@ pub fn make_blank_rows(size : usize, count : usize) -> Vec<Row> {
     result
 }
 
-pub fn flatten<T>(m : Vec<Box<[T]>>) -> Vec<T> {
-    let mut result = Vec::with_capacity(m.len() * m[0].len());
+pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
+    let mut result : Vec<T> =
+        Vec::with_capacity(m.len() * m[0].len());
     for row in m.into_iter() {
         for v in row.into_iter() {
-            result.push(*v);
+            result.push(v);
         }
     }
     result
@@ -51,6 +60,13 @@ pub struct Matrix {
 }
 
 impl Matrix {
+    fn calc_row_start_end(&self, row : usize) -> (usize, usize) {
+        let start = row * self.col_count;
+        let end   = start + self.col_count;
+
+        (start, end)
+    }
+
     pub fn new(rows : usize, cols : usize) -> Matrix {
         let data = vec![0; rows * cols];
 
@@ -59,45 +75,45 @@ impl Matrix {
                  data }
     }
 
-    pub fn new_with_data(init_data : Vec<Box<[u8]>>) -> Matrix {
+    pub fn new_with_data(init_data : Vec<Vec<u8>>) -> Matrix {
         let rows = init_data.len();
         let cols = init_data[0].len();
 
-        let mut data = Vec::with_capacity(rows);
-
-        for r in init_data.into_iter() {
+        for r in init_data.iter() {
             if r.len() != cols {
                 panic!("Inconsistent row sizes")
             }
         }
 
+        let data = flatten(init_data);
+
         Matrix { row_count : rows,
                  col_count : cols,
-                 data      : flatten(data) }
+                 data }
     }
 
     pub fn identity(size : usize) -> Matrix {
         let mut result = Self::new(size, size);
         for i in 0..size {
-            Rc::get_mut(&mut result.data[i]).unwrap()[i] = 1;
+            acc!(result, i, i) = 1;
         }
         result
     }
 
     pub fn column_count(&self) -> usize {
-        self.data[0].len()
+        self.col_count
     }
 
     pub fn row_count(&self) -> usize {
-        self.data.len()
+        self.row_count
     }
 
     pub fn get(&self, r : usize, c : usize) -> u8 {
-        self.data[r][c]
+        acc!(self, r, c)
     }
 
     pub fn set(&mut self, r : usize, c : usize, val : u8) {
-        Rc::get_mut(&mut self.data[r]).unwrap()[c] = val;
+        acc!(self, r, c) = val;
     }
 
     pub fn multiply(&self, rhs : &Matrix) -> Matrix {
@@ -126,13 +142,11 @@ impl Matrix {
                                    self.column_count() + rhs.column_count());
         for r in 0..self.row_count() {
             for c in 0..self.column_count() {
-                Rc::get_mut(&mut result.data[r]).unwrap()[c] =
-                    self.data[r][c];
+                acc!(result, r, c) = acc!(self, r, c);
             }
             let self_column_count = self.column_count();
             for c in 0..rhs.column_count() {
-                Rc::get_mut(&mut result.data[r])
-                    .unwrap()[self_column_count + c] = rhs.data[r][c];
+                acc!(result, r, self_column_count + c) = acc!(rhs, r, c);
             }
         }
 
@@ -143,23 +157,37 @@ impl Matrix {
         let mut result = Self::new(rmax - rmin, cmax - cmin);
         for r in rmin..rmax {
             for c in cmin..cmax {
-                Rc::get_mut(&mut result.data[r - rmin])
-                    .unwrap()[c - cmin] = self.data[r][c];
+                acc!(result, r - rmin, c - cmin) = acc!(self, r, c);
             }
         }
         result
     }
 
-    pub fn get_row_deep_clone(&self, row : usize) -> Box<[u8]> {
-        self.data[row].deref().clone()
-    }
+    /*pub fn get_row_clone(&self, row : usize) -> Box<[u8]> {
+        let
+    }*/
 
-    pub fn get_row_shallow_clone(&self, row : usize) -> Row {
-        self.data[row].clone()
+    pub fn get_row(&self, row : usize) -> &[u8] {
+        let (start, end) = self.calc_row_start_end(row);
+
+        &self.data[start..end]
     }
 
     pub fn swap_rows(&mut self, r1 : usize, r2 : usize) {
-        self.data.swap(r1, r2);
+        let (r1_s, _) = self.calc_row_start_end(r1);
+        let (r2_s, _) = self.calc_row_start_end(r2);
+
+        if r1 == r2 {
+            return;
+        }
+        else {
+            let mut tmp;
+            for i in 0..self.col_count {
+                tmp = self.data[r1_s + i];
+                self.data[r1_s + i] = self.data[r2_s + i];
+                self.data[r2_s + i] = tmp;
+            }
+        }
     }
 
     pub fn is_square(&self) -> bool {
@@ -168,36 +196,35 @@ impl Matrix {
 
     pub fn gaussian_elim(&mut self) -> Result<(), Error> {
         for r in 0..self.row_count() {
-            if self.data[r][r] == 0 {
+            if acc!(self, r, r) == 0 {
                 for r_below in r+1..self.row_count() {
-                    if self.data[r_below][r] != 0 {
+                    if acc!(self, r_below, r) != 0 {
                         self.swap_rows(r, r_below);
                         break;
                     }
                 }
             }
             // If we couldn't find one, the matrix is singular.
-            if self.data[r][r] == 0 {
+            if acc!(self, r, r) == 0 {
                 return Err(Error::SingularMatrix)
             }
             // Scale to 1.
-            if self.data[r][r] != 1 {
-                let scale = galois::div(1, self.data[r][r]);
+            if acc!(self, r, r) != 1 {
+                let scale = galois::div(1, acc!(self, r, r));
                 for c in 0..self.column_count() {
-                    Rc::get_mut(&mut self.data[r])
-                        .unwrap()[c] = galois::mul(self.data[r][c], scale);
+                    acc!(self, r, c) = galois::mul(acc!(self, r, c), scale);
                 }
             }
             // Make everything below the 1 be a 0 by subtracting
             // a multiple of it.  (Subtraction and addition are
             // both exclusive or in the Galois field.)
             for r_below in r+1..self.row_count() {
-                if self.data[r_below][r] != 0 {
-                    let scale = self.data[r_below][r];
+                if acc!(self, r_below, r) != 0 {
+                    let scale = acc!(self, r_below, r);
                     for c in 0..self.column_count() {
-                        Rc::get_mut(&mut self.data[r_below])
-                            .unwrap()[c] ^= galois::mul(scale,
-                                                        self.data[r][c]);
+                        acc!(self, r_below, c) ^=
+                            galois::mul(scale,
+                                        acc!(self, r, c));
                     }
                 }
             }
@@ -206,12 +233,12 @@ impl Matrix {
         // Now clear the part above the main diagonal.
         for d in 0..self.row_count() {
             for r_above in 0..d {
-                if self.data[r_above][d] != 0 {
-                    let scale = self.data[r_above][d];
+                if acc!(self, r_above, d) != 0 {
+                    let scale = acc!(self, r_above, d);
                     for c in 0..self.column_count() {
-                        Rc::get_mut(&mut self.data[r_above])
-                            .unwrap()[c] ^= galois::mul(scale,
-                                                        self.data[d][c]);
+                        acc!(self, r_above, c) ^=
+                            galois::mul(scale,
+                                        acc!(self, d, c));
                     }
                 }
             }
@@ -242,8 +269,7 @@ impl Matrix {
 
         for r in 0..rows {
             for c in 0..cols {
-                Rc::get_mut(&mut result.data[r])
-                    .unwrap()[c] = galois::exp(r as u8, c);
+                acc!(result, r, c) = galois::exp(r as u8, c);
             }
         }
         result
@@ -258,7 +284,7 @@ mod tests {
                 [ $( $x:expr ),+ ]
             ),*
         ) => (
-            Matrix::new_with_data(vec![ $( vec![$( $x ),*].into_boxed_slice() ),* ])
+            Matrix::new_with_data(vec![ $( vec![$( $x ),*] ),* ])
         );
         ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
     }
