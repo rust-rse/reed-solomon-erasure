@@ -73,16 +73,9 @@ impl Matrix {
     pub fn new(rows : usize, cols : usize) -> Matrix {
         let data = vec![0; rows * cols];
 
-        let mut data_rows = Vec::with_capacity(rows);
-        for i in 0..rows {
-            let (s, e) = calc_matrix_row_start_end(cols, i);
-            data_rows.push(&data[s..e])
-        }
-
         Matrix { row_count : rows,
                  col_count : cols,
-                 data,
-                 data_rows }
+                 data }
     }
 
     pub fn new_with_data(init_data : Vec<Vec<u8>>) -> Matrix {
@@ -97,16 +90,9 @@ impl Matrix {
 
         let data = flatten(init_data);
 
-        let mut data_rows = Vec::with_capacity(rows);
-        for i in 0..rows {
-            let (s, e) = calc_matrix_row_start_end(cols, i);
-            data_rows.push(&data[s..e])
-        }
-
         Matrix { row_count : rows,
                  col_count : cols,
-                 data,
-                 data_rows }
+                 data }
     }
 
     pub fn identity(size : usize) -> Matrix {

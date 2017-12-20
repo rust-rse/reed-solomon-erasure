@@ -330,36 +330,21 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
 ///
 ///  `byte_count` defaults to length of shard if it is `None`.
 #[derive(PartialEq, Debug)]
-pub struct ReedSolomon<'a> {
+pub struct ReedSolomon {
     data_shard_count   : usize,
     parity_shard_count : usize,
     total_shard_count  : usize,
     matrix             : Matrix,
-    parity_rows        : Vec<&'a Box<[u8]>>,
+    //parity_rows        : Vec<Vec<[u8]>>,
 }
 
-/*
-impl<'a> Clone for ReedSolomon<'a> {
-    fn clone(&self) -> ReedSolomon<'a> {
-        let mut parity_rows =
-            Vec::with_capacity(self.parity_rows.len());
-
-        for shard in self.parity_rows.iter() {
-            let inner : Box<[u8]> = shard.deref().clone();
-            parity_rows.push(Rc::new(inner));
-        }
-
-        ReedSolomon {
-            data_shard_count   : self.data_shard_count,
-            parity_shard_count : self.parity_shard_count,
-            total_shard_count  : self.total_shard_count,
-            matrix             : Matrix::clone(&self.matrix),
-            parity_rows
-        }
+impl Clone for ReedSolomon {
+    fn clone(&self) -> ReedSolomon {
+        ReedSolomon::new(self.data_shard_count,
+                         self.parity_shard_count)
     }
-}*/
+}
 
-/*
 impl ReedSolomon {
     fn build_matrix(data_shards : usize, total_shards : usize) -> Matrix {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
@@ -370,7 +355,7 @@ impl ReedSolomon {
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
-    pub fn new<'a>(data_shards : usize, parity_shards : usize) -> ReedSolomon<'a> {
+    pub fn new(data_shards : usize, parity_shards : usize) -> ReedSolomon {
         if data_shards == 0 {
             panic!("Too few data shards")
         }
@@ -381,23 +366,19 @@ impl ReedSolomon {
             panic!("Too many shards, max is 256")
         }
 
-        let total_shards = data_shards + parity_shards;
-        let matrix       = Self::build_matrix(data_shards, total_shards);
-        let mut parity_rows  = Vec::with_capacity(parity_shards);
-        for i in 0..parity_shards {
-            parity_rows.push(
-                matrix.get_row_shallow_clone(data_shards + i));
-        }
+        let total_shards    = data_shards + parity_shards;
+
+        let matrix = Self::build_matrix(data_shards, total_shards);
 
         ReedSolomon {
             data_shard_count   : data_shards,
             parity_shard_count : parity_shards,
             total_shard_count  : total_shards,
             matrix,
-            parity_rows
         }
     }
 
+    /*
     pub fn data_shard_count(&self) -> usize {
         self.data_shard_count
     }
@@ -762,8 +743,10 @@ impl ReedSolomon {
 
         Ok (())
     }
+    */
 }
 
+/*
 #[cfg(test)]
 mod tests {
     extern crate rand;
