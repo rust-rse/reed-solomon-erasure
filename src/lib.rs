@@ -346,6 +346,15 @@ impl Clone for ReedSolomon {
 }
 
 impl ReedSolomon {
+    fn get_parity_rows(&self) -> Vec<&[u8]> {
+        let mut parity_rows  = Vec::with_capacity(self.parity_shard_count);
+        let matrix           = &self.matrix;
+        for i in self.data_shard_count..self.total_shard_count {
+            parity_rows.push(matrix.get_row(i));
+        }
+
+        parity_rows
+    }
     fn build_matrix(data_shards : usize, total_shards : usize) -> Matrix {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
 
@@ -554,11 +563,7 @@ impl ReedSolomon {
 
         let (inputs, outputs) = shards.split_at_mut(self.data_shard_count);
 
-        let mut parity_rows  = Vec::with_capacity(self.parity_shard_count);
-        let matrix           = &self.matrix;
-        for i in self.data_shard_count..self.total_shard_count {
-            parity_rows.push(matrix.get_row(i));
-        }
+        let parity_rows = self.get_parity_rows();
 
         Self::code_some_shards(&parity_rows,
                                inputs,  self.data_shard_count,
@@ -595,7 +600,6 @@ impl ReedSolomon {
         true
     }
 
-    /*
     /// Verify correctness of parity shards
     pub fn is_parity_correct(&self,
                              shards     : &Vec<Shard>,
@@ -610,12 +614,15 @@ impl ReedSolomon {
 
         let (data_shards, to_check) = shards.split_at(self.data_shard_count);
 
-        Self::check_some_shards(&self.parity_rows,
+        let parity_rows = self.get_parity_rows();
+
+        Self::check_some_shards(&parity_rows,
                                 data_shards, self.data_shard_count,
                                 to_check,    self.parity_shard_count,
                                 offset, byte_count)
     }
 
+    /*
     /// Reconstruct missing shards
     ///
     /// # Remarks
