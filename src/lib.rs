@@ -12,9 +12,16 @@
 mod galois;
 mod matrix;
 
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::ops::Deref;
+extern crate rayon;
+use rayon::prelude::*;
+//extern crate threadpool;
+//use threadpool::ThreadPool;
+
+extern crate num_cpus;
+
+use std::sync::{Arc, RwLock};
+//use std::ops::Deref;
+use std::ops::DerefMut;
 
 use matrix::Matrix;
 
@@ -24,8 +31,39 @@ pub enum Error {
 }
 
 /// Main data type used by this library
-pub type Shard = Rc<RefCell<Box<[u8]>>>;
+//pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
+pub type Shard = Arc<RwLock<Box<[u8]>>>;
+
+/*fn shard_into_tsshard(shard : Shard) -> TsShard {
+    let inner : Box<[u8]> = shard.into_inner();
+    Arc::new(RwLock::new(inner))
+}
+
+fn tsshard_into_shard(shard : TsShard) -> Shard {
+    let inner : Box<[u8]> = shard.into_inner().unwrap();
+    Rc::new(RefCell::new(inner))
+}
+
+fn shards_into_tsshards(shards : Vec<Shard>) -> Vec<TsShard> {
+    let mut result = Vec::with_capacity(shards.len());
+    for shard in shards.into_iter() {
+        let inner : Box<[u8]> =
+            shard.into_inner();
+        result.push(Arc::new(RwLock::new(inner)));
+    }
+    result
+}
+
+fn tsshards_into_shards(shards : Vec<TsShard>) -> Vec<Shard> {
+    let mut result = Vec::with_capacity(shards.len());
+    for shard in shards.into_iter() {
+        let inner : Box<[u8]> =
+            shard.into_inner().unwrap();
+        result.push(Rc::new(RefCell::new(inner)));
+    }
+    result
+}*/
 /// Constructs a shard
 ///
 /// # Example
@@ -79,7 +117,7 @@ mod helper {
                            byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
-            None    => shards[0].borrow().len()
+            None    => shards[0].read().unwrap().len()
         };
 
         if result == 0 { panic!("Byte count is zero"); }
@@ -105,7 +143,7 @@ mod helper {
                 let mut value = None;
                 for v in shards.iter() {
                     match *v {
-                        Some(ref x) => { value = Some(x.borrow().len());
+                        Some(ref x) => { value = Some(x.read().unwrap().len());
                                          break; },
                         None        => {},
                     }
@@ -131,11 +169,63 @@ mod helper {
 
         (offset, byte_count)
     }
+
+    pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
+                                              chunk_size : usize)
+                                              -> Vec<(usize, &'a mut [T])> {
+        fn helper<'a, T>(slice      : &'a mut [T],
+                         chunk_size : usize,
+                         cur_index  : usize,
+                         mut result : Vec<(usize, &'a mut [T])>)
+                         -> Vec<(usize, &'a mut [T])> {
+            if chunk_size < slice.len() {
+                let (l, r) = slice.split_at_mut(chunk_size);
+                result.push((cur_index, l));
+                helper(r, chunk_size, cur_index + 1, result)
+            }
+            else {
+                result.push((cur_index, slice));
+                result
+            }
+        }
+
+        let result = Vec::with_capacity(slice.len() / chunk_size + 1);
+        helper(slice,
+               chunk_size,
+               0,
+               result)
+    }
+
+    pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
+                                          chunk_size : usize)
+                                          -> Vec<(usize, &'a [T])> {
+        fn helper<'a, T>(slice      : &'a [T],
+                         chunk_size : usize,
+                         cur_index  : usize,
+                         mut result : Vec<(usize, &'a [T])>)
+                         -> Vec<(usize, &'a [T])> {
+            if chunk_size < slice.len() {
+                let (l, r) = slice.split_at(chunk_size);
+                result.push((cur_index, l));
+                helper(r, chunk_size, cur_index + 1, result)
+            }
+            else {
+                result.push((cur_index, slice));
+                result
+            }
+        }
+
+        let result = Vec::with_capacity(slice.len() / chunk_size + 1);
+        helper(slice,
+               chunk_size,
+               0,
+               result)
+    }
 }
 
 
 pub fn boxed_u8_into_shard(b : Box<[u8]>) -> Shard {
-    Rc::new(RefCell::new(b))
+    Arc::new(RwLock::new(b))
 }
 
 /// Makes shard with byte array of zero length
@@ -177,8 +267,8 @@ pub fn shards_to_option_shards(shards : &Vec<Shard>)
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner : RefCell<Box<[u8]>> = v.deref().clone();
-        result.push(Some(Rc::new(inner)));
+        let inner : Box<[u8]> = v.read().unwrap().clone();
+        result.push(Some(boxed_u8_into_shard(inner)));
     }
     result
 }
@@ -237,8 +327,8 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
             Some(ref x) => x,
             None        => panic!("Missing shard, index : {}", i),
         };
-        let inner : RefCell<Box<[u8]>> = shard.deref().clone();
-        result.push(Rc::new(inner));
+        let inner : Box<[u8]> = shard.read().unwrap().clone();
+        result.push(boxed_u8_into_shard(inner));
     }
     result
 }
@@ -284,8 +374,8 @@ pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner : RefCell<Box<[u8]>> = v.deref().clone();
-        result.push(Rc::new(inner));
+        let inner : Box<[u8]> = v.read().unwrap().clone();
+        result.push(boxed_u8_into_shard(inner));
     }
     result
 }
@@ -308,8 +398,8 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
 
     for v in shards.iter() {
         let inner = match *v {
-            Some(ref x) => { let inner = x.deref().clone();
-                             Some(Rc::new(inner)) },
+            Some(ref x) => { let inner = x.read().unwrap().clone();
+                             Some(boxed_u8_into_shard(inner)) },
             None        => None
         };
         result.push(inner);
@@ -336,12 +426,34 @@ pub struct ReedSolomon {
     total_shard_count  : usize,
     matrix             : Matrix,
     //parity_rows        : Vec<Vec<[u8]>>,
+    pparam             : ParallelParam
+}
+
+/// Parameters for parallelism
+#[derive(PartialEq, Debug, Clone)]
+pub struct ParallelParam {
+    pub bytes_per_encode  : usize,
+    pub shards_per_encode : usize,
+}
+
+impl ParallelParam {
+    pub fn new(bytes_per_encode  : usize,
+               shards_per_encode : usize) -> ParallelParam {
+        ParallelParam { bytes_per_encode,
+                        shards_per_encode }
+    }
+
+    pub fn with_default() -> ParallelParam {
+        Self::new(4096,
+                  4)
+    }
 }
 
 impl Clone for ReedSolomon {
     fn clone(&self) -> ReedSolomon {
-        ReedSolomon::new(self.data_shard_count,
-                         self.parity_shard_count)
+        ReedSolomon::with_pparam(self.data_shard_count,
+                                 self.parity_shard_count,
+                                 self.pparam.clone())
     }
 }
 
@@ -355,6 +467,7 @@ impl ReedSolomon {
 
         parity_rows
     }
+
     fn build_matrix(data_shards : usize, total_shards : usize) -> Matrix {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
 
@@ -363,8 +476,17 @@ impl ReedSolomon {
         vandermonde.multiply(&top.invert().unwrap())
     }
 
+    pub fn new(data_shards : usize,
+               parity_shards : usize) -> ReedSolomon {
+        Self::with_pparam(data_shards,
+                          parity_shards,
+                          ParallelParam::with_default())
+    }
+
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
-    pub fn new(data_shards : usize, parity_shards : usize) -> ReedSolomon {
+    pub fn with_pparam(data_shards   : usize,
+                       parity_shards : usize,
+                       pparam        : ParallelParam) -> ReedSolomon {
         if data_shards == 0 {
             panic!("Too few data shards")
         }
@@ -384,6 +506,7 @@ impl ReedSolomon {
             parity_shard_count : parity_shards,
             total_shard_count  : total_shards,
             matrix,
+            pparam
         }
     }
 
@@ -406,9 +529,9 @@ impl ReedSolomon {
             panic!("Incorrect number of shards : {}", shards.len())
         }
 
-        let shard_length = shards[0].borrow().len();
+        let shard_length = shards[0].read().unwrap().len();
         for shard in shards.iter() {
-            if shard.borrow().len() != shard_length {
+            if shard.read().unwrap().len() != shard_length {
                 panic!("Shards are of different sizes");
             }
         }
@@ -429,9 +552,9 @@ impl ReedSolomon {
         for shard in shards.iter() {
             if let Some(ref s) = *shard {
                 match shard_length {
-                    None    => shard_length = Some(s.borrow().len()),
+                    None    => shard_length = Some(s.read().unwrap().len()),
                     Some(x) => {
-                        if s.borrow().len() != x {
+                        if s.read().unwrap().len() != x {
                             panic!("Shards are of different sizes");
                         }
                     }
@@ -446,9 +569,10 @@ impl ReedSolomon {
         }
     }
 
-    #[inline]
-    fn code_first_input_shard(matrix_rows  : &Vec<&[u8]>,
-                              outputs      : &mut [Shard],
+    #[inline(always)]
+    fn code_first_input_shard(pparam       : &ParallelParam,
+                              matrix_rows  : &Vec<&[u8]>,
+                              outputs      : &[Shard],
                               output_count : usize,
                               offset       : usize,
                               byte_count   : usize,
@@ -456,21 +580,33 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let mut output_shard =
-                outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = table[matrix_row[i_input] as usize];
-            for i_byte in offset..offset + byte_count {
-                output_shard[i_byte] =
-                    mult_table_row[input_shard[i_byte] as usize];
-            }
-        }
+        (0..output_count).into_par_iter()
+            .for_each(|i_output| {
+                let mut output_shard =
+                    outputs[i_output].write().unwrap();
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = table[matrix_row[i_input] as usize];
+                let output_shard_pieces =
+                    helper::split_slice_mut_with_index(
+                        &mut output_shard.deref_mut()[offset..offset + byte_count],
+                        pparam.bytes_per_encode);
+                output_shard_pieces.into_par_iter()
+                    .for_each(|(index, out)| {
+                        let slice_offset =
+                            offset + index * pparam.bytes_per_encode;
+                        for i in 0..out.len() {
+                            out[i] =
+                                mult_table_row[
+                                    input_shard[slice_offset + i] as usize];
+                        }
+                    })
+            })
     }
 
-    #[inline]
-    fn code_other_input_shard(matrix_rows  : &Vec<&[u8]>,
-                              outputs      : &mut [Shard],
+    #[inline(always)]
+    fn code_other_input_shard(pparam       : &ParallelParam,
+                              matrix_rows  : &Vec<&[u8]>,
+                              outputs      : &[Shard],
                               output_count : usize,
                               offset       : usize,
                               byte_count   : usize,
@@ -478,43 +614,59 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let mut output_shard = outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = &table[matrix_row[i_input] as usize];
-            for i_byte in offset..offset + byte_count {
-                output_shard[i_byte] ^= mult_table_row[input_shard[i_byte] as usize];
-            }
-        }
+        (0..output_count).into_par_iter()
+            .for_each(|i_output| {
+                let mut output_shard = outputs[i_output].write().unwrap();
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = &table[matrix_row[i_input] as usize];
+                let output_shard_pieces =
+                    helper::split_slice_mut_with_index(
+                        &mut output_shard.deref_mut()[offset..offset + byte_count],
+                        pparam.bytes_per_encode);
+                output_shard_pieces.into_par_iter()
+                    .for_each(|(index, out)| {
+                        let slice_offset =
+                            offset + index * pparam.bytes_per_encode;
+                        for i in 0..out.len() {
+                            out[i] ^=
+                                mult_table_row[
+                                    input_shard[slice_offset + i] as usize];
+                        }
+                    })
+            })
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
-    fn code_some_shards(matrix_rows  : &Vec<&[u8]>,
+    fn code_some_shards(pparam       : &ParallelParam,
+                        matrix_rows  : &Vec<&[u8]>,
                         inputs       : &[Shard],
                         input_count  : usize,
-                        outputs      : &mut [Shard],
+                        outputs      : &[Shard],
                         output_count : usize,
                         offset       : usize,
                         byte_count   : usize) {
         {
             let i_input = 0;
-            let input_shard = inputs[i_input].borrow();
-            Self::code_first_input_shard(matrix_rows,
+            let input_shard = inputs[i_input].read().unwrap();
+            Self::code_first_input_shard(pparam,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
                                          i_input, &input_shard);
         }
 
         for i_input in 1..input_count {
-            let input_shard = inputs[i_input].borrow();
-            Self::code_other_input_shard(matrix_rows,
+            let input_shard = inputs[i_input].read().unwrap();
+            Self::code_other_input_shard(pparam,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
                                          i_input, &input_shard);
         }
     }
 
-    fn code_some_option_shards(matrix_rows  : &Vec<&[u8]>,
+    fn code_some_option_shards(pparam       : &ParallelParam,
+                               matrix_rows  : &Vec<&[u8]>,
                                inputs       : &[Option<Shard>],
                                input_count  : usize,
                                outputs      : &mut [Shard],
@@ -524,10 +676,11 @@ impl ReedSolomon {
         {
             let i_input = 0;
             let input_shard = match inputs[i_input] {
-                Some(ref x) => x.borrow(),
+                Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
-            Self::code_first_input_shard(matrix_rows,
+            Self::code_first_input_shard(pparam,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
                                          i_input, &input_shard);
@@ -535,10 +688,11 @@ impl ReedSolomon {
 
         for i_input in 1..input_count {
             let input_shard = match inputs[i_input] {
-                Some(ref x) => x.borrow(),
+                Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
-            Self::code_other_input_shard(matrix_rows,
+            Self::code_other_input_shard(pparam,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
                                          i_input, &input_shard);
@@ -565,7 +719,8 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
-        Self::code_some_shards(&parity_rows,
+        Self::code_some_shards(&self.pparam,
+                               &parity_rows,
                                inputs,  self.data_shard_count,
                                outputs, self.parity_shard_count,
                                offset, byte_count);
@@ -590,9 +745,9 @@ impl ReedSolomon {
                     value ^=
                         table
                         [matrix_row[i_input]     as usize]
-                        [inputs[i_input].borrow()[i_byte] as usize];
+                        [inputs[i_input].read().unwrap()[i_byte] as usize];
                 }
-                if to_check[i_output].borrow()[i_byte] != value {
+                if to_check[i_output].read().unwrap()[i_byte] != value {
                     return false
                 }
             }
@@ -683,7 +838,7 @@ impl ReedSolomon {
                         sub_matrix.set(sub_matrix_row, c,
                                        self.matrix.get(matrix_row, c));
                     }
-                    sub_shards.push(Rc::clone(shard));
+                    sub_shards.push(Arc::clone(shard));
                 }
             }
         }
@@ -711,13 +866,14 @@ impl ReedSolomon {
                 if let None = shards[i_shard] {
                     // link slot in outputs to the missing slot in shards
                     shards[i_shard] =
-                        Some(Rc::clone(&outputs[output_count]));
+                        Some(Arc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
                         data_decode_matrix.get_row(i_shard);
                     output_count += 1;
                 }
             }
-            Self::code_some_shards(&matrix_rows,
+            Self::code_some_shards(&self.pparam,
+                                   &matrix_rows,
                                    &sub_shards,  self.data_shard_count,
                                    &mut outputs, output_count,
                                    offset, byte_count);
@@ -739,14 +895,15 @@ impl ReedSolomon {
                 if let None = shards[i_shard] {
                     // link slot in outputs to the missing slot in shards
                     shards[i_shard] =
-                        Some(Rc::clone(&outputs[output_count]));
+                        Some(Arc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
                         parity_rows[i_shard
                                     - self.data_shard_count];
                     output_count += 1;
                 }
             }
-            Self::code_some_option_shards(&matrix_rows,
+            Self::code_some_option_shards(&self.pparam,
+                                          &matrix_rows,
                                           &shards, self.data_shard_count,
                                           &mut outputs, output_count,
                                           offset, byte_count);
@@ -762,7 +919,7 @@ mod tests {
 
     use super::*;
     use self::rand::{thread_rng, Rng};
-    use std::rc::Rc;
+    //use std::rc::Rc;
 
     macro_rules! make_random_shards {
         ($per_shard:expr, $size:expr) => {{
@@ -777,6 +934,14 @@ mod tests {
 
             shards
         }}
+    }
+
+    fn assert_eq_shards(s1 : &Vec<Shard>, s2 : &Vec<Shard>) {
+        assert_eq!(s1.len(), s2.len());
+        for i in 0..s1.len() {
+            assert_eq!(*s1[i].read().unwrap(),
+                       *s2[i].read().unwrap());
+        }
     }
 
     /*fn is_increasing_and_contains_data_row(indices : &Vec<usize>) -> bool {
@@ -842,7 +1007,7 @@ mod tests {
     }*/
 
     fn fill_random(arr : &mut Shard) {
-        for a in arr.borrow_mut().iter_mut() {
+        for a in arr.write().unwrap().iter_mut() {
             *a = rand::random::<u8>();
         }
     }
@@ -852,8 +1017,8 @@ mod tests {
                                    offset     : usize,
                                    byte_count : usize) {
         for s in 0..shards1.len() {
-            let slice1 = &shards1[s].borrow()[offset..offset + byte_count];
-            let slice2 = &shards2[s].borrow()[offset..offset + byte_count];
+            let slice1 = &shards1[s].read().unwrap()[offset..offset + byte_count];
+            let slice2 = &shards2[s].read().unwrap()[offset..offset + byte_count];
             assert_eq!(slice1, slice2);
         }
     }
@@ -940,7 +1105,7 @@ mod tests {
             let inter  = shards_into_option_shards(shards);
             let result = option_shards_into_shards(inter);
 
-            assert_eq!(expect, result);
+            assert_eq_shards(&expect, &result);
         }
     }
 
@@ -954,7 +1119,7 @@ mod tests {
             let result        =
                 option_shards_to_shards(&option_shards, None, None);
 
-            assert_eq!(expect, result);
+            assert_eq_shards(&expect, &result);
         }
     }
 
@@ -1096,16 +1261,16 @@ mod tests {
         let shards1 = make_random_shards!(1_000, 10);
 
         for v in shards1.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
 
         let shards2 = shards1.clone();
 
         for v in shards1.iter() {
-            assert_eq!(2, Rc::strong_count(v));
+            assert_eq!(2, Arc::strong_count(v));
         }
         for v in shards2.iter() {
-            assert_eq!(2, Rc::strong_count(v));
+            assert_eq!(2, Arc::strong_count(v));
         }
     }
 
@@ -1114,16 +1279,16 @@ mod tests {
         let shards1 = make_random_shards!(1_000, 10);
 
         for v in shards1.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
 
         let shards2 = deep_clone_shards(&shards1);
 
         for v in shards1.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
         for v in shards2.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
     }
 
@@ -1135,7 +1300,7 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
 
@@ -1143,12 +1308,12 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(2, Rc::strong_count(x));
+                assert_eq!(2, Arc::strong_count(x));
             }
         }
         for v in shards2.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(2, Rc::strong_count(x));
+                assert_eq!(2, Arc::strong_count(x));
             }
         }
     }
@@ -1161,7 +1326,7 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
 
@@ -1169,12 +1334,12 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
         for v in shards2.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
 
@@ -1184,9 +1349,9 @@ mod tests {
 
         let shards3 = deep_clone_option_shards(&shards1);
 
-        assert_eq!(None, shards3[0]);
-        assert_eq!(None, shards3[4]);
-        assert_eq!(None, shards3[7]);
+        if let Some(_) = shards3[0] { panic!() }
+        if let Some(_) = shards3[4] { panic!() }
+        if let Some(_) = shards3[7] { panic!() }
     }
 
     #[test]
@@ -1214,11 +1379,11 @@ mod tests {
         let result = option_shards_into_shards(shards);
         
         assert!(r.is_parity_correct(&result, None, None));
-        assert_eq!(1, Rc::strong_count(&result[0]));
-        assert_eq!(2, Rc::strong_count(&result[1]));
-        assert_eq!(2, Rc::strong_count(&result[2]));
-        assert_eq!(2, Rc::strong_count(&result[3]));
-        assert_eq!(1, Rc::strong_count(&result[4]));
+        assert_eq!(1, Arc::strong_count(&result[0]));
+        assert_eq!(2, Arc::strong_count(&result[1]));
+        assert_eq!(2, Arc::strong_count(&result[2]));
+        assert_eq!(2, Arc::strong_count(&result[3]));
+        assert_eq!(1, Arc::strong_count(&result[4]));
     }
 
     #[test]
@@ -1229,11 +1394,11 @@ mod tests {
             shards_to_option_shards(&shards);
 
         for v in shards.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
         for v in option_shards.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
     }
@@ -1247,7 +1412,7 @@ mod tests {
 
         for v in option_shards.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
     }
@@ -1263,11 +1428,11 @@ mod tests {
 
         for v in option_shards.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
         for v in shards.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
     }
 
@@ -1281,7 +1446,7 @@ mod tests {
             option_shards_into_shards(option_shards);
 
         for v in shards.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
     }
 
@@ -1329,7 +1494,7 @@ mod tests {
         {
             let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
-            assert_eq!(shards, master_copy);
+            assert_eq_shards(&shards, &master_copy);
         }
 
         // Try to decode with 10 shards
@@ -1341,7 +1506,7 @@ mod tests {
         {
             let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
-            assert_eq!(shards, master_copy);
+            assert_eq_shards(&shards, &master_copy);
         }
 
         // Try to deocde with 6 data and 4 parity shards
@@ -1494,20 +1659,20 @@ mod tests {
                                  [0, 0]);
 
         r.encode_parity(&mut shards, None, None);
-        { assert_eq!(shards[5].borrow()[0], 12);
-          assert_eq!(shards[5].borrow()[1], 13); }
-        { assert_eq!(shards[6].borrow()[0], 10);
-          assert_eq!(shards[6].borrow()[1], 11); }
-        { assert_eq!(shards[7].borrow()[0], 14);
-          assert_eq!(shards[7].borrow()[1], 15); }
-        { assert_eq!(shards[8].borrow()[0], 90);
-          assert_eq!(shards[8].borrow()[1], 91); }
-        { assert_eq!(shards[9].borrow()[0], 94);
-          assert_eq!(shards[9].borrow()[1], 95); }
+        { assert_eq!(shards[5].read().unwrap()[0], 12);
+          assert_eq!(shards[5].read().unwrap()[1], 13); }
+        { assert_eq!(shards[6].read().unwrap()[0], 10);
+          assert_eq!(shards[6].read().unwrap()[1], 11); }
+        { assert_eq!(shards[7].read().unwrap()[0], 14);
+          assert_eq!(shards[7].read().unwrap()[1], 15); }
+        { assert_eq!(shards[8].read().unwrap()[0], 90);
+          assert_eq!(shards[8].read().unwrap()[1], 91); }
+        { assert_eq!(shards[9].read().unwrap()[0], 94);
+          assert_eq!(shards[9].read().unwrap()[1], 95); }
 
         assert!(r.is_parity_correct(&shards, None, None));
 
-        shards[8].borrow_mut()[0] += 1;
+        shards[8].write().unwrap()[0] += 1;
         assert!(!r.is_parity_correct(&shards, None, None));
     }
 }
