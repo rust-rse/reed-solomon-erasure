@@ -756,7 +756,6 @@ impl ReedSolomon {
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
     extern crate rand;
@@ -1512,4 +1511,3 @@ mod tests {
         assert!(!r.is_parity_correct(&shards, None, None));
     }
 }
-*/
