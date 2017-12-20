@@ -169,6 +169,30 @@ mod helper {
 
         (offset, byte_count)
     }
+
+    pub fn split_slice<'a, T> (slice      : &'a mut [T],
+                           chunk_size : usize) -> Vec<&'a mut [T]> {
+        fn split_slice_helper<'a, T>(slice      : &'a mut [T],
+                                     chunk_size : usize,
+                                     mut result : Vec<&'a mut [T]>)
+                                     -> Vec<&'a mut [T]> {
+            if chunk_size < slice.len() {
+                let (l, r) = slice.split_at_mut(chunk_size);
+                result.push(l);
+                split_slice_helper(r, chunk_size, result)
+            }
+            else {
+                result.push(slice);
+                result
+            }
+        }
+
+        let result = Vec::with_capacity(slice.len() / chunk_size + 1);
+        split_slice_helper(slice,
+                           chunk_size,
+                           result)
+    }
+
 }
 
 
@@ -495,29 +519,6 @@ impl ReedSolomon {
                 panic!("Shards too small, shard length : Some({}), offset + byte_count : {}", x, offset + byte_count);
             }
         }
-    }
-
-    fn split_slice<'a, T> (slice      : &'a mut [T],
-                           chunk_size : usize) -> Vec<&'a mut [T]> {
-        fn split_slice_helper<'a, T>(slice      : &'a mut [T],
-                                     chunk_size : usize,
-                                     mut result : Vec<&'a mut [T]>)
-                                     -> Vec<&'a mut [T]> {
-            if chunk_size < slice.len() {
-                let (l, r) = slice.split_at_mut(chunk_size);
-                result.push(l);
-                split_slice_helper(r, chunk_size, result)
-            }
-            else {
-                result.push(slice);
-                result
-            }
-        }
-
-        let result = Vec::with_capacity(slice.len() / chunk_size + 1);
-        split_slice_helper(slice,
-                           chunk_size,
-                           result)
     }
 
     #[inline(always)]
