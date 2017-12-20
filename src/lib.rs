@@ -437,9 +437,8 @@ impl ReedSolomon {
         }
     }
 
-    /*
     #[inline]
-    fn code_first_input_shard(matrix_rows  : &Vec<Row>,
+    fn code_first_input_shard(matrix_rows  : &Vec<&[u8]>,
                               outputs      : &mut [Shard],
                               output_count : usize,
                               offset       : usize,
@@ -451,7 +450,7 @@ impl ReedSolomon {
         for i_output in 0..output_count {
             let mut output_shard =
                 outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output].clone();
+            let matrix_row       = matrix_rows[i_output];
             let mult_table_row   = table[matrix_row[i_input] as usize];
             for i_byte in offset..offset + byte_count {
                 output_shard[i_byte] =
@@ -461,7 +460,7 @@ impl ReedSolomon {
     }
 
     #[inline]
-    fn code_other_input_shard(matrix_rows  : &Vec<Row>,
+    fn code_other_input_shard(matrix_rows  : &Vec<&[u8]>,
                               outputs      : &mut [Shard],
                               output_count : usize,
                               offset       : usize,
@@ -472,7 +471,7 @@ impl ReedSolomon {
 
         for i_output in 0..output_count {
             let mut output_shard = outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output].clone();
+            let matrix_row       = matrix_rows[i_output];
             let mult_table_row   = &table[matrix_row[i_input] as usize];
             for i_byte in offset..offset + byte_count {
                 output_shard[i_byte] ^= mult_table_row[input_shard[i_byte] as usize];
@@ -480,6 +479,7 @@ impl ReedSolomon {
         }
     }
 
+    /*
     // Translated from InputOutputByteTableCodingLoop.java
     fn code_some_shards(matrix_rows  : &Vec<Row>,
                         inputs       : &[Shard],
