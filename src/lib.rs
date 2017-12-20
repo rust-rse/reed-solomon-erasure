@@ -25,7 +25,7 @@ use std::ops::DerefMut;
 
 use matrix::Matrix;
 
-static BYTES_PER_ENCODE : usize = 500_000;
+static BYTES_PER_ENCODE : usize = 4096;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
