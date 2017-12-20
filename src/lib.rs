@@ -378,7 +378,6 @@ impl ReedSolomon {
         }
     }
 
-    /*
     pub fn data_shard_count(&self) -> usize {
         self.data_shard_count
     }
@@ -438,6 +437,7 @@ impl ReedSolomon {
         }
     }
 
+    /*
     #[inline]
     fn code_first_input_shard(matrix_rows  : &Vec<Row>,
                               outputs      : &mut [Shard],
