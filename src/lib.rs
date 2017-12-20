@@ -16,7 +16,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
 
-use matrix::{Matrix, Row};
+use matrix::Matrix;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
@@ -330,16 +330,17 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
 ///
 ///  `byte_count` defaults to length of shard if it is `None`.
 #[derive(PartialEq, Debug)]
-pub struct ReedSolomon {
+pub struct ReedSolomon<'a> {
     data_shard_count   : usize,
     parity_shard_count : usize,
     total_shard_count  : usize,
     matrix             : Matrix,
-    parity_rows        : Vec<Row>,
+    parity_rows        : Vec<&'a Box<[u8]>>,
 }
 
-impl Clone for ReedSolomon {
-    fn clone(&self) -> ReedSolomon {
+/*
+impl<'a> Clone for ReedSolomon<'a> {
+    fn clone(&self) -> ReedSolomon<'a> {
         let mut parity_rows =
             Vec::with_capacity(self.parity_rows.len());
 
@@ -356,8 +357,9 @@ impl Clone for ReedSolomon {
             parity_rows
         }
     }
-}
+}*/
 
+/*
 impl ReedSolomon {
     fn build_matrix(data_shards : usize, total_shards : usize) -> Matrix {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
@@ -368,7 +370,7 @@ impl ReedSolomon {
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
-    pub fn new(data_shards : usize, parity_shards : usize) -> ReedSolomon {
+    pub fn new<'a>(data_shards : usize, parity_shards : usize) -> ReedSolomon<'a> {
         if data_shards == 0 {
             panic!("Too few data shards")
         }
@@ -1517,3 +1519,4 @@ mod tests {
         assert!(!r.is_parity_correct(&shards, None, None));
     }
 }
+*/

@@ -7,9 +7,9 @@ pub enum Error {
     SingularMatrix,
 }
 
-pub type Row = Rc<Box<[u8]>>;
+pub type Row = Box<[u8]>;
 
-pub fn make_zero_len_row() -> Row {
+/*pub fn make_zero_len_row() -> Row {
     Rc::new(Box::new([]))
 }
 
@@ -19,10 +19,10 @@ pub fn make_zero_len_rows(count : usize) -> Vec<Row> {
         result.push(make_zero_len_row());
     }
     result
-}
+}*/
 
 pub fn make_blank_row(size : usize) -> Row {
-    Rc::new(vec![0; size].into_boxed_slice())
+    vec![0; size].into_boxed_slice()
 }
 
 pub fn make_blank_rows(size : usize, count : usize) -> Vec<Row> {
@@ -33,24 +33,30 @@ pub fn make_blank_rows(size : usize, count : usize) -> Vec<Row> {
     result
 }
 
+pub fn flatten<T>(m : Vec<Box<[T]>>) -> Vec<T> {
+    let mut result = Vec::with_capacity(m.len() * m[0].len());
+    for row in m.into_iter() {
+        for v in row.into_iter() {
+            result.push(*v);
+        }
+    }
+    result
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct Matrix {
-    data : Vec<Row>
+    row_count : usize,
+    col_count : usize,
+    data : Vec<u8>  // store in flattened structure
 }
 
 impl Matrix {
     pub fn new(rows : usize, cols : usize) -> Matrix {
-        let mut data = Vec::with_capacity(rows);
+        let data = vec![0; rows * cols];
 
-        for _ in 0..rows {
-            let mut row = Vec::with_capacity(cols);
-            for _ in 0..cols {
-                row.push(0);
-            }
-            data.push(Rc::new(row.into_boxed_slice()));
-        }
-
-        Matrix { data }
+        Matrix { row_count : rows,
+                 col_count : cols,
+                 data }
     }
 
     pub fn new_with_data(init_data : Vec<Box<[u8]>>) -> Matrix {
@@ -63,10 +69,11 @@ impl Matrix {
             if r.len() != cols {
                 panic!("Inconsistent row sizes")
             }
-            data.push(Rc::new(r));
         }
 
-        Matrix { data }
+        Matrix { row_count : rows,
+                 col_count : cols,
+                 data      : flatten(data) }
     }
 
     pub fn identity(size : usize) -> Matrix {
