@@ -66,6 +66,9 @@ The entire test suite contains 55 tests which you can run via the following comm
 cargo test
 ```
 
+## Changelog
+[Changelog](CHANGELOG.md)
+
 ## Notes
 The implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), and the test suite mirrors [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
