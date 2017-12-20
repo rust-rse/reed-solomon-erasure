@@ -801,7 +801,7 @@ mod tests {
 
     use super::*;
     use self::rand::{thread_rng, Rng};
-    use std::rc::Rc;
+    //use std::rc::Rc;
 
     macro_rules! make_random_shards {
         ($per_shard:expr, $size:expr) => {{
@@ -816,6 +816,14 @@ mod tests {
 
             shards
         }}
+    }
+
+    fn assert_eq_shards(s1 : &Vec<Shard>, s2 : &Vec<Shard>) {
+        assert_eq!(s1.len(), s2.len());
+        for i in 0..s1.len() {
+            assert_eq!(*s1[i].read().unwrap(),
+                       *s2[i].read().unwrap());
+        }
     }
 
     /*fn is_increasing_and_contains_data_row(indices : &Vec<usize>) -> bool {
@@ -881,7 +889,7 @@ mod tests {
     }*/
 
     fn fill_random(arr : &mut Shard) {
-        for a in arr.borrow_mut().iter_mut() {
+        for a in arr.write().unwrap().iter_mut() {
             *a = rand::random::<u8>();
         }
     }
@@ -891,8 +899,8 @@ mod tests {
                                    offset     : usize,
                                    byte_count : usize) {
         for s in 0..shards1.len() {
-            let slice1 = &shards1[s].borrow()[offset..offset + byte_count];
-            let slice2 = &shards2[s].borrow()[offset..offset + byte_count];
+            let slice1 = &shards1[s].read().unwrap()[offset..offset + byte_count];
+            let slice2 = &shards2[s].read().unwrap()[offset..offset + byte_count];
             assert_eq!(slice1, slice2);
         }
     }
@@ -979,7 +987,7 @@ mod tests {
             let inter  = shards_into_option_shards(shards);
             let result = option_shards_into_shards(inter);
 
-            assert_eq!(expect, result);
+            assert_eq_shards(&expect, &result);
         }
     }
 
@@ -993,7 +1001,7 @@ mod tests {
             let result        =
                 option_shards_to_shards(&option_shards, None, None);
 
-            assert_eq!(expect, result);
+            assert_eq_shards(&expect, &result);
         }
     }
 
@@ -1135,16 +1143,16 @@ mod tests {
         let shards1 = make_random_shards!(1_000, 10);
 
         for v in shards1.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
 
         let shards2 = shards1.clone();
 
         for v in shards1.iter() {
-            assert_eq!(2, Rc::strong_count(v));
+            assert_eq!(2, Arc::strong_count(v));
         }
         for v in shards2.iter() {
-            assert_eq!(2, Rc::strong_count(v));
+            assert_eq!(2, Arc::strong_count(v));
         }
     }
 
@@ -1153,16 +1161,16 @@ mod tests {
         let shards1 = make_random_shards!(1_000, 10);
 
         for v in shards1.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
 
         let shards2 = deep_clone_shards(&shards1);
 
         for v in shards1.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
         for v in shards2.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
     }
 
@@ -1174,7 +1182,7 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
 
@@ -1182,12 +1190,12 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(2, Rc::strong_count(x));
+                assert_eq!(2, Arc::strong_count(x));
             }
         }
         for v in shards2.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(2, Rc::strong_count(x));
+                assert_eq!(2, Arc::strong_count(x));
             }
         }
     }
@@ -1200,7 +1208,7 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
 
@@ -1208,12 +1216,12 @@ mod tests {
 
         for v in shards1.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
         for v in shards2.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
 
@@ -1223,9 +1231,9 @@ mod tests {
 
         let shards3 = deep_clone_option_shards(&shards1);
 
-        assert_eq!(None, shards3[0]);
-        assert_eq!(None, shards3[4]);
-        assert_eq!(None, shards3[7]);
+        if let Some(_) = shards3[0] { panic!() }
+        if let Some(_) = shards3[4] { panic!() }
+        if let Some(_) = shards3[7] { panic!() }
     }
 
     #[test]
@@ -1253,11 +1261,11 @@ mod tests {
         let result = option_shards_into_shards(shards);
         
         assert!(r.is_parity_correct(&result, None, None));
-        assert_eq!(1, Rc::strong_count(&result[0]));
-        assert_eq!(2, Rc::strong_count(&result[1]));
-        assert_eq!(2, Rc::strong_count(&result[2]));
-        assert_eq!(2, Rc::strong_count(&result[3]));
-        assert_eq!(1, Rc::strong_count(&result[4]));
+        assert_eq!(1, Arc::strong_count(&result[0]));
+        assert_eq!(2, Arc::strong_count(&result[1]));
+        assert_eq!(2, Arc::strong_count(&result[2]));
+        assert_eq!(2, Arc::strong_count(&result[3]));
+        assert_eq!(1, Arc::strong_count(&result[4]));
     }
 
     #[test]
@@ -1268,11 +1276,11 @@ mod tests {
             shards_to_option_shards(&shards);
 
         for v in shards.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
         for v in option_shards.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
     }
@@ -1286,7 +1294,7 @@ mod tests {
 
         for v in option_shards.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
     }
@@ -1302,11 +1310,11 @@ mod tests {
 
         for v in option_shards.iter() {
             if let Some(ref x) = *v {
-                assert_eq!(1, Rc::strong_count(x));
+                assert_eq!(1, Arc::strong_count(x));
             }
         }
         for v in shards.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
     }
 
@@ -1320,7 +1328,7 @@ mod tests {
             option_shards_into_shards(option_shards);
 
         for v in shards.iter() {
-            assert_eq!(1, Rc::strong_count(v));
+            assert_eq!(1, Arc::strong_count(v));
         }
     }
 
@@ -1368,7 +1376,7 @@ mod tests {
         {
             let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
-            assert_eq!(shards, master_copy);
+            assert_eq_shards(&shards, &master_copy);
         }
 
         // Try to decode with 10 shards
@@ -1380,7 +1388,7 @@ mod tests {
         {
             let shards = option_shards_to_shards(&shards, None, None);
             assert!(r.is_parity_correct(&shards, None, None));
-            assert_eq!(shards, master_copy);
+            assert_eq_shards(&shards, &master_copy);
         }
 
         // Try to deocde with 6 data and 4 parity shards
@@ -1533,20 +1541,20 @@ mod tests {
                                  [0, 0]);
 
         r.encode_parity(&mut shards, None, None);
-        { assert_eq!(shards[5].borrow()[0], 12);
-          assert_eq!(shards[5].borrow()[1], 13); }
-        { assert_eq!(shards[6].borrow()[0], 10);
-          assert_eq!(shards[6].borrow()[1], 11); }
-        { assert_eq!(shards[7].borrow()[0], 14);
-          assert_eq!(shards[7].borrow()[1], 15); }
-        { assert_eq!(shards[8].borrow()[0], 90);
-          assert_eq!(shards[8].borrow()[1], 91); }
-        { assert_eq!(shards[9].borrow()[0], 94);
-          assert_eq!(shards[9].borrow()[1], 95); }
+        { assert_eq!(shards[5].read().unwrap()[0], 12);
+          assert_eq!(shards[5].read().unwrap()[1], 13); }
+        { assert_eq!(shards[6].read().unwrap()[0], 10);
+          assert_eq!(shards[6].read().unwrap()[1], 11); }
+        { assert_eq!(shards[7].read().unwrap()[0], 14);
+          assert_eq!(shards[7].read().unwrap()[1], 15); }
+        { assert_eq!(shards[8].read().unwrap()[0], 90);
+          assert_eq!(shards[8].read().unwrap()[1], 91); }
+        { assert_eq!(shards[9].read().unwrap()[0], 94);
+          assert_eq!(shards[9].read().unwrap()[1], 95); }
 
         assert!(r.is_parity_correct(&shards, None, None));
 
-        shards[8].borrow_mut()[0] += 1;
+        shards[8].write().unwrap()[0] += 1;
         assert!(!r.is_parity_correct(&shards, None, None));
     }
 }
