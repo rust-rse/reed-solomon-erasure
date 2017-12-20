@@ -605,22 +605,23 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let mut output_shard = outputs[i_output].write().unwrap();
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = &table[matrix_row[i_input] as usize];
-            let output_shard_pieces =
-                helper::split_slice_mut(
-                    &mut output_shard.deref_mut()[offset..offset + byte_count],
-                    pparam.bytes_per_encode);
-            output_shard_pieces.into_par_iter()
-                .for_each(|out| {
-                    for i in 0..out.len() {
-                        out[i] ^=
-                            mult_table_row[input_shard[i] as usize];
-                    }
-                })
-        }
+        (0..output_count).into_par_iter()
+            .for_each(|i_output| {
+                let mut output_shard = outputs[i_output].write().unwrap();
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = &table[matrix_row[i_input] as usize];
+                let output_shard_pieces =
+                    helper::split_slice_mut(
+                        &mut output_shard.deref_mut()[offset..offset + byte_count],
+                        pparam.bytes_per_encode);
+                output_shard_pieces.into_par_iter()
+                    .for_each(|out| {
+                        for i in 0..out.len() {
+                            out[i] ^=
+                                mult_table_row[input_shard[i] as usize];
+                        }
+                    })
+            })
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
