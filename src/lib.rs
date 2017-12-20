@@ -170,19 +170,21 @@ mod helper {
         (offset, byte_count)
     }
 
-    pub fn split_slice_mut<'a, T> (slice      : &'a mut [T],
-                                   chunk_size : usize) -> Vec<&'a mut [T]> {
+    pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
+                                              chunk_size : usize)
+                                              -> Vec<(usize, &'a mut [T])> {
         fn helper<'a, T>(slice      : &'a mut [T],
                          chunk_size : usize,
-                         mut result : Vec<&'a mut [T]>)
-                         -> Vec<&'a mut [T]> {
+                         cur_index  : usize,
+                         mut result : Vec<(usize, &'a mut [T])>)
+                         -> Vec<(usize, &'a mut [T])> {
             if chunk_size < slice.len() {
                 let (l, r) = slice.split_at_mut(chunk_size);
-                result.push(l);
-                helper(r, chunk_size, result)
+                result.push((cur_index, l));
+                helper(r, chunk_size, cur_index + 1, result)
             }
             else {
-                result.push(slice);
+                result.push((cur_index, slice));
                 result
             }
         }
@@ -190,22 +192,25 @@ mod helper {
         let result = Vec::with_capacity(slice.len() / chunk_size + 1);
         helper(slice,
                chunk_size,
+               0,
                result)
     }
 
-    pub fn split_slice<'a, T> (slice      : &'a [T],
-                               chunk_size : usize) -> Vec<&'a [T]> {
+    pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
+                                          chunk_size : usize)
+                                          -> Vec<(usize, &'a [T])> {
         fn helper<'a, T>(slice      : &'a [T],
                          chunk_size : usize,
-                         mut result : Vec<&'a [T]>)
-                         -> Vec<&'a [T]> {
+                         cur_index  : usize,
+                         mut result : Vec<(usize, &'a [T])>)
+                         -> Vec<(usize, &'a [T])> {
             if chunk_size < slice.len() {
                 let (l, r) = slice.split_at(chunk_size);
-                result.push(l);
-                helper(r, chunk_size, result)
+                result.push((cur_index, l));
+                helper(r, chunk_size, cur_index + 1, result)
             }
             else {
-                result.push(slice);
+                result.push((cur_index, slice));
                 result
             }
         }
@@ -213,6 +218,7 @@ mod helper {
         let result = Vec::with_capacity(slice.len() / chunk_size + 1);
         helper(slice,
                chunk_size,
+               0,
                result)
     }
 }
@@ -438,8 +444,7 @@ impl ParallelParam {
     }
 
     pub fn with_default() -> ParallelParam {
-        static BYTES_PER_ENCODE : usize = 4096;
-        Self::new(4096,
+        Self::new(1_000_000_000,
                   4)
     }
 }
@@ -582,14 +587,17 @@ impl ReedSolomon {
                 let matrix_row       = matrix_rows[i_output];
                 let mult_table_row   = table[matrix_row[i_input] as usize];
                 let output_shard_pieces =
-                    helper::split_slice_mut(
+                    helper::split_slice_mut_with_index(
                         &mut output_shard.deref_mut()[offset..offset + byte_count],
                         pparam.bytes_per_encode);
                 output_shard_pieces.into_par_iter()
-                    .for_each(|out| {
+                    .for_each(|(index, out)| {
+                        let slice_offset =
+                            offset + index * pparam.bytes_per_encode;
                         for i in 0..out.len() {
                             out[i] =
-                                mult_table_row[input_shard[i] as usize];
+                                mult_table_row[
+                                    input_shard[slice_offset + i] as usize];
                         }
                     })
             })
@@ -612,14 +620,17 @@ impl ReedSolomon {
                 let matrix_row       = matrix_rows[i_output];
                 let mult_table_row   = &table[matrix_row[i_input] as usize];
                 let output_shard_pieces =
-                    helper::split_slice_mut(
+                    helper::split_slice_mut_with_index(
                         &mut output_shard.deref_mut()[offset..offset + byte_count],
                         pparam.bytes_per_encode);
                 output_shard_pieces.into_par_iter()
-                    .for_each(|out| {
+                    .for_each(|(index, out)| {
+                        let slice_offset =
+                            offset + index * pparam.bytes_per_encode;
                         for i in 0..out.len() {
                             out[i] ^=
-                                mult_table_row[input_shard[i] as usize];
+                                mult_table_row[
+                                    input_shard[slice_offset + i] as usize];
                         }
                     })
             })
