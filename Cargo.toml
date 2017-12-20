@@ -29,5 +29,6 @@ coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
 rand  = "0.4"
+rayon = "0.9"
 threadpool = "1.0"
 num_cpus = "1.0"
