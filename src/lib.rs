@@ -496,7 +496,8 @@ impl ReedSolomon {
     }
 
     #[inline(always)]
-    fn code_first_input_shard(matrix_rows  : &Vec<&[u8]>,
+    fn code_first_input_shard(threadpool   : &ThreadPool,
+                              matrix_rows  : &Vec<&[u8]>,
                               outputs      : &[Shard],
                               output_count : usize,
                               offset       : usize,
@@ -518,7 +519,8 @@ impl ReedSolomon {
     }
 
     #[inline(always)]
-    fn code_other_input_shard(matrix_rows  : &Vec<&[u8]>,
+    fn code_other_input_shard(threadpool   : &ThreadPool,
+                              matrix_rows  : &Vec<&[u8]>,
                               outputs      : &[Shard],
                               output_count : usize,
                               offset       : usize,
@@ -539,7 +541,8 @@ impl ReedSolomon {
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
-    fn code_some_shards(matrix_rows  : &Vec<&[u8]>,
+    fn code_some_shards(threadpool   : &ThreadPool,
+                        matrix_rows  : &Vec<&[u8]>,
                         inputs       : &[Shard],
                         input_count  : usize,
                         outputs      : &[Shard],
@@ -549,7 +552,8 @@ impl ReedSolomon {
         {
             let i_input = 0;
             let input_shard = inputs[i_input].read().unwrap();
-            Self::code_first_input_shard(matrix_rows,
+            Self::code_first_input_shard(threadpool,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
                                          i_input, &input_shard);
@@ -557,14 +561,16 @@ impl ReedSolomon {
 
         for i_input in 1..input_count {
             let input_shard = inputs[i_input].read().unwrap();
-            Self::code_other_input_shard(matrix_rows,
+            Self::code_other_input_shard(threadpool,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
                                          i_input, &input_shard);
         }
     }
 
-    fn code_some_option_shards(matrix_rows  : &Vec<&[u8]>,
+    fn code_some_option_shards(threadpool   : &ThreadPool,
+                               matrix_rows  : &Vec<&[u8]>,
                                inputs       : &[Option<Shard>],
                                input_count  : usize,
                                outputs      : &mut [Shard],
@@ -577,7 +583,8 @@ impl ReedSolomon {
                 Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
-            Self::code_first_input_shard(matrix_rows,
+            Self::code_first_input_shard(threadpool,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
                                          i_input, &input_shard);
@@ -588,7 +595,8 @@ impl ReedSolomon {
                 Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
-            Self::code_other_input_shard(matrix_rows,
+            Self::code_other_input_shard(threadpool,
+                                         matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
                                          i_input, &input_shard);
@@ -615,7 +623,8 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
-        Self::code_some_shards(&parity_rows,
+        Self::code_some_shards(&self.threadpool,
+                               &parity_rows,
                                inputs,  self.data_shard_count,
                                outputs, self.parity_shard_count,
                                offset, byte_count);
@@ -767,7 +776,8 @@ impl ReedSolomon {
                     output_count += 1;
                 }
             }
-            Self::code_some_shards(&matrix_rows,
+            Self::code_some_shards(&self.threadpool,
+                                   &matrix_rows,
                                    &sub_shards,  self.data_shard_count,
                                    &mut outputs, output_count,
                                    offset, byte_count);
@@ -796,7 +806,8 @@ impl ReedSolomon {
                     output_count += 1;
                 }
             }
-            Self::code_some_option_shards(&matrix_rows,
+            Self::code_some_option_shards(&self.threadpool,
+                                          &matrix_rows,
                                           &shards, self.data_shard_count,
                                           &mut outputs, output_count,
                                           offset, byte_count);
