@@ -497,25 +497,25 @@ impl ReedSolomon {
         }
     }
 
-    fn split_bytes<'a> (bytes      : &'a mut [u8],
-                        chunk_size : usize) -> Vec<&'a mut [u8]> {
-        fn split_bytes_helper<'a>(bytes      : &'a mut [u8],
-                                  chunk_size : usize,
-                                  mut result : Vec<&'a mut [u8]>)
-                                  -> Vec<&'a mut [u8]> {
-            if chunk_size < bytes.len() {
-                let (l, r) = bytes.split_at_mut(chunk_size);
+    fn split_slice<'a, T> (slice      : &'a mut [T],
+                           chunk_size : usize) -> Vec<&'a mut [T]> {
+        fn split_slice_helper<'a, T>(slice      : &'a mut [T],
+                                     chunk_size : usize,
+                                     mut result : Vec<&'a mut [T]>)
+                                     -> Vec<&'a mut [T]> {
+            if chunk_size < slice.len() {
+                let (l, r) = slice.split_at_mut(chunk_size);
                 result.push(l);
-                split_bytes_helper(r, chunk_size, result)
+                split_slice_helper(r, chunk_size, result)
             }
             else {
-                result.push(bytes);
+                result.push(slice);
                 result
             }
         }
 
-        let result = Vec::with_capacity(bytes.len() / chunk_size + 1);
-        split_bytes_helper(bytes,
+        let result = Vec::with_capacity(slice.len() / chunk_size + 1);
+        split_slice_helper(slice,
                            chunk_size,
                            result)
     }
