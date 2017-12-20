@@ -14,18 +14,16 @@ mod matrix;
 
 extern crate rayon;
 use rayon::prelude::*;
-extern crate threadpool;
-use threadpool::ThreadPool;
+//extern crate threadpool;
+//use threadpool::ThreadPool;
 
 extern crate num_cpus;
 
 use std::sync::{Arc, RwLock};
-use std::ops::Deref;
+//use std::ops::Deref;
 use std::ops::DerefMut;
 
 use matrix::Matrix;
-
-static BYTES_PER_ENCODE : usize = 4096;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
@@ -422,14 +420,35 @@ pub struct ReedSolomon {
     total_shard_count  : usize,
     matrix             : Matrix,
     //parity_rows        : Vec<Vec<[u8]>>,
-    threadpool         : ThreadPool
+    pparam             : ParallelParam
+}
+
+/// Parameters for parallelism
+#[derive(PartialEq, Debug, Clone)]
+pub struct ParallelParam {
+    pub bytes_per_encode  : usize,
+    pub shards_per_encode : usize,
+}
+
+impl ParallelParam {
+    pub fn new(bytes_per_encode  : usize,
+               shards_per_encode : usize) -> ParallelParam {
+        ParallelParam { bytes_per_encode,
+                        shards_per_encode }
+    }
+
+    pub fn with_default() -> ParallelParam {
+        static BYTES_PER_ENCODE : usize = 4096;
+        Self::new(4096,
+                  4)
+    }
 }
 
 impl Clone for ReedSolomon {
     fn clone(&self) -> ReedSolomon {
-        ReedSolomon::new_with_tc(self.data_shard_count,
+        ReedSolomon::with_pparam(self.data_shard_count,
                                  self.parity_shard_count,
-                                 self.threadpool.max_count())
+                                 self.pparam.clone())
     }
 }
 
@@ -454,15 +473,15 @@ impl ReedSolomon {
 
     pub fn new(data_shards : usize,
                parity_shards : usize) -> ReedSolomon {
-        Self::new_with_tc(data_shards,
+        Self::with_pparam(data_shards,
                           parity_shards,
-                          num_cpus::get())
+                          ParallelParam::with_default())
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
-    pub fn new_with_tc(data_shards   : usize,
+    pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
-                       thread_count  : usize) -> ReedSolomon {
+                       pparam        : ParallelParam) -> ReedSolomon {
         if data_shards == 0 {
             panic!("Too few data shards")
         }
@@ -482,7 +501,7 @@ impl ReedSolomon {
             parity_shard_count : parity_shards,
             total_shard_count  : total_shards,
             matrix,
-            threadpool         : ThreadPool::new(thread_count)
+            pparam
         }
     }
 
@@ -546,7 +565,7 @@ impl ReedSolomon {
     }
 
     #[inline(always)]
-    fn code_first_input_shard(threadpool   : &ThreadPool,
+    fn code_first_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
                               outputs      : &[Shard],
                               output_count : usize,
@@ -562,8 +581,9 @@ impl ReedSolomon {
             let matrix_row       = matrix_rows[i_output];
             let mult_table_row   = table[matrix_row[i_input] as usize];
             let output_shard_pieces =
-                helper::split_slice_mut(output_shard.deref_mut(),
-                                        BYTES_PER_ENCODE);
+                helper::split_slice_mut(
+                    &mut output_shard.deref_mut()[offset..offset + byte_count],
+                    pparam.bytes_per_encode);
             output_shard_pieces.into_par_iter()
                 .for_each(|out| {
                     for i in 0..out.len() {
@@ -575,7 +595,7 @@ impl ReedSolomon {
     }
 
     #[inline(always)]
-    fn code_other_input_shard(threadpool   : &ThreadPool,
+    fn code_other_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
                               outputs      : &[Shard],
                               output_count : usize,
@@ -590,8 +610,9 @@ impl ReedSolomon {
             let matrix_row       = matrix_rows[i_output];
             let mult_table_row   = &table[matrix_row[i_input] as usize];
             let output_shard_pieces =
-                helper::split_slice_mut(output_shard.deref_mut(),
-                                        BYTES_PER_ENCODE);
+                helper::split_slice_mut(
+                    &mut output_shard.deref_mut()[offset..offset + byte_count],
+                    pparam.bytes_per_encode);
             output_shard_pieces.into_par_iter()
                 .for_each(|out| {
                     for i in 0..out.len() {
@@ -603,7 +624,7 @@ impl ReedSolomon {
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
-    fn code_some_shards(threadpool   : &ThreadPool,
+    fn code_some_shards(pparam       : &ParallelParam,
                         matrix_rows  : &Vec<&[u8]>,
                         inputs       : &[Shard],
                         input_count  : usize,
@@ -614,7 +635,7 @@ impl ReedSolomon {
         {
             let i_input = 0;
             let input_shard = inputs[i_input].read().unwrap();
-            Self::code_first_input_shard(threadpool,
+            Self::code_first_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
@@ -623,7 +644,7 @@ impl ReedSolomon {
 
         for i_input in 1..input_count {
             let input_shard = inputs[i_input].read().unwrap();
-            Self::code_other_input_shard(threadpool,
+            Self::code_other_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
@@ -631,7 +652,7 @@ impl ReedSolomon {
         }
     }
 
-    fn code_some_option_shards(threadpool   : &ThreadPool,
+    fn code_some_option_shards(pparam       : &ParallelParam,
                                matrix_rows  : &Vec<&[u8]>,
                                inputs       : &[Option<Shard>],
                                input_count  : usize,
@@ -645,7 +666,7 @@ impl ReedSolomon {
                 Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
-            Self::code_first_input_shard(threadpool,
+            Self::code_first_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
@@ -657,7 +678,7 @@ impl ReedSolomon {
                 Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
-            Self::code_other_input_shard(threadpool,
+            Self::code_other_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
@@ -685,7 +706,7 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
-        Self::code_some_shards(&self.threadpool,
+        Self::code_some_shards(&self.pparam,
                                &parity_rows,
                                inputs,  self.data_shard_count,
                                outputs, self.parity_shard_count,
@@ -838,7 +859,7 @@ impl ReedSolomon {
                     output_count += 1;
                 }
             }
-            Self::code_some_shards(&self.threadpool,
+            Self::code_some_shards(&self.pparam,
                                    &matrix_rows,
                                    &sub_shards,  self.data_shard_count,
                                    &mut outputs, output_count,
@@ -868,7 +889,7 @@ impl ReedSolomon {
                     output_count += 1;
                 }
             }
-            Self::code_some_option_shards(&self.threadpool,
+            Self::code_some_option_shards(&self.pparam,
                                           &matrix_rows,
                                           &shards, self.data_shard_count,
                                           &mut outputs, output_count,
