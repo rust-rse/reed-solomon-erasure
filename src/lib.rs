@@ -33,7 +33,7 @@ pub enum Error {
 /// Main data type used by this library
 //pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
-pub type Shard = Arc<RwLock<Box<[u8]>>>;
+pub type Shard = Box<[u8]>;
 
 /*fn shard_into_tsshard(shard : Shard) -> TsShard {
     let inner : Box<[u8]> = shard.into_inner();
