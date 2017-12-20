@@ -12,9 +12,14 @@
 mod galois;
 mod matrix;
 
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::ops::Deref;
+extern crate rayon;
+use rayon::prelude::*;
+
+//use std::rc::Rc;
+//use std::cell::RefCell;
+//use std::ops::Deref;
+
+use std::sync::{Arc, RwLock};
 
 use matrix::Matrix;
 
@@ -24,8 +29,39 @@ pub enum Error {
 }
 
 /// Main data type used by this library
-pub type Shard = Rc<RefCell<Box<[u8]>>>;
+//pub type Shard = Rc<RefCell<Box<[u8]>>>;
 
+pub type Shard = Arc<RwLock<Box<[u8]>>>;
+
+/*fn shard_into_tsshard(shard : Shard) -> TsShard {
+    let inner : Box<[u8]> = shard.into_inner();
+    Arc::new(RwLock::new(inner))
+}
+
+fn tsshard_into_shard(shard : TsShard) -> Shard {
+    let inner : Box<[u8]> = shard.into_inner().unwrap();
+    Rc::new(RefCell::new(inner))
+}
+
+fn shards_into_tsshards(shards : Vec<Shard>) -> Vec<TsShard> {
+    let mut result = Vec::with_capacity(shards.len());
+    for shard in shards.into_iter() {
+        let inner : Box<[u8]> =
+            shard.into_inner();
+        result.push(Arc::new(RwLock::new(inner)));
+    }
+    result
+}
+
+fn tsshards_into_shards(shards : Vec<TsShard>) -> Vec<Shard> {
+    let mut result = Vec::with_capacity(shards.len());
+    for shard in shards.into_iter() {
+        let inner : Box<[u8]> =
+            shard.into_inner().unwrap();
+        result.push(Rc::new(RefCell::new(inner)));
+    }
+    result
+}*/
 /// Constructs a shard
 ///
 /// # Example
@@ -79,7 +115,7 @@ mod helper {
                            byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
-            None    => shards[0].borrow().len()
+            None    => shards[0].read().unwrap().len()
         };
 
         if result == 0 { panic!("Byte count is zero"); }
@@ -105,7 +141,7 @@ mod helper {
                 let mut value = None;
                 for v in shards.iter() {
                     match *v {
-                        Some(ref x) => { value = Some(x.borrow().len());
+                        Some(ref x) => { value = Some(x.read().unwrap().len());
                                          break; },
                         None        => {},
                     }
@@ -135,7 +171,7 @@ mod helper {
 
 
 pub fn boxed_u8_into_shard(b : Box<[u8]>) -> Shard {
-    Rc::new(RefCell::new(b))
+    Arc::new(RwLock::new(b))
 }
 
 /// Makes shard with byte array of zero length
@@ -177,8 +213,8 @@ pub fn shards_to_option_shards(shards : &Vec<Shard>)
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner : RefCell<Box<[u8]>> = v.deref().clone();
-        result.push(Some(Rc::new(inner)));
+        let inner : Box<[u8]> = v.read().unwrap().clone();
+        result.push(Some(boxed_u8_into_shard(inner)));
     }
     result
 }
@@ -237,8 +273,8 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
             Some(ref x) => x,
             None        => panic!("Missing shard, index : {}", i),
         };
-        let inner : RefCell<Box<[u8]>> = shard.deref().clone();
-        result.push(Rc::new(inner));
+        let inner : Box<[u8]> = shard.read().unwrap().clone();
+        result.push(boxed_u8_into_shard(inner));
     }
     result
 }
@@ -284,8 +320,8 @@ pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner : RefCell<Box<[u8]>> = v.deref().clone();
-        result.push(Rc::new(inner));
+        let inner : Box<[u8]> = v.read().unwrap().clone();
+        result.push(boxed_u8_into_shard(inner));
     }
     result
 }
@@ -308,8 +344,8 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
 
     for v in shards.iter() {
         let inner = match *v {
-            Some(ref x) => { let inner = x.deref().clone();
-                             Some(Rc::new(inner)) },
+            Some(ref x) => { let inner = x.read().unwrap().clone();
+                             Some(boxed_u8_into_shard(inner)) },
             None        => None
         };
         result.push(inner);
@@ -406,9 +442,9 @@ impl ReedSolomon {
             panic!("Incorrect number of shards : {}", shards.len())
         }
 
-        let shard_length = shards[0].borrow().len();
+        let shard_length = shards[0].read().unwrap().len();
         for shard in shards.iter() {
-            if shard.borrow().len() != shard_length {
+            if shard.read().unwrap().len() != shard_length {
                 panic!("Shards are of different sizes");
             }
         }
@@ -429,9 +465,9 @@ impl ReedSolomon {
         for shard in shards.iter() {
             if let Some(ref s) = *shard {
                 match shard_length {
-                    None    => shard_length = Some(s.borrow().len()),
+                    None    => shard_length = Some(s.read().unwrap().len()),
                     Some(x) => {
-                        if s.borrow().len() != x {
+                        if s.read().unwrap().len() != x {
                             panic!("Shards are of different sizes");
                         }
                     }
@@ -456,16 +492,17 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let mut output_shard =
-                outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = table[matrix_row[i_input] as usize];
-            for i_byte in offset..offset + byte_count {
-                output_shard[i_byte] =
-                    mult_table_row[input_shard[i_byte] as usize];
-            }
-        }
+        (0..output_count).into_par_iter()
+            .for_each(|i_output| {
+                let mut output_shard =
+                    outputs[i_output].write().unwrap();
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = table[matrix_row[i_input] as usize];
+                for i_byte in offset..offset + byte_count {
+                    output_shard[i_byte] =
+                        mult_table_row[input_shard[i_byte] as usize];
+                }
+            });
     }
 
     #[inline(always)]
@@ -478,14 +515,16 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let mut output_shard = outputs[i_output].borrow_mut();
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = &table[matrix_row[i_input] as usize];
-            for i_byte in offset..offset + byte_count {
-                output_shard[i_byte] ^= mult_table_row[input_shard[i_byte] as usize];
-            }
-        }
+        (0..output_count).into_par_iter()
+            .for_each(|i_output| {
+                let mut output_shard = outputs[i_output].write().unwrap();
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = &table[matrix_row[i_input] as usize];
+                for i_byte in offset..offset + byte_count {
+                    output_shard[i_byte] ^=
+                        mult_table_row[input_shard[i_byte] as usize];
+                }
+            })
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
@@ -498,7 +537,7 @@ impl ReedSolomon {
                         byte_count   : usize) {
         {
             let i_input = 0;
-            let input_shard = inputs[i_input].borrow();
+            let input_shard = inputs[i_input].read().unwrap();
             Self::code_first_input_shard(matrix_rows,
                                          outputs, output_count,
                                          offset,  byte_count,
@@ -506,7 +545,7 @@ impl ReedSolomon {
         }
 
         for i_input in 1..input_count {
-            let input_shard = inputs[i_input].borrow();
+            let input_shard = inputs[i_input].read().unwrap();
             Self::code_other_input_shard(matrix_rows,
                                          outputs, output_count,
                                          offset, byte_count,
@@ -524,7 +563,7 @@ impl ReedSolomon {
         {
             let i_input = 0;
             let input_shard = match inputs[i_input] {
-                Some(ref x) => x.borrow(),
+                Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
             Self::code_first_input_shard(matrix_rows,
@@ -535,7 +574,7 @@ impl ReedSolomon {
 
         for i_input in 1..input_count {
             let input_shard = match inputs[i_input] {
-                Some(ref x) => x.borrow(),
+                Some(ref x) => x.read().unwrap(),
                 None        => panic!()
             };
             Self::code_other_input_shard(matrix_rows,
@@ -590,9 +629,9 @@ impl ReedSolomon {
                     value ^=
                         table
                         [matrix_row[i_input]     as usize]
-                        [inputs[i_input].borrow()[i_byte] as usize];
+                        [inputs[i_input].read().unwrap()[i_byte] as usize];
                 }
-                if to_check[i_output].borrow()[i_byte] != value {
+                if to_check[i_output].read().unwrap()[i_byte] != value {
                     return false
                 }
             }
@@ -683,7 +722,7 @@ impl ReedSolomon {
                         sub_matrix.set(sub_matrix_row, c,
                                        self.matrix.get(matrix_row, c));
                     }
-                    sub_shards.push(Rc::clone(shard));
+                    sub_shards.push(Arc::clone(shard));
                 }
             }
         }
@@ -711,7 +750,7 @@ impl ReedSolomon {
                 if let None = shards[i_shard] {
                     // link slot in outputs to the missing slot in shards
                     shards[i_shard] =
-                        Some(Rc::clone(&outputs[output_count]));
+                        Some(Arc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
                         data_decode_matrix.get_row(i_shard);
                     output_count += 1;
@@ -739,7 +778,7 @@ impl ReedSolomon {
                 if let None = shards[i_shard] {
                     // link slot in outputs to the missing slot in shards
                     shards[i_shard] =
-                        Some(Rc::clone(&outputs[output_count]));
+                        Some(Arc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
                         parity_rows[i_shard
                                     - self.data_shard_count];
