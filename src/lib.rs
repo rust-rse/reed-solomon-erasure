@@ -536,7 +536,6 @@ impl ReedSolomon {
         }
     }
 
-    /*
     /// Constructs parity shards
     ///
     /// # Remarks
@@ -555,12 +554,19 @@ impl ReedSolomon {
 
         let (inputs, outputs) = shards.split_at_mut(self.data_shard_count);
 
-        Self::code_some_shards(&self.parity_rows,
+        let mut parity_rows  = Vec::with_capacity(self.parity_shard_count);
+        let matrix           = &self.matrix;
+        for i in self.data_shard_count..self.total_shard_count {
+            parity_rows.push(matrix.get_row(i));
+        }
+
+        Self::code_some_shards(&parity_rows,
                                inputs,  self.data_shard_count,
                                outputs, self.parity_shard_count,
                                offset, byte_count);
     }
 
+    /*
     // Translated from CodingLoopBase.java
     fn check_some_shards(matrix_rows : &Vec<Row>,
                          inputs      : &[Shard],

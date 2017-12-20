@@ -26,7 +26,7 @@ macro_rules! acc {
     }
 }
 
-pub fn make_blank_row(size : usize) -> Row {
+/*pub fn make_blank_row(size : usize) -> Row {
     vec![0; size].into_boxed_slice()
 }
 
@@ -36,7 +36,7 @@ pub fn make_blank_rows(size : usize, count : usize) -> Vec<Row> {
         result.push(make_blank_row(size));
     }
     result
-}
+}*/
 
 pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
     let mut result : Vec<T> =
