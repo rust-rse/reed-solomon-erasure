@@ -566,9 +566,8 @@ impl ReedSolomon {
                                offset, byte_count);
     }
 
-    /*
     // Translated from CodingLoopBase.java
-    fn check_some_shards(matrix_rows : &Vec<Row>,
+    fn check_some_shards(matrix_rows : &Vec<&[u8]>,
                          inputs      : &[Shard],
                          input_count : usize,
                          to_check    : &[Shard],
@@ -596,6 +595,7 @@ impl ReedSolomon {
         true
     }
 
+    /*
     /// Verify correctness of parity shards
     pub fn is_parity_correct(&self,
                              shards     : &Vec<Shard>,
