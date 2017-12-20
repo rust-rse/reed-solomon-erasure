@@ -12,8 +12,10 @@
 mod galois;
 mod matrix;
 
-extern crate rayon;
-use rayon::prelude::*;
+//extern crate rayon;
+//use rayon::prelude::*;
+extern crate threadpool;
+use threadpool::ThreadPool;
 
 //use std::rc::Rc;
 //use std::cell::RefCell;
@@ -492,17 +494,16 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        (0..output_count).into_par_iter()
-            .for_each(|i_output| {
-                let mut output_shard =
-                    outputs[i_output].write().unwrap();
-                let matrix_row       = matrix_rows[i_output];
-                let mult_table_row   = table[matrix_row[i_input] as usize];
-                for i_byte in offset..offset + byte_count {
-                    output_shard[i_byte] =
-                        mult_table_row[input_shard[i_byte] as usize];
-                }
-            });
+        for i_output in 0..output_count {
+            let mut output_shard =
+                outputs[i_output].write().unwrap();
+            let matrix_row       = matrix_rows[i_output];
+            let mult_table_row   = table[matrix_row[i_input] as usize];
+            for i_byte in offset..offset + byte_count {
+                output_shard[i_byte] =
+                    mult_table_row[input_shard[i_byte] as usize];
+            }
+        }
     }
 
     #[inline(always)]
@@ -515,16 +516,15 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        (0..output_count).into_par_iter()
-            .for_each(|i_output| {
-                let mut output_shard = outputs[i_output].write().unwrap();
-                let matrix_row       = matrix_rows[i_output];
-                let mult_table_row   = &table[matrix_row[i_input] as usize];
-                for i_byte in offset..offset + byte_count {
-                    output_shard[i_byte] ^=
-                        mult_table_row[input_shard[i_byte] as usize];
-                }
-            })
+        for i_output in 0..output_count {
+            let mut output_shard = outputs[i_output].write().unwrap();
+            let matrix_row       = matrix_rows[i_output];
+            let mult_table_row   = &table[matrix_row[i_input] as usize];
+            for i_byte in offset..offset + byte_count {
+                output_shard[i_byte] ^=
+                    mult_table_row[input_shard[i_byte] as usize];
+            }
+        }
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
