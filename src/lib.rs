@@ -479,9 +479,8 @@ impl ReedSolomon {
         }
     }
 
-    /*
     // Translated from InputOutputByteTableCodingLoop.java
-    fn code_some_shards(matrix_rows  : &Vec<Row>,
+    fn code_some_shards(matrix_rows  : &Vec<&[u8]>,
                         inputs       : &[Shard],
                         input_count  : usize,
                         outputs      : &mut [Shard],
@@ -506,7 +505,7 @@ impl ReedSolomon {
         }
     }
 
-    fn code_some_option_shards(matrix_rows  : &Vec<Row>,
+    fn code_some_option_shards(matrix_rows  : &Vec<&[u8]>,
                                inputs       : &[Option<Shard>],
                                input_count  : usize,
                                outputs      : &mut [Shard],
@@ -537,6 +536,7 @@ impl ReedSolomon {
         }
     }
 
+    /*
     /// Constructs parity shards
     ///
     /// # Remarks

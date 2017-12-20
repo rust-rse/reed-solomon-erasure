@@ -4,7 +4,7 @@ pub enum Error {
     SingularMatrix,
 }
 
-pub type Row = Box<[u8]>;
+//pub type Row = Box<[u8]>;
 
 /*pub fn make_zero_len_row() -> Row {
     Rc::new(Box::new([]))
