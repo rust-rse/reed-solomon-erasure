@@ -622,7 +622,6 @@ impl ReedSolomon {
                                 offset, byte_count)
     }
 
-    /*
     /// Reconstruct missing shards
     ///
     /// # Remarks
@@ -701,8 +700,8 @@ impl ReedSolomon {
         // The input to the coding is all of the shards we actually
         // have, and the output is the missing data shards.  The computation
         // is done using the special decode matrix we just built.
-        let mut matrix_rows : Vec<Row> =
-            matrix::make_zero_len_rows(self.parity_shard_count);
+        let mut matrix_rows : Vec<&[u8]> =
+            vec![&[]; self.parity_shard_count];
         {
             let mut outputs : Vec<Shard> =
                 make_blank_shards(shard_length,
@@ -714,8 +713,7 @@ impl ReedSolomon {
                     shards[i_shard] =
                         Some(Rc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
-                        data_decode_matrix
-                        .get_row_shallow_clone(i_shard);
+                        data_decode_matrix.get_row(i_shard);
                     output_count += 1;
                 }
             }
@@ -731,6 +729,7 @@ impl ReedSolomon {
         // The input to the coding is ALL of the data shards, including
         // any that we just calculated.  The output is whichever of the
         // data shards were missing.
+        let parity_rows = self.get_parity_rows();
         {
             let mut outputs : Vec<Shard> =
                 make_blank_shards(shard_length,
@@ -742,9 +741,8 @@ impl ReedSolomon {
                     shards[i_shard] =
                         Some(Rc::clone(&outputs[output_count]));
                     matrix_rows[output_count] =
-                        Rc::clone(
-                            &self.parity_rows[i_shard
-                                              - self.data_shard_count]);
+                        parity_rows[i_shard
+                                    - self.data_shard_count];
                     output_count += 1;
                 }
             }
@@ -756,7 +754,6 @@ impl ReedSolomon {
 
         Ok (())
     }
-    */
 }
 
 /*
