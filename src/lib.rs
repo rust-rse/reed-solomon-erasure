@@ -872,14 +872,14 @@ impl ReedSolomon {
             return Ok(())
         }
 
-        // Convert to more usable arrangement
-        let shards : Vec<&mut Option<Shard>> =
-            helper::break_down_slice_mut(shards);
-
         // More complete sanity check
         if number_present < self.data_shard_count {
             return Err(Error::NotEnoughShards)
         }
+
+        // Convert to more usable arrangement
+        let shards : Vec<&mut Option<Shard>> =
+            helper::break_down_slice_mut(shards);
 
         // Pull out the rows of the matrix that correspond to the
         // shards that we have and build a square matrix.  This
