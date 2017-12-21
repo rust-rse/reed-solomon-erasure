@@ -868,6 +868,26 @@ impl ReedSolomon {
         // the missing data shards.
         let mut sub_matrix =
             Matrix::new(self.data_shard_count, self.data_shard_count);
+        let mut sub_shards : Vec<&Shard> =
+            Vec::with_capacity(self.data_shard_count);
+        let mut matrix_row = 0;
+        let data_shard_count = self.data_shard_count;
+        let matrix           = &self.matrix;
+        for shard in shards.iter() {
+            let sub_matrix_row = sub_shards.len();
+
+            if sub_matrix_row >= self.data_shard_count { break; }
+
+            if let Some(ref shard) = *shard {
+                for c in 0..self.data_shard_count {
+                    sub_matrix.set(sub_matrix_row, c,
+                                   matrix.get(matrix_row, c));
+                }
+                sub_shards.push(shard);
+            }
+
+            matrix_row += 1;
+        }
 
         // Invert the matrix, so we can go from the encoded shards
         // back to the original data.  Then pull out the row that
@@ -883,63 +903,38 @@ impl ReedSolomon {
         // is done using the special decode matrix we just built.
         let mut matrix_rows : Vec<&[u8]> =
             Vec::with_capacity(self.parity_shard_count);
-        {
-            let mut new_data_shards : Vec<Shard> =
-                Vec::with_capacity(self.data_shard_count - data_shards_present);
-            {
-                let mut sub_shards : Vec<&Shard> =
-                    Vec::with_capacity(self.data_shard_count);
-                let mut matrix_row = 0;
-                let data_shard_count = self.data_shard_count;
-                let matrix           = &self.matrix;
-                for shard in shards.iter() {
-                    let sub_matrix_row = sub_shards.len();
-
-                    if sub_matrix_row >= self.data_shard_count { break; }
-
-                    if let Some(ref shard) = *shard {
-                        for c in 0..self.data_shard_count {
-                            sub_matrix.set(sub_matrix_row, c,
-                                           matrix.get(matrix_row, c));
-                        }
-                        sub_shards.push(shard);
-                    }
-
-                    matrix_row += 1;
-
-                    let mut new_data_shards_ref : Vec<&mut Shard> =
-                        Vec::with_capacity(self.data_shard_count - data_shards_present);
-                    for i_shard in 0..self.data_shard_count {
-                        if !shard_present[i_shard] {
-                            new_data_shards.push(
-                                make_blank_shard(shard_length));
-                            matrix_rows.push(
-                                data_decode_matrix.get_row(i_shard));
-                        }
-                    }
-                    let new_data_shard_count = new_data_shards.len();
-                    for shard in new_data_shards.iter_mut() {
-                        /*new_data_shards_ref.push(
-                        &mut new_data_shards[new_data_shards.len() - 1]);*/
-                        new_data_shards_ref.push(shard);
-                    }
-                    Self::code_some_shards(&self.pparam,
-                                           &matrix_rows,
-                                           &sub_shards,
-                                           self.data_shard_count,
-                                           &mut new_data_shards_ref,
-                                           new_data_shard_count,
-                                           offset, byte_count);
-                }
+        let mut new_data_shards : Vec<Shard> =
+            Vec::with_capacity(self.data_shard_count - data_shards_present);
+        let mut new_data_shards_ref : Vec<&mut Shard> =
+            Vec::with_capacity(self.data_shard_count - data_shards_present);
+        for i_shard in 0..self.data_shard_count {
+            if !shard_present[i_shard] {
+                new_data_shards.push(
+                    make_blank_shard(shard_length));
+                matrix_rows.push(
+                    data_decode_matrix.get_row(i_shard));
             }
+        }
+        let new_data_shard_count = new_data_shards.len();
+        for shard in new_data_shards.iter_mut() {
+            /*new_data_shards_ref.push(
+            &mut new_data_shards[new_data_shards.len() - 1]);*/
+            new_data_shards_ref.push(shard);
+        }
+        Self::code_some_shards(&self.pparam,
+                               &matrix_rows,
+                               &sub_shards,
+                               self.data_shard_count,
+                               &mut new_data_shards_ref,
+                               new_data_shard_count,
+                               offset, byte_count);
 
-            // Patch the total shard set using the new data shards
-            // in reverse order(so moving actually works)
-            for i_shard in (0..self.data_shard_count).rev() {
-                if !shard_present[i_shard] {
-                    shards[i_shard] =
-                        new_data_shards.pop();
-                }
+        // Patch the total shard set using the new data shards
+        // in reverse order(so moving actually works)
+        for i_shard in (0..self.data_shard_count).rev() {
+            if !shard_present[i_shard] {
+                shards[i_shard] =
+                    new_data_shards.pop();
             }
         }
 
