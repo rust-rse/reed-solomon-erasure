@@ -19,10 +19,6 @@ use rayon::prelude::*;
 
 extern crate num_cpus;
 
-use std::sync::{Arc, RwLock};
-//use std::ops::Deref;
-use std::ops::DerefMut;
-
 use matrix::Matrix;
 
 #[derive(PartialEq, Debug)]
@@ -572,12 +568,12 @@ impl ReedSolomon {
     #[inline(always)]
     fn code_first_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
-                              outputs      : &mut Vec<&mut [u8]>,
+                              outputs      : &mut Vec<&mut Shard>,
                               output_count : usize,
                               offset       : usize,
                               byte_count   : usize,
                               i_input      : usize,
-                              input_shard  : &Box<[u8]>) {
+                              input_shard  : &Shard) {
         let table = &galois::MULT_TABLE;
 
         for i_output in 0..output_count {
@@ -606,7 +602,7 @@ impl ReedSolomon {
     #[inline(always)]
     fn code_other_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
-                              outputs      : &[Shard],
+                              outputs      : &mut Vec<&mut Shard>,
                               output_count : usize,
                               offset       : usize,
                               byte_count   : usize,
