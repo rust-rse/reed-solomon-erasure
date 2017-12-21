@@ -8,6 +8,7 @@ branches:
   except:
     - test
     - test2
+    - rewrite-using-klauspost-go
 
 matrix:
   allow_features:
