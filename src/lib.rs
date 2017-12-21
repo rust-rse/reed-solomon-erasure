@@ -633,7 +633,7 @@ impl ReedSolomon {
 
     // Translated from InputOutputByteTableCodingLoop.java
     fn code_some_shards(pparam       : &ParallelParam,
-                        matrix_rows  : &[&[u8]],
+                        matrix_rows  : &Vec<&[u8]>,
                         inputs       : &[Shard],
                         input_count  : usize,
                         outputs      : &mut [&mut Shard],
@@ -694,7 +694,6 @@ impl ReedSolomon {
         }
     }
 
-    /*
     /// Constructs parity shards
     ///
     /// # Remarks
@@ -715,13 +714,19 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
+        let mut outputs_ref = Vec::with_capacity(outputs.len());
+        for output in outputs.iter_mut() {
+            outputs_ref.push(output);
+        }
+
         Self::code_some_shards(&self.pparam,
                                &parity_rows,
                                inputs,  self.data_shard_count,
-                               outputs, self.parity_shard_count,
+                               &mut outputs_ref, self.parity_shard_count,
                                offset, byte_count);
     }
 
+    /*
     // Translated from CodingLoopBase.java
     fn check_some_shards(matrix_rows : &Vec<&[u8]>,
                          inputs      : &[Shard],
