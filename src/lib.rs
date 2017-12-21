@@ -817,7 +817,41 @@ impl ReedSolomon {
                           offset     : Option<usize>,
                           byte_count : Option<usize>)
                           -> Result<(), Error> {
+        let (offset, byte_count) =
+            helper::calc_offset_and_byte_count_option_shards(offset,
+                                                             shards,
+                                                             byte_count);
+
+        self.check_buffer_and_sizes_option_shards(shards, offset, byte_count);
+
+        let shard_length = helper::calc_byte_count_option_shards(&shards,
+                                                                 None);
+
+        // Quick check: are all of the shards present?  If so, there's
+        // nothing to do.
+        // And also note down which shards are present
+        let mut number_present = 0;
+        let mut shard_present  = Vec::with_capacity(shards.len());
+        for v in shards.iter() {
+            match *v {
+                Some(_) => { number_present += 1;
+                             shard_present.push(true); },
+                None    => { shard_present.push(false); }
+            }
+        }
+        if number_present == self.total_shard_count {
+            // Cool.  All of the shards data data.  We don't
+            // need to do anything.
+            return Ok(())
+        }
+
+        // More complete sanity check
+        if number_present < self.data_shard_count {
+            return Err(Error::NotEnoughShards)
+        }
+
     }
+
     pub fn decode_missing(&self,
                           shards     : &mut Vec<Option<Shard>>,
                           offset     : Option<usize>,
