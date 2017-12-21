@@ -817,6 +817,12 @@ impl ReedSolomon {
                           offset     : Option<usize>,
                           byte_count : Option<usize>)
                           -> Result<(), Error> {
+    }
+    pub fn decode_missing(&self,
+                          shards     : &mut Vec<Option<Shard>>,
+                          offset     : Option<usize>,
+                          byte_count : Option<usize>)
+                          -> Result<(), Error> {
         let (offset, byte_count) =
             helper::calc_offset_and_byte_count_option_shards(offset,
                                                              shards,
