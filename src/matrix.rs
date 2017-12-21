@@ -128,8 +128,8 @@ impl Matrix {
             for c in 0..rhs.column_count() {
                 let mut val = 0;
                 for i in 0..self.column_count() {
-                    val ^= galois::mul(self.get(r, i),
-                                       rhs.get(i, c));
+                    val ^= galois::mul(acc!(self, r, i),
+                                       acc!(rhs,  i, c));
                 }
                 result.set(r, c, val);
             }
