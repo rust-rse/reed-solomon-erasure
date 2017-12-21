@@ -847,9 +847,6 @@ impl ReedSolomon {
         let shard_length = helper::calc_byte_count_option_shards(&shards,
                                                                  None);
 
-        let shards =
-            helper::break_down_slice_mut(shards);
-
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
         // And also note down which shards are present
@@ -874,6 +871,10 @@ impl ReedSolomon {
             // need to do anything.
             return Ok(())
         }
+
+        // Convert to more usable arrangement
+        let shards : Vec<&mut Option<Shard>> =
+            helper::break_down_slice_mut(shards);
 
         // More complete sanity check
         if number_present < self.data_shard_count {
