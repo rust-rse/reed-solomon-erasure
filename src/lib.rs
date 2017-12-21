@@ -755,7 +755,6 @@ impl ReedSolomon {
         true
     }
 
-    /*
     /// Verify correctness of parity shards
     pub fn is_parity_correct(&self,
                              shards     : &Vec<Shard>,
@@ -777,6 +776,7 @@ impl ReedSolomon {
                                 to_check,    self.parity_shard_count,
                                 offset, byte_count)
     }
+    /*
 
     /// Reconstruct missing shards
     ///
