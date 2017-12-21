@@ -849,6 +849,14 @@ impl ReedSolomon {
             return Err(Error::NotEnoughShards)
         }
 
+        let mut shards_ref = Vec::with_capacity(shards.len());
+        for v in shards.iter_mut() {
+            match *v {
+                Some(ref x) => shards_ref.push(Some(x)),
+                None        => shards_ref.push(None)
+            }
+        }
+
         // Pull out the rows of the matrix that correspond to the
         // shards that we have and build a square matrix.  This
         // matrix could be used to generate the shards that we have
@@ -868,12 +876,12 @@ impl ReedSolomon {
 
                 if sub_matrix_row >= self.data_shard_count { break; }
 
-                if let Some(ref shard) = shards[matrix_row] {
+                if let Some(shard) = shards_ref[matrix_row] {
                     for c in 0..self.data_shard_count {
                         sub_matrix.set(sub_matrix_row, c,
                                        self.matrix.get(matrix_row, c));
                     }
-                    sub_shards.push(&shard);
+                    sub_shards.push(shard);
                 }
             }
         }
@@ -922,7 +930,7 @@ impl ReedSolomon {
         //
         // The input to the coding is ALL of the data shards, including
         // any that we just calculated.  The output is whichever of the
-        // data shards were missing.
+        // parity shards were missing.
         let parity_rows = self.get_parity_rows();
         {
             let mut outputs : Vec<Shard> =
@@ -940,6 +948,7 @@ impl ReedSolomon {
                     output_count += 1;
                 }
             }
+
             Self::code_some_option_shards(&self.pparam,
                                           &matrix_rows,
                                           &shards, self.data_shard_count,
