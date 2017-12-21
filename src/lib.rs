@@ -568,7 +568,7 @@ impl ReedSolomon {
     #[inline(always)]
     fn code_first_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
-                              outputs      : &mut Vec<&mut Shard>,
+                              outputs      : &mut [&mut Shard],
                               output_count : usize,
                               offset       : usize,
                               byte_count   : usize,
@@ -601,7 +601,7 @@ impl ReedSolomon {
     #[inline(always)]
     fn code_other_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
-                              outputs      : &mut Vec<&mut Shard>,
+                              outputs      : &mut [&mut Shard],
                               output_count : usize,
                               offset       : usize,
                               byte_count   : usize,
@@ -631,19 +631,18 @@ impl ReedSolomon {
         }
     }
 
-    /*
     // Translated from InputOutputByteTableCodingLoop.java
     fn code_some_shards(pparam       : &ParallelParam,
                         matrix_rows  : &Vec<&[u8]>,
                         inputs       : &[Shard],
                         input_count  : usize,
-                        outputs      : &[Shard],
+                        outputs      : &mut [&mut Shard],
                         output_count : usize,
                         offset       : usize,
                         byte_count   : usize) {
         {
             let i_input = 0;
-            let input_shard = inputs[i_input].read().unwrap();
+            let input_shard = &inputs[i_input];
             Self::code_first_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
@@ -652,7 +651,7 @@ impl ReedSolomon {
         }
 
         for i_input in 1..input_count {
-            let input_shard = inputs[i_input].read().unwrap();
+            let input_shard = &inputs[i_input];
             Self::code_other_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
@@ -661,6 +660,7 @@ impl ReedSolomon {
         }
     }
 
+    /*
     fn code_some_option_shards(pparam       : &ParallelParam,
                                matrix_rows  : &Vec<&[u8]>,
                                inputs       : &[Option<Shard>],
