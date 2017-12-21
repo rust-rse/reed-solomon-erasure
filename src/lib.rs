@@ -272,7 +272,7 @@ pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
 
 /// Makes shard with byte array filled with zeros of some length
 pub fn make_blank_shard(size : usize) -> Shard {
-    vec![0; size].into_boxed_slice()
+    boxed_u8_into_shard(vec![0; size].into_boxed_slice())
 }
 
 pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
@@ -830,22 +830,15 @@ impl ReedSolomon {
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
         // And also note down which shards are present
+        let mut number_present = 0;
         let mut shard_present  = Vec::with_capacity(shards.len());
         for v in shards.iter() {
             match *v {
-                Some(_) => { shard_present.push(true); },
+                Some(_) => { number_present += 1;
+                             shard_present.push(true); },
                 None    => { shard_present.push(false); }
             }
         }
-        let mut data_shards_present   = 0;
-        let mut parity_shards_present = 0;
-        for i in 0..shard_present.len() {
-            if shard_present[i] {
-                if i < self.data_shard_count { data_shards_present   += 1; }
-                else                         { parity_shards_present += 1; }
-            }
-        }
-        let number_present = data_shards_present + parity_shards_present;
         if number_present == self.total_shard_count {
             // Cool.  All of the shards data data.  We don't
             // need to do anything.
@@ -857,103 +850,6 @@ impl ReedSolomon {
             return Err(Error::NotEnoughShards)
         }
 
-        // Pull out the rows of the matrix that correspond to the
-        // shards that we have and build a square matrix.  This
-        // matrix could be used to generate the shards that we have
-        // from the original data.
-        //
-        // Also, pull out an array holding just the shards that
-        // correspond to the rows of the submatrix.  These shards
-        // will be the input to the decoding process that re-creates
-        // the missing data shards.
-        let mut sub_matrix =
-            Matrix::new(self.data_shard_count, self.data_shard_count);
-
-        // Invert the matrix, so we can go from the encoded shards
-        // back to the original data.  Then pull out the row that
-        // generates the shard that we want to decode.  Note that
-        // since this matrix maps back to the orginal data, it can
-        // be used to create a data shard, but not a parity shard.
-        let data_decode_matrix = sub_matrix.invert().unwrap();
-
-        // Re-create any data shards that were missing.
-        //
-        // The input to the coding is all of the shards we actually
-        // have, and the output is the missing data shards.  The computation
-        // is done using the special decode matrix we just built.
-        let mut matrix_rows : Vec<&[u8]> =
-            Vec::with_capacity(self.parity_shard_count);
-        {
-            let mut new_data_shards : Vec<Shard> =
-                Vec::with_capacity(self.data_shard_count - data_shards_present);
-            {
-                let mut sub_shards : Vec<&Shard> =
-                    Vec::with_capacity(self.data_shard_count);
-                let mut matrix_row = 0;
-                let data_shard_count = self.data_shard_count;
-                let matrix           = &self.matrix;
-                for shard in shards.iter() {
-                    let sub_matrix_row = sub_shards.len();
-
-                    if sub_matrix_row >= self.data_shard_count { break; }
-
-                    if let Some(ref shard) = *shard {
-                        for c in 0..self.data_shard_count {
-                            sub_matrix.set(sub_matrix_row, c,
-                                           matrix.get(matrix_row, c));
-                        }
-                        sub_shards.push(shard);
-                    }
-
-                    matrix_row += 1;
-
-                    let mut new_data_shards_ref : Vec<&mut Shard> =
-                        Vec::with_capacity(self.data_shard_count - data_shards_present);
-                    for i_shard in 0..self.data_shard_count {
-                        if !shard_present[i_shard] {
-                            new_data_shards.push(
-                                make_blank_shard(shard_length));
-                            matrix_rows.push(
-                                data_decode_matrix.get_row(i_shard));
-                        }
-                    }
-                    let new_data_shard_count = new_data_shards.len();
-                    for shard in new_data_shards.iter_mut() {
-                        /*new_data_shards_ref.push(
-                        &mut new_data_shards[new_data_shards.len() - 1]);*/
-                        new_data_shards_ref.push(shard);
-                    }
-                    Self::code_some_shards(&self.pparam,
-                                           &matrix_rows,
-                                           &sub_shards,
-                                           self.data_shard_count,
-                                           &mut new_data_shards_ref,
-                                           new_data_shard_count,
-                                           offset, byte_count);
-                }
-            }
-
-            // Patch the total shard set using the new data shards
-            // in reverse order(so moving actually works)
-            for i_shard in (0..self.data_shard_count).rev() {
-                if !shard_present[i_shard] {
-                    shards[i_shard] =
-                        new_data_shards.pop();
-                }
-            }
-        }
-
-        // Now that we have all of the data shards intact, we can
-        // compute any of the parity that is missing.
-        //
-        // The input to the coding is ALL of the data shards, including
-        // any that we just calculated.  The output is whichever of the
-        // data shards were missing.
-        {
-            let parity_rows = self.get_parity_rows();
-        }
-
-        Ok(())
     }
 
     /*
@@ -1102,8 +998,7 @@ impl ReedSolomon {
         }*/
 
         Ok (())
-    }
-    */ 
+    }*/
 }
 
     /*
