@@ -238,6 +238,22 @@ mod helper {
         result
     }
 
+    pub fn break_down_slice_mut_with_index<'a, T>(slice : &'a mut [T]) -> Vec<(usize, &'a mut T)> {
+        let mut result = Vec::with_capacity(slice.len());
+        for (i, v) in split_slice_mut_with_index(slice, 1).into_iter() {
+            result.push((i, &mut v[0]));
+        }
+        result
+    }
+
+    pub fn break_down_slice_with_index<'a, T>(slice : &'a [T]) -> Vec<(usize, &'a T)> {
+        let mut result = Vec::with_capacity(slice.len());
+        for (i, v) in split_slice_with_index(slice, 1).into_iter() {
+            result.push((i, & v[0]));
+        }
+        result
+    }
+
     pub fn break_down_slice_mut<'a, T>(slice : &'a mut [T]) -> Vec<&'a mut T> {
         let mut result = Vec::with_capacity(slice.len());
         for (_, v) in split_slice_mut_with_index(slice, 1).into_iter() {
@@ -629,26 +645,27 @@ impl ReedSolomon {
                               input_shard  : &Shard) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let output_shard =
-                &mut outputs[i_output];
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = table[matrix_row[i_input] as usize];
-            let output_shard_pieces =
-                helper::split_slice_mut_with_index(
-                    &mut output_shard[offset..offset + byte_count],
-                    pparam.bytes_per_encode);
-            output_shard_pieces.into_par_iter()
-                .for_each(|(index, out)| {
-                    let slice_offset =
-                        offset + index * pparam.bytes_per_encode;
-                    for i in 0..out.len() {
-                        out[i] =
-                            mult_table_row[
-                                input_shard[slice_offset + i] as usize];
-                    }
-                })
-        }
+        helper::break_down_slice_mut_with_index(
+            &mut outputs[0..output_count])
+            .into_par_iter()
+            .for_each(|(i_output, output_shard)| {
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = table[matrix_row[i_input] as usize];
+                let output_shard_pieces =
+                    helper::split_slice_mut_with_index(
+                        &mut output_shard[offset..offset + byte_count],
+                        pparam.bytes_per_encode);
+                output_shard_pieces.into_par_iter()
+                    .for_each(|(index, out)| {
+                        let slice_offset =
+                            offset + index * pparam.bytes_per_encode;
+                        for i in 0..out.len() {
+                            out[i] =
+                                mult_table_row[
+                                    input_shard[slice_offset + i] as usize];
+                        }
+                    })
+            })
     }
 
     #[inline(always)]
@@ -827,6 +844,7 @@ impl ReedSolomon {
                                 offset, byte_count)
     }
 
+    /*
     /// Reconstruct missing shards
     ///
     /// # Remarks
@@ -895,14 +913,12 @@ impl ReedSolomon {
         let mut sub_shards : Vec<&Shard> =
             Vec::with_capacity(self.data_shard_count);
         let mut matrix_row = 0;
-        let data_shard_count = self.data_shard_count;
-        let matrix           = &self.matrix;
-        for shard in shards.iter() {
+        for shard in shards.into_iter() {
             let sub_matrix_row = sub_shards.len();
 
             if sub_matrix_row >= self.data_shard_count { break; }
 
-            if let Some(ref shard) = *shard {
+            if let Some(shard) = shard {
                 for c in 0..self.data_shard_count {
                     sub_matrix.set(sub_matrix_row, c,
                                    matrix.get(matrix_row, c));
@@ -979,6 +995,7 @@ impl ReedSolomon {
 
         Ok(())
     }
+    */
 
     /*
     pub fn decode_missing(&self,
