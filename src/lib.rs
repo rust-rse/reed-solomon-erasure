@@ -218,6 +218,26 @@ mod helper {
                result)
     }
 
+    pub fn split_slice_mut<'a, T> (slice      : &'a mut [T],
+                                   chunk_size : usize)
+                                   -> Vec<&'a mut [T]> {
+        let mut result = Vec::with_capacity(slice.len());
+        for (_, v) in split_slice_mut_with_index(slice, chunk_size) {
+            result.push(v);
+        }
+        result
+    }
+
+    pub fn split_slice<'a, T> (slice      : &'a [T],
+                               chunk_size : usize)
+                               -> Vec<&'a [T]> {
+        let mut result = Vec::with_capacity(slice.len());
+        for (_, v) in split_slice_with_index(slice, chunk_size) {
+            result.push(v);
+        }
+        result
+    }
+
     pub fn break_down_slice_mut<'a, T>(slice : &'a mut [T]) -> Vec<&'a mut T> {
         let mut result = Vec::with_capacity(slice.len());
         for (_, v) in split_slice_mut_with_index(slice, 1).into_iter() {
@@ -826,6 +846,9 @@ impl ReedSolomon {
 
         let shard_length = helper::calc_byte_count_option_shards(&shards,
                                                                  None);
+
+        let shards =
+            helper::break_down_slice_mut(shards);
 
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
