@@ -107,7 +107,7 @@ impl Matrix {
         result
     }
 
-    pub fn column_count(&self) -> usize {
+    pub fn col_count(&self) -> usize {
         self.col_count
     }
 
@@ -124,14 +124,14 @@ impl Matrix {
     }
 
     pub fn multiply(&self, rhs : &Matrix) -> Matrix {
-        if self.column_count() != rhs.row_count() {
-            panic!("Colomn count on left is different from row count on right, lhs : {}, rhs : {}", self.column_count(), rhs.row_count())
+        if self.col_count != rhs.row_count {
+            panic!("Colomn count on left is different from row count on right, lhs : {}, rhs : {}", self.col_count, rhs.row_count)
         }
-        let mut result = Self::new(self.row_count(), rhs.column_count());
-        for r in 0..self.row_count() {
-            for c in 0..rhs.column_count() {
+        let mut result = Self::new(self.row_count, rhs.col_count);
+        for r in 0..self.row_count {
+            for c in 0..rhs.col_count {
                 let mut val = 0;
-                for i in 0..self.column_count() {
+                for i in 0..self.col_count {
                     val ^= galois::mul(acc!(self, r, i),
                                        acc!(rhs,  i, c));
                 }
@@ -142,17 +142,17 @@ impl Matrix {
     }
 
     pub fn augment(&self, rhs : &Matrix) -> Matrix {
-        if self.row_count() != self.column_count() {
-            panic!("Matrices do not have the same row count, lhs : {}, rhs : {}", self.row_count(), rhs.row_count())
+        if self.row_count != self.col_count {
+            panic!("Matrices do not have the same row count, lhs : {}, rhs : {}", self.row_count, rhs.row_count)
         }
-        let mut result = Self::new(self.row_count(),
-                                   self.column_count() + rhs.column_count());
-        for r in 0..self.row_count() {
-            for c in 0..self.column_count() {
+        let mut result = Self::new(self.row_count,
+                                   self.col_count + rhs.col_count);
+        for r in 0..self.row_count {
+            for c in 0..self.col_count {
                 acc!(result, r, c) = acc!(self, r, c);
             }
-            let self_column_count = self.column_count();
-            for c in 0..rhs.column_count() {
+            let self_column_count = self.col_count;
+            for c in 0..rhs.col_count {
                 acc!(result, r, self_column_count + c) = acc!(rhs, r, c);
             }
         }
@@ -198,13 +198,13 @@ impl Matrix {
     }
 
     pub fn is_square(&self) -> bool {
-        self.row_count() == self.column_count()
+        self.row_count == self.col_count
     }
 
     pub fn gaussian_elim(&mut self) -> Result<(), Error> {
-        for r in 0..self.row_count() {
+        for r in 0..self.row_count {
             if acc!(self, r, r) == 0 {
-                for r_below in r+1..self.row_count() {
+                for r_below in r+1..self.row_count {
                     if acc!(self, r_below, r) != 0 {
                         self.swap_rows(r, r_below);
                         break;
@@ -218,17 +218,17 @@ impl Matrix {
             // Scale to 1.
             if acc!(self, r, r) != 1 {
                 let scale = galois::div(1, acc!(self, r, r));
-                for c in 0..self.column_count() {
+                for c in 0..self.col_count {
                     acc!(self, r, c) = galois::mul(acc!(self, r, c), scale);
                 }
             }
             // Make everything below the 1 be a 0 by subtracting
             // a multiple of it.  (Subtraction and addition are
             // both exclusive or in the Galois field.)
-            for r_below in r+1..self.row_count() {
+            for r_below in r+1..self.row_count {
                 if acc!(self, r_below, r) != 0 {
                     let scale = acc!(self, r_below, r);
-                    for c in 0..self.column_count() {
+                    for c in 0..self.col_count {
                         acc!(self, r_below, c) ^=
                             galois::mul(scale,
                                         acc!(self, r, c));
@@ -238,11 +238,11 @@ impl Matrix {
         }
 
         // Now clear the part above the main diagonal.
-        for d in 0..self.row_count() {
+        for d in 0..self.row_count {
             for r_above in 0..d {
                 if acc!(self, r_above, d) != 0 {
                     let scale = acc!(self, r_above, d);
-                    for c in 0..self.column_count() {
+                    for c in 0..self.col_count {
                         acc!(self, r_above, c) ^=
                             galois::mul(scale,
                                         acc!(self, d, c));
@@ -258,8 +258,8 @@ impl Matrix {
             panic!("Trying to invert a non-square matrix")
         }
 
-        let row_count = self.row_count();
-        let col_count = self.column_count();
+        let row_count = self.row_count;
+        let col_count = self.col_count;
 
         let mut work = self.augment(&Self::identity(row_count));
 
