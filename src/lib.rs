@@ -598,7 +598,6 @@ impl ReedSolomon {
         }
     }
 
-    /*
     #[inline(always)]
     fn code_other_input_shard(pparam       : &ParallelParam,
                               matrix_rows  : &Vec<&[u8]>,
@@ -610,28 +609,29 @@ impl ReedSolomon {
                               input_shard  : &Box<[u8]>) {
         let table = &galois::MULT_TABLE;
 
-        (0..output_count).into_par_iter()
-            .for_each(|i_output| {
-                let mut output_shard = outputs[i_output].write().unwrap();
-                let matrix_row       = matrix_rows[i_output];
-                let mult_table_row   = &table[matrix_row[i_input] as usize];
-                let output_shard_pieces =
-                    helper::split_slice_mut_with_index(
-                        &mut output_shard.deref_mut()[offset..offset + byte_count],
-                        pparam.bytes_per_encode);
-                output_shard_pieces.into_par_iter()
-                    .for_each(|(index, out)| {
-                        let slice_offset =
-                            offset + index * pparam.bytes_per_encode;
-                        for i in 0..out.len() {
-                            out[i] ^=
-                                mult_table_row[
-                                    input_shard[slice_offset + i] as usize];
-                        }
-                    })
-            })
+        for i_output in 0..output_count {
+            let output_shard =
+                &mut outputs[i_output];
+            let matrix_row       = matrix_rows[i_output];
+            let mult_table_row   = &table[matrix_row[i_input] as usize];
+            let output_shard_pieces =
+                helper::split_slice_mut_with_index(
+                    &mut output_shard[offset..offset + byte_count],
+                    pparam.bytes_per_encode);
+            output_shard_pieces.into_par_iter()
+                .for_each(|(index, out)| {
+                    let slice_offset =
+                        offset + index * pparam.bytes_per_encode;
+                    for i in 0..out.len() {
+                        out[i] ^=
+                            mult_table_row[
+                                input_shard[slice_offset + i] as usize];
+                    }
+                })
+        }
     }
 
+    /*
     // Translated from InputOutputByteTableCodingLoop.java
     fn code_some_shards(pparam       : &ParallelParam,
                         matrix_rows  : &Vec<&[u8]>,
