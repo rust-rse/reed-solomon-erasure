@@ -9,6 +9,10 @@ Rust implementation of Reed-Solomon erasure coding
 
 This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon) and [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
+Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
+
+Version `2.X.X` copies Klaus Post's implementation.
+
 See [Notes](#notes) and [License](#license) section for details.
 
 ## Usage
