@@ -567,7 +567,7 @@ impl ReedSolomon {
 
     #[inline(always)]
     fn code_first_input_shard(pparam       : &ParallelParam,
-                              matrix_rows  : &Vec<&[u8]>,
+                              matrix_rows  : &[&[u8]],
                               outputs      : &mut [&mut Shard],
                               output_count : usize,
                               offset       : usize,
@@ -600,7 +600,7 @@ impl ReedSolomon {
 
     #[inline(always)]
     fn code_other_input_shard(pparam       : &ParallelParam,
-                              matrix_rows  : &Vec<&[u8]>,
+                              matrix_rows  : &[&[u8]],
                               outputs      : &mut [&mut Shard],
                               output_count : usize,
                               offset       : usize,
@@ -633,7 +633,7 @@ impl ReedSolomon {
 
     // Translated from InputOutputByteTableCodingLoop.java
     fn code_some_shards(pparam       : &ParallelParam,
-                        matrix_rows  : &Vec<&[u8]>,
+                        matrix_rows  : &[&[u8]],
                         inputs       : &[Shard],
                         input_count  : usize,
                         outputs      : &mut [&mut Shard],
@@ -660,19 +660,18 @@ impl ReedSolomon {
         }
     }
 
-    /*
     fn code_some_option_shards(pparam       : &ParallelParam,
-                               matrix_rows  : &Vec<&[u8]>,
+                               matrix_rows  : &[&[u8]],
                                inputs       : &[Option<Shard>],
                                input_count  : usize,
-                               outputs      : &mut [Shard],
+                               outputs      : &mut [&mut Shard],
                                output_count : usize,
                                offset       : usize,
                                byte_count   : usize) {
         {
             let i_input = 0;
             let input_shard = match inputs[i_input] {
-                Some(ref x) => x.read().unwrap(),
+                Some(ref x) => x,
                 None        => panic!()
             };
             Self::code_first_input_shard(pparam,
@@ -684,7 +683,7 @@ impl ReedSolomon {
 
         for i_input in 1..input_count {
             let input_shard = match inputs[i_input] {
-                Some(ref x) => x.read().unwrap(),
+                Some(ref x) => x,
                 None        => panic!()
             };
             Self::code_other_input_shard(pparam,
@@ -695,6 +694,7 @@ impl ReedSolomon {
         }
     }
 
+    /*
     /// Constructs parity shards
     ///
     /// # Remarks
