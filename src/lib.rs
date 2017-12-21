@@ -679,26 +679,27 @@ impl ReedSolomon {
                               input_shard  : &Shard) {
         let table = &galois::MULT_TABLE;
 
-        for i_output in 0..output_count {
-            let output_shard =
-                &mut outputs[i_output];
-            let matrix_row       = matrix_rows[i_output];
-            let mult_table_row   = &table[matrix_row[i_input] as usize];
-            let output_shard_pieces =
-                helper::split_slice_mut_with_index(
-                    &mut output_shard[offset..offset + byte_count],
-                    pparam.bytes_per_encode);
-            output_shard_pieces.into_par_iter()
-                .for_each(|(index, out)| {
-                    let slice_offset =
-                        offset + index * pparam.bytes_per_encode;
-                    for i in 0..out.len() {
-                        out[i] ^=
-                            mult_table_row[
-                                input_shard[slice_offset + i] as usize];
-                    }
-                })
-        }
+        helper::break_down_slice_mut_with_index(
+            &mut outputs[0..output_count])
+            .into_par_iter()
+            .for_each(|(i_output, output_shard)| {
+                let matrix_row       = matrix_rows[i_output];
+                let mult_table_row   = &table[matrix_row[i_input] as usize];
+                let output_shard_pieces =
+                    helper::split_slice_mut_with_index(
+                        &mut output_shard[offset..offset + byte_count],
+                        pparam.bytes_per_encode);
+                output_shard_pieces.into_par_iter()
+                    .for_each(|(index, out)| {
+                        let slice_offset =
+                            offset + index * pparam.bytes_per_encode;
+                        for i in 0..out.len() {
+                            out[i] ^=
+                                mult_table_row[
+                                    input_shard[slice_offset + i] as usize];
+                        }
+                    })
+            })
     }
 
     // Translated from InputOutputByteTableCodingLoop.java
