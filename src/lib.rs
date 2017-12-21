@@ -937,7 +937,7 @@ impl ReedSolomon {
             let mut i_shard = 0;
             for new_shard in new_data_shards.into_iter() {
                 if !shard_present[i_shard] {
-                    shards[i_shard] = new_shard;
+                    shards[i_shard] = Some(new_shard);
                 }
                 i_shard += 1;
             }
