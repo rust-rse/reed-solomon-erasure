@@ -217,6 +217,39 @@ mod helper {
                0,
                result)
     }
+
+    pub fn break_down_slice_mut<'a, T>(slice : &'a mut [T]) -> Vec<&'a mut T> {
+        let mut result = Vec::with_capacity(slice.len());
+        for (_, v) in split_slice_mut_with_index(slice, 1).into_iter() {
+            result.push(&mut v[0]);
+        }
+        result
+    }
+
+    pub fn break_down_slice<'a, T>(slice : &'a [T]) -> Vec<&'a T> {
+        let mut result = Vec::with_capacity(slice.len());
+        for (_, v) in split_slice_with_index(slice, 1).into_iter() {
+            result.push(& v[0]);
+        }
+        result
+    }
+
+    pub fn slice_to_vec_of_refs<'a, T>(slice : &'a [T]) -> Vec<&'a T> {
+        let mut result = Vec::with_capacity(slice.len());
+        for v in slice.iter() {
+            result.push(v);
+        }
+        result
+    }
+
+    pub fn mut_slice_to_vec_of_mut_refs<'a, T>(slice : &'a mut [T])
+                                               -> Vec<&'a mut T> {
+        let mut result = Vec::with_capacity(slice.len());
+        for v in slice.iter_mut() {
+            result.push(v);
+        }
+        result
+    }
 }
 
 
@@ -606,7 +639,7 @@ impl ReedSolomon {
                               offset       : usize,
                               byte_count   : usize,
                               i_input      : usize,
-                              input_shard  : &Box<[u8]>) {
+                              input_shard  : &Shard) {
         let table = &galois::MULT_TABLE;
 
         for i_output in 0..output_count {
@@ -634,7 +667,7 @@ impl ReedSolomon {
     // Translated from InputOutputByteTableCodingLoop.java
     fn code_some_shards(pparam       : &ParallelParam,
                         matrix_rows  : &Vec<&[u8]>,
-                        inputs       : &[Shard],
+                        inputs       : &[&Shard],
                         input_count  : usize,
                         outputs      : &mut [&mut Shard],
                         output_count : usize,
@@ -642,7 +675,7 @@ impl ReedSolomon {
                         byte_count   : usize) {
         {
             let i_input = 0;
-            let input_shard = &inputs[i_input];
+            let input_shard = inputs[i_input];
             Self::code_first_input_shard(pparam,
                                          matrix_rows,
                                          outputs, output_count,
@@ -662,7 +695,7 @@ impl ReedSolomon {
 
     fn code_some_option_shards(pparam       : &ParallelParam,
                                matrix_rows  : &[&[u8]],
-                               inputs       : &[Option<Shard>],
+                               inputs       : &[Option<&Shard>],
                                input_count  : usize,
                                outputs      : &mut [&mut Shard],
                                output_count : usize,
@@ -711,17 +744,14 @@ impl ReedSolomon {
         self.check_buffer_and_sizes(shards, offset, byte_count);
 
         let (inputs, outputs) = shards.split_at_mut(self.data_shard_count);
+        let inputs_ref  = helper::slice_to_vec_of_refs(inputs);
+        let mut outputs_ref = helper::mut_slice_to_vec_of_mut_refs(outputs);
 
         let parity_rows = self.get_parity_rows();
 
-        let mut outputs_ref = Vec::with_capacity(outputs.len());
-        for output in outputs.iter_mut() {
-            outputs_ref.push(output);
-        }
-
         Self::code_some_shards(&self.pparam,
                                &parity_rows,
-                               inputs,  self.data_shard_count,
+                               &inputs_ref,  self.data_shard_count,
                                &mut outputs_ref, self.parity_shard_count,
                                offset, byte_count);
     }
@@ -776,7 +806,6 @@ impl ReedSolomon {
                                 to_check,    self.parity_shard_count,
                                 offset, byte_count)
     }
-    /*
 
     /// Reconstruct missing shards
     ///
@@ -801,8 +830,13 @@ impl ReedSolomon {
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
         let mut number_present = 0;
+        let mut shard_present  = Vec::with_capacity(shards.len());
         for v in shards.iter() {
-            if let Some(_) = *v { number_present += 1; }
+            match *v {
+                Some(_) => { number_present += 1;
+                             shard_present.push(true); },
+                None    => { shard_present.push(false); }
+            }
         }
         if number_present == self.total_shard_count {
             // Cool.  All of the shards data data.  We don't
@@ -826,7 +860,7 @@ impl ReedSolomon {
         // the missing data shards.
         let mut sub_matrix =
             Matrix::new(self.data_shard_count, self.data_shard_count);
-        let mut sub_shards : Vec<Shard> =
+        let mut sub_shards : Vec<&Shard> =
             Vec::with_capacity(self.data_shard_count);
         {
             for matrix_row in 0..self.total_shard_count {
@@ -839,7 +873,7 @@ impl ReedSolomon {
                         sub_matrix.set(sub_matrix_row, c,
                                        self.matrix.get(matrix_row, c));
                     }
-                    sub_shards.push(Arc::clone(shard));
+                    sub_shards.push(&shard);
                 }
             }
         }
@@ -859,15 +893,17 @@ impl ReedSolomon {
         let mut matrix_rows : Vec<&[u8]> =
             vec![&[]; self.parity_shard_count];
         {
-            let mut outputs : Vec<Shard> =
-                make_blank_shards(shard_length,
-                                  self.parity_shard_count);
+            let mut outputs : Vec<&mut Shard> =
+                Vec::with_capacity(self.parity_shard_count);
             let mut output_count = 0;
             for i_shard in 0..self.data_shard_count {
-                if let None = shards[i_shard] {
-                    // link slot in outputs to the missing slot in shards
+                if !shard_present[i_shard] {
                     shards[i_shard] =
-                        Some(Arc::clone(&outputs[output_count]));
+                        Some(make_blank_shard(shard_length));
+                    match shards[i_shard] {
+                        Some(ref mut x) => outputs.push(x),
+                        None => panic!(),
+                    }
                     matrix_rows[output_count] =
                         data_decode_matrix.get_row(i_shard);
                     output_count += 1;
@@ -875,11 +911,12 @@ impl ReedSolomon {
             }
             Self::code_some_shards(&self.pparam,
                                    &matrix_rows,
-                                   &sub_shards,  self.data_shard_count,
+                                   sub_shards.as_slice(),  self.data_shard_count,
                                    &mut outputs, output_count,
                                    offset, byte_count);
         }
 
+        /*
         // Now that we have all of the data shards intact, we can
         // compute any of the parity that is missing.
         //
@@ -896,7 +933,7 @@ impl ReedSolomon {
                 if let None = shards[i_shard] {
                     // link slot in outputs to the missing slot in shards
                     shards[i_shard] =
-                        Some(Arc::clone(&outputs[output_count]));
+                        Some(&outputs[output_count]);
                     matrix_rows[output_count] =
                         parity_rows[i_shard
                                     - self.data_shard_count];
@@ -908,10 +945,10 @@ impl ReedSolomon {
                                           &shards, self.data_shard_count,
                                           &mut outputs, output_count,
                                           offset, byte_count);
-        }
+        }*/
 
         Ok (())
-    }*/
+    }
 }
 
     /*
