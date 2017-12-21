@@ -4,6 +4,10 @@ pub enum Error {
     SingularMatrix,
 }
 
+extern crate rayon;
+use rayon::prelude::*;
+use super::misc_utils;
+
 //pub type Row = Box<[u8]>;
 
 /*pub fn make_zero_len_row() -> Row {
@@ -131,7 +135,7 @@ impl Matrix {
                     val ^= galois::mul(acc!(self, r, i),
                                        acc!(rhs,  i, c));
                 }
-                result.set(r, c, val);
+                acc!(result, r, c) = val;
             }
         }
         result
