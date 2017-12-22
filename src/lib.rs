@@ -471,9 +471,14 @@ impl ReedSolomon {
                                                   output);
                             })
                     } else {
-                        galois::mul_slice_xor(matrix_rows[i_row][c],
-                                              input,
-                                              output);
+                        misc_utils::split_slice_mut
+                            (output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|output| {
+                                galois::mul_slice_xor(matrix_rows[i_row][c],
+                                                      input,
+                                                      output);
+                            })
                     }
                 })
         }
