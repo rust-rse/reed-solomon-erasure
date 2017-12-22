@@ -432,52 +432,6 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
-    fn check_shards(&self,
-                    shards : &Vec<Shard>,
-                    offset : usize, byte_count : usize) {
-        if shards.len() != self.total_shard_count {
-            panic!("Incorrect number of shards : {}", shards.len())
-        }
-
-        let shard_length = shards[0].len();
-        for shard in shards.iter() {
-            if shard.len() != shard_length {
-                panic!("Shards are of different sizes");
-            }
-        }
-
-        if shard_length < offset + byte_count {
-            panic!("Shards too small, shard length : Some({}), offset + byte_count : {}", shard_length, offset + byte_count);
-        }
-    }
-
-    fn check_option_shards(&self,
-                           shards : &Vec<Option<Shard>>,
-                           offset : usize, byte_count : usize) {
-        if shards.len() != self.total_shard_count {
-            panic!("Incorrect number of shards : {}", shards.len())
-        }
-
-        let mut shard_length = None;
-        for shard in shards.iter() {
-            if let Some(ref s) = *shard {
-                match shard_length {
-                    None    => shard_length = Some(s.len()),
-                    Some(x) => {
-                        if s.len() != x {
-                            panic!("Shards are of different sizes");
-                        }
-                    }
-                }
-            }
-        }
-
-        if let Some(x) = shard_length {
-            if x < offset + byte_count {
-                panic!("Shards too small, shard length : Some({}), offset + byte_count : {}", x, offset + byte_count);
-            }
-        }
-    }
 }
 
     /*
