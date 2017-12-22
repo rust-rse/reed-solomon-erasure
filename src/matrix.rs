@@ -4,24 +4,6 @@ pub enum Error {
     SingularMatrix,
 }
 
-extern crate rayon;
-use rayon::prelude::*;
-use super::misc_utils;
-
-//pub type Row = Box<[u8]>;
-
-/*pub fn make_zero_len_row() -> Row {
-    Rc::new(Box::new([]))
-}
-
-pub fn make_zero_len_rows(count : usize) -> Vec<Row> {
-    let mut result = Vec::with_capacity(count);
-    for _ in 0..count {
-        result.push(make_zero_len_row());
-    }
-    result
-}*/
-
 macro_rules! acc {
     ($m:ident, $r:expr, $c:expr)
         =>
@@ -29,18 +11,6 @@ macro_rules! acc {
         $m.data[$r * $m.col_count + $c]
     }
 }
-
-/*pub fn make_blank_row(size : usize) -> Row {
-    vec![0; size].into_boxed_slice()
-}
-
-pub fn make_blank_rows(size : usize, count : usize) -> Vec<Row> {
-    let mut result = Vec::with_capacity(count);
-    for _ in 0..count {
-        result.push(make_blank_row(size));
-    }
-    result
-}*/
 
 pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
     let mut result : Vec<T> =
