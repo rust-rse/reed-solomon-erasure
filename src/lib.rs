@@ -526,6 +526,7 @@ impl ReedSolomon {
         Ok(())
     }
 
+    /*
     fn reconstruct_internal(&self,
                             shards    : &mut [&mut Option<[u8]>],
                             data_only : bool) -> Result<(), Error> {
@@ -563,7 +564,32 @@ impl ReedSolomon {
 	      //
 	      // Also, create an array of indices of the valid rows we do have
 	      // and the invalid rows we don't have up until we have enough valid rows.
+        let sub_shards      : Vec<&[u8]> =
+            Vec::with_capacity(self.data_shard_count);
+        let valid_indices   : Vec<usize> =
+            Vec::with_capacity(self.data_shard_count);
+        let invalid_indices : Vec<usize> =
+            Vec::with_capacity(self.data_shard_count);
+        let mut sub_matrix_row           = 0;
+        let mut matrix_row               = 0;
+        while      matrix_row < self.total_shard_count
+            && sub_matrix_row < self.data_shard_count
+        {
+            if shards[matrix_row] != 0 {
+                sub_shards.push(shards[matrix_row]);
+                valid_indices.push(matrix_row);
+                sub_matrix_row += 1;
+            } else {
+                invalid_indices.push(matrix_row);
+            }
+
+            matrix_row += 1;
+        }
+
+    // Attempt to get the cached inverted matrix out of the tree
+    // based on the indices of the invalid rows.
     }
+    */
 }
 
     /*
