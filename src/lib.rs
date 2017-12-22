@@ -25,7 +25,7 @@ use matrix::Matrix;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
-    NotEnoughShards,
+    TooFewShards,
     WrongShardSize,
     EmptyShrd
 }
@@ -526,6 +526,44 @@ impl ReedSolomon {
         Ok(())
     }
 
+    fn reconstruct_internal(&self,
+                            shards    : &mut [&mut Option<[u8]>],
+                            data_only : bool) -> Result<(), Error> {
+        if shards.len < self.data_shard_count {
+            return Err(Error::TooFewShards)
+        }
+
+        check_shards(shards)?
+
+        let shard_size = shards[0].len();
+
+	      // Quick check: are all of the shards present?  If so, there's
+	      // nothing to do.
+        let mut number_present = 0;
+        for shard in shards.iter() {
+            if let Some(_) = *shard {
+                number_present += 1;
+            }
+        }
+        if number_present == self.data_shard_count {
+            // Cool.  All of the shards data data.  We don't
+            // need to do anything.
+            return Ok(())
+        }
+
+	      // More complete sanity check
+	      if number_present < self.data_shard_count {
+		        return Err(Error::TooFewShards)
+	      }
+
+	      // Pull out an array holding just the shards that
+	      // correspond to the rows of the submatrix.  These shards
+	      // will be the input to the decoding process that re-creates
+	      // the missing data shards.
+	      //
+	      // Also, create an array of indices of the valid rows we do have
+	      // and the invalid rows we don't have up until we have enough valid rows.
+    }
 }
 
     /*
