@@ -28,39 +28,8 @@ pub enum Error {
 }
 
 /// Main data type used by this library
-//pub type Shard = Rc<RefCell<Box<[u8]>>>;
-
 pub type Shard = Box<[u8]>;
 
-/*fn shard_into_tsshard(shard : Shard) -> TsShard {
-    let inner : Box<[u8]> = shard.into_inner();
-    Arc::new(RwLock::new(inner))
-}
-
-fn tsshard_into_shard(shard : TsShard) -> Shard {
-    let inner : Box<[u8]> = shard.into_inner().unwrap();
-    Rc::new(RefCell::new(inner))
-}
-
-fn shards_into_tsshards(shards : Vec<Shard>) -> Vec<TsShard> {
-    let mut result = Vec::with_capacity(shards.len());
-    for shard in shards.into_iter() {
-        let inner : Box<[u8]> =
-            shard.into_inner();
-        result.push(Arc::new(RwLock::new(inner)));
-    }
-    result
-}
-
-fn tsshards_into_shards(shards : Vec<TsShard>) -> Vec<Shard> {
-    let mut result = Vec::with_capacity(shards.len());
-    for shard in shards.into_iter() {
-        let inner : Box<[u8]> =
-            shard.into_inner().unwrap();
-        result.push(Rc::new(RefCell::new(inner)));
-    }
-    result
-}*/
 /// Constructs a shard
 ///
 /// # Example
