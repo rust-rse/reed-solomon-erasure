@@ -444,9 +444,14 @@ impl ReedSolomon {
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
                     if c == 0 {
-                        galois::mul_slice(matrix_rows[i_row][c],
-                                          input,
-                                          output);
+                        misc_utils::split_slice_mut
+                            (output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|output| {
+                                galois::mul_slice(matrix_rows[i_row][c],
+                                                  input,
+                                                  output);
+                            })
                     } else {
                         galois::mul_slice_xor(matrix_rows[i_row][c],
                                               input,
