@@ -45,7 +45,7 @@ macro_rules! shard {
     (
         $( $x:expr ),*
     ) => {
-        boxed_u8_into_shard(Box::new([ $( $x ),* ]))
+        Box::new([ $( $x ),* ])
     }
 }
 
@@ -65,7 +65,7 @@ macro_rules! shards {
     (
         $( [ $( $x:expr ),* ] ),*
     ) => {{
-        vec![ $( boxed_u8_into_shard(Box::new([ $( $x ),* ])) ),* ]
+        vec![ $( Box::new([ $( $x ),* ])),* ]
     }}
 }
 
@@ -138,13 +138,9 @@ mod helper {
 
 }
 
-pub fn boxed_u8_into_shard(b : Box<[u8]>) -> Shard {
-    b
-}
-
 /// Makes shard with byte array of zero length
 pub fn make_zero_len_shard() -> Shard {
-    boxed_u8_into_shard(Box::new([]))
+    Box::new([])
 }
 
 pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
@@ -182,7 +178,7 @@ pub fn shards_to_option_shards(shards : &Vec<Shard>)
 
     for v in shards.iter() {
         let inner : Box<[u8]> = v.clone();
-        result.push(Some(boxed_u8_into_shard(inner)));
+        result.push(Some(inner));
     }
     result
 }
@@ -242,7 +238,7 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
             None        => panic!("Missing shard, index : {}", i),
         };
         let inner : Box<[u8]> = shard.clone();
-        result.push(boxed_u8_into_shard(inner));
+        result.push(inner);
     }
     result
 }
@@ -289,7 +285,7 @@ pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
 
     for v in shards.iter() {
         let inner : Box<[u8]> = v.clone();
-        result.push(boxed_u8_into_shard(inner));
+        result.push(inner);
     }
     result
 }
@@ -313,7 +309,7 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
     for v in shards.iter() {
         let inner = match *v {
             Some(ref x) => { let inner = x.clone();
-                             Some(boxed_u8_into_shard(inner)) },
+                             Some(inner) },
             None        => None
         };
         result.push(inner);
