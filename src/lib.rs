@@ -25,7 +25,9 @@ use matrix::Matrix;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
-    NotEnoughShards
+    NotEnoughShards,
+    WrongShardSize,
+    EmptyShrd
 }
 
 /// Main data type used by this library
@@ -510,6 +512,20 @@ impl ReedSolomon {
         }
         true
     }
+
+    fn check_shards(shards : &[&[u8]]) -> Result<(), Error> {
+        let size = shards[0].len();
+        if size == 0 {
+            return Err(Error::EmptyShrd);
+        }
+        for shard in shards.iter() {
+            if shard.len() != size {
+                return Err(Error::WrongShardSize);
+            }
+        }
+        Ok(())
+    }
+
 }
 
     /*
