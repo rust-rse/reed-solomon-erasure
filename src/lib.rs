@@ -494,11 +494,14 @@ impl ReedSolomon {
             make_blank_shards(inputs[0].len(), to_check.len());
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            for i_row in 0..output_count {
-                galois::mul_slice_xor(matrix_rows[i_row][c],
-                                      input,
-                                      &mut outputs[i_row]);
-            }
+            misc_utils::break_down_slice_mut_with_index
+                (&mut outputs[0..output_count])
+                .into_par_iter()
+                .for_each(|(i_row, output)| {
+                    galois::mul_slice_xor(matrix_rows[i_row][c],
+                                          input,
+                                          output);
+                })
         }
         for i in 0..outputs.len() {
             if !misc_utils::slices_are_equal(&outputs[i], to_check[i]) {
