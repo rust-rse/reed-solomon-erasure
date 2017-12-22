@@ -17,7 +17,7 @@ extern crate rayon;
 use rayon::prelude::*;
 //extern crate threadpool;
 //use threadpool::ThreadPool;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 extern crate num_cpus;
 
@@ -322,6 +322,15 @@ fn shards_to_refs<'a>(shards : &'a Vec<Shard>) -> Vec<&'a [u8]> {
     let mut result = Vec::with_capacity(shards.len());
     for shard in shards.iter() {
         result.push(shard.deref());
+    }
+    result
+}
+
+fn mut_shards_to_mut_refs<'a>(shards : &'a mut Vec<Shard>)
+                              -> Vec<&'a mut [u8]> {
+    let mut result = Vec::with_capacity(shards.len());
+    for shard in shards.iter_mut() {
+        result.push(shard.deref_mut());
     }
     result
 }
