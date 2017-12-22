@@ -82,6 +82,12 @@ pub fn mul_slice_xor(c : u8, input : &[u8], output : &mut [u8]) {
     }
 }
 
+pub fn slice_xor(input : &[u8], output : &mut [u8]) {
+    for n in 0..input.len() {
+        output[n] ^= input[n]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{LOG_TABLE, add, sub, mul, div, exp};
