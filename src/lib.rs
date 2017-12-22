@@ -432,6 +432,26 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
+    fn code_some_slices(&self,
+                        matrix_rows  : &[&[u8]],
+                        inputs       : &[&[u8]],
+                        outputs      : &mut [&mut [u8]],
+                        output_count : usize) {
+        for c in 0..self.data_shard_count {
+            let input = inputs[c];
+            for i_row in 0..output_count {
+                if c == 0 {
+                    galois::mul_slice(matrix_rows[i_row][c],
+                                      input,
+                                      outputs[i_row]);
+                } else {
+                    galois::mul_slice_xor(matrix_rows[i_row][c],
+                                          input,
+                                          outputs[i_row]);
+                }
+            }
+        }
+    }
 }
 
     /*
