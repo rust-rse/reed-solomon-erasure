@@ -32,18 +32,16 @@ pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
     let mut rem_len   = slice.len();
     let mut cur_index = 0;
     let mut result    = Vec::with_capacity(slice.len() / chunk_size + 1);
-    let mut rem_slice = Vec::with_capacity(1);
-
-    rem_slice.push(slice);
+    let rem_slice     = Cell::new(slice);
 
     loop {
         if chunk_size < rem_len {
-            let slice = rem_slice.pop().unwrap();
+            let slice = rem_slice.take();
             let (l, r) = slice.split_at(1);
             result.push((cur_index, l));
-            rem_slice.push(r);
+            rem_slice.set(r);
         } else {
-            result.push((cur_index, rem_slice.pop().unwrap()));
+            result.push((cur_index, rem_slice.take()));
             break;
         }
 
