@@ -4,13 +4,13 @@ use std::cell::RefCell;
 pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
                                           chunk_size : usize)
                                           -> Vec<(usize, &'a mut [T])> {
-    let mut rem_len                      = slice.len();
-    let mut cur_index                          = 0;
-    let mut result : Vec<(usize, &'a mut [T])> =
-        Vec::with_capacity(slice.len() / chunk_size + 1);
-    let mut rem_slice : Vec<&'a mut [T]> =
-        Vec::with_capacity(slice.len() / chunk_size + 1);
+    let mut rem_len   = slice.len();
+    let mut cur_index = 0;
+    let mut result    = Vec::with_capacity(slice.len() / chunk_size + 1);
+    let mut rem_slice = Vec::with_capacity(1);
+
     rem_slice.push(slice);
+
     loop {
         if chunk_size < rem_len {
             let slice = rem_slice.pop().unwrap();
