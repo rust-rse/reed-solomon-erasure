@@ -1,27 +1,31 @@
+use std::cell::Cell;
+use std::cell::RefCell;
+
 pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
                                           chunk_size : usize)
                                           -> Vec<(usize, &'a mut [T])> {
-    fn helper<'a, T>(slice      : &'a mut [T],
-                     chunk_size : usize,
-                     cur_index  : usize,
-                     mut result : Vec<(usize, &'a mut [T])>)
-                     -> Vec<(usize, &'a mut [T])> {
-        if chunk_size < slice.len() {
-            let (l, r) = slice.split_at_mut(chunk_size);
+    let mut rem_len                      = slice.len();
+    let mut cur_index                          = 0;
+    let mut result : Vec<(usize, &'a mut [T])> =
+        Vec::with_capacity(slice.len() / chunk_size + 1);
+    let mut rem_slice : Vec<&'a mut [T]> =
+        Vec::with_capacity(slice.len() / chunk_size + 1);
+    rem_slice.push(slice);
+    loop {
+        if chunk_size < rem_len {
+            let slice = rem_slice.pop().unwrap();
+            let (l, r) = slice.split_at_mut(1);
             result.push((cur_index, l));
-            helper(r, chunk_size, cur_index + 1, result)
+            rem_slice.push(r);
+        } else {
+            result.push((cur_index, rem_slice.pop().unwrap()));
+            break;
         }
-        else {
-            result.push((cur_index, slice));
-            result
-        }
-    }
 
-    let result = Vec::with_capacity(slice.len() / chunk_size + 1);
-    helper(slice,
-           chunk_size,
-           0,
-           result)
+        cur_index += 1;
+        rem_len   -= chunk_size;
+    }
+    result
 }
 
 pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
