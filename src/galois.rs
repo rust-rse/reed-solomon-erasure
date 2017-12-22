@@ -74,6 +74,14 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     }
 }
 
+pub fn mul_slice_xor(c : u8, input : &[u8], output : &mut [u8]) {
+    let mt = &MULT_TABLE[c as usize];
+
+    for n in 0..input.len() {
+        output[n] ^= mt[input[n] as usize];
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{LOG_TABLE, add, sub, mul, div, exp};
