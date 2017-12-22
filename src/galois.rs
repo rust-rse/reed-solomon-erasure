@@ -91,6 +91,13 @@ pub fn slice_xor(input : &[u8], output : &mut [u8]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    extern crate rand;
+
+    fn fill_random(arr : &mut [u8]) {
+        for a in arr.iter_mut() {
+            *a = rand::random::<u8>();
+        }
+    }
 
     static BACKBLAZE_LOG_TABLE : [u8; 256] = [
         //-1,    0,    1,   25,    2,   50,   26,  198,
@@ -249,6 +256,33 @@ mod tests {
         assert_eq!(exp(2, 2), 4);
         assert_eq!(exp(5, 20), 235);
         assert_eq!(exp(13, 7), 43);
+    }
+
+    #[test]
+    fn test_slice_add() {
+        let length_list = [16, 32, 34];
+        for len in length_list.into_iter() {
+            let mut input = vec![0; *len];
+            fill_random(&mut input);
+            let mut output = vec![0; *len];
+            fill_random(&mut output);
+            let mut expect = vec![0; *len];
+            for i in 0..expect.len() {
+                expect[i] = input[i] ^ output[i];
+            }
+            slice_xor(&input, &mut output);
+            for i in 0..expect.len() {
+                assert_eq!(expect[i], output[i]);
+            }
+            fill_random(&mut output);
+            for i in 0..expect.len() {
+                expect[i] = input[i] ^ output[i];
+            }
+            slice_xor(&input, &mut output);
+            for i in 0..expect.len() {
+                assert_eq!(expect[i], output[i]);
+            }
+        }
     }
 
     #[test]
