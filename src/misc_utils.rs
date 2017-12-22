@@ -31,27 +31,28 @@ pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
 pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
                                       chunk_size : usize)
                                       -> Vec<(usize, &'a [T])> {
-    fn helper<'a, T>(slice      : &'a [T],
-                     chunk_size : usize,
-                     cur_index  : usize,
-                     mut result : Vec<(usize, &'a [T])>)
-                     -> Vec<(usize, &'a [T])> {
-        if chunk_size < slice.len() {
-            let (l, r) = slice.split_at(chunk_size);
-            result.push((cur_index, l));
-            helper(r, chunk_size, cur_index + 1, result)
-        }
-        else {
-            result.push((cur_index, slice));
-            result
-        }
-    }
+    let mut rem_len   = slice.len();
+    let mut cur_index = 0;
+    let mut result    = Vec::with_capacity(slice.len() / chunk_size + 1);
+    let mut rem_slice = Vec::with_capacity(1);
 
-    let result = Vec::with_capacity(slice.len() / chunk_size + 1);
-    helper(slice,
-           chunk_size,
-           0,
-           result)
+    rem_slice.push(slice);
+
+    loop {
+        if chunk_size < rem_len {
+            let slice = rem_slice.pop().unwrap();
+            let (l, r) = slice.split_at(1);
+            result.push((cur_index, l));
+            rem_slice.push(r);
+        } else {
+            result.push((cur_index, rem_slice.pop().unwrap()));
+            break;
+        }
+
+        cur_index += 1;
+        rem_len   -= chunk_size;
+    }
+    result
 }
 
 pub fn split_slice_mut<'a, T> (slice      : &'a mut [T],
