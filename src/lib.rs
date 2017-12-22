@@ -17,6 +17,7 @@ extern crate rayon;
 use rayon::prelude::*;
 //extern crate threadpool;
 //use threadpool::ThreadPool;
+use std::ops::Deref;
 
 extern crate num_cpus;
 
@@ -317,6 +318,14 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
     result
 }
 
+fn shards_to_refs<'a>(shards : &'a Vec<Shard>) -> Vec<&'a [u8]> {
+    let mut result = Vec::with_capacity(shards.len());
+    for shard in shards.iter() {
+        result.push(shard.deref());
+    }
+    result
+}
+
 /// Reed-Solomon erasure code encoder/decoder
 ///
 /// # Remarks
@@ -459,6 +468,16 @@ impl ReedSolomon {
                     }
                 })
         }
+    }
+
+    fn check_some_shards(&self,
+                         matrix_rows  : &[&[u8]],
+                         inputs       : &[&[u8]],
+                         to_check     : &[&[u8]],
+                         output_count : usize) {
+        let outputs =
+            vec![make_blank_shard; to_check.len()];
+
     }
 }
 
