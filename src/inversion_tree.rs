@@ -1,15 +1,15 @@
 use super::matrix::Matrix;
 
-use std::sync::{RwLock, RwLockReadGuard};
+use std::sync::RwLock;
 use std::sync::Arc;
 
 pub struct InversionTree {
-    root : RwLock<InversionNode>
+    pub root : RwLock<InversionNode>
 }
 
-struct InversionNode {
-    matrix   : Arc<Matrix>,
-    children : Vec<Option<InversionNode>>
+pub struct InversionNode {
+    pub matrix   : Arc<Matrix>,
+    pub children : Vec<Option<InversionNode>>
 }
 
 impl InversionTree {
@@ -26,10 +26,6 @@ impl InversionTree {
                 children
             })
         }
-    }
-
-    pub fn read_root(&self) -> RwLockReadGuard<InversionNode> {
-        self.root.read().unwrap()
     }
 
     pub fn get_inverted_matrix(&self,
@@ -172,10 +168,31 @@ impl InversionNode {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    use super::super::matrix::Matrix;
+
+    macro_rules! matrix {
+        (
+            $(
+                [ $( $x:expr ),+ ]
+            ),*
+        ) => (
+            Matrix::new_with_data(vec![ $( vec![$( $x ),*] ),* ])
+        );
+        ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
+    }
+
     #[test]
     fn test_new_inversion_tree() {
         let tree = InversionTree::new(3, 2);
 
-        let children = tree.read_root().len();
+        let children = tree.root.read().unwrap().children.len();
+        assert_eq!(5, children);
+
+        let expect = matrix!([1, 0, 0],
+                             [0, 1, 0],
+                             [0, 0, 1]);
+        assert_eq!(expect, *tree.root.read().unwrap().matrix);
     }
 }
