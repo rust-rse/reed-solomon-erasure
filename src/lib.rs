@@ -524,17 +524,6 @@ impl ReedSolomon {
         result
     }
 
-    /*fn code_some_option_shards(&self,
-                               matrix_rows  : &[&[u8]],
-                               inputs       : &[&[u8]],
-                               outputs      : &mut [&mut Option<Shard>],
-                               output_count : usize) {
-        self.code_some_slices(matrix_rows,
-                              inputs,
-                              &mut Self::mut_option_shards_to_mut_slices(
-                                  outputs))
-    }*/
-
     fn code_some_slices(&self,
                         matrix_rows  : &[&[u8]],
                         inputs       : &[&[u8]],
