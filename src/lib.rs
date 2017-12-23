@@ -856,6 +856,16 @@ impl ReedSolomon {
                                       &all_data_shards_refs,
                                       &mut outputs_refs);
             }
+
+            // Patch outputs into provided set of shards
+            {
+                let mut missing_parity_index = 0;
+                for output in outputs.into_iter() {
+                    *empty_parity_slots[missing_parity_index] =
+                        Some(output);
+                    missing_parity_index += 1;
+                }
+            }
             Ok(())
         }
     }
