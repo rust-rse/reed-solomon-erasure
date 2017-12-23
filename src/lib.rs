@@ -852,6 +852,9 @@ impl ReedSolomon {
                 }
                 // Now do the actual computation for the missing
                 // parity shards
+                self.code_some_slices(&matrix_rows,
+                                      &all_data_shards_refs,
+                                      &mut outputs_refs);
             }
             Ok(())
         }
