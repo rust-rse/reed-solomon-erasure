@@ -1,6 +1,6 @@
 use super::matrix::Matrix;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Error {
     AlreadySet,
     NotSquare,
@@ -21,7 +21,7 @@ pub struct InversionNode {
 }
 
 impl InversionTree {
-    fn new(data_shards : usize,
+    pub fn new(data_shards : usize,
            parity_shards : usize)
            -> InversionTree {
         let mut children = Vec::with_capacity(data_shards + parity_shards);
@@ -48,7 +48,7 @@ impl InversionTree {
 
     pub fn insert_inverted_matrix(&self,
                                   invalid_indices : &[usize],
-                                  matrix          : Matrix,
+                                  matrix          : &Arc<Matrix>,
                                   shards          : usize)
                                   -> Result<(), Error> {
 	      // If no invalid indices were given then we are done because the
@@ -129,7 +129,7 @@ impl InversionNode {
 
     pub fn insert_inverted_matrix(&mut self,
                                   invalid_indices : &[usize],
-                                  matrix          : Matrix,
+                                  matrix          : &Arc<Matrix>,
                                   shards          : usize) {
         // Set up stacks for storing the environment
         let mut node_stack            = Vec::with_capacity(1);
@@ -168,7 +168,7 @@ impl InversionNode {
                         children.push(None);
                     }
                     let new_node = InversionNode {
-                        matrix   : Arc::new(matrix),
+                        matrix   : Arc::clone(matrix),
                         children
                     };
 		                // Insert the new node into the tree at the first index relative
@@ -191,7 +191,7 @@ impl InversionNode {
                     } else {
 		                    // If there aren't any more invalid indices to search, we've found our
 		                    // node.  Cache the inverted matrix in this node.
-                        return node.matrix = Arc::new(matrix);
+                        return node.matrix = Arc::clone(matrix);
                     }
                 }
             }

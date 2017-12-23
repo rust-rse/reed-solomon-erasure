@@ -16,19 +16,20 @@ mod inversion_tree;
 
 extern crate rayon;
 use rayon::prelude::*;
-//extern crate threadpool;
-//use threadpool::ThreadPool;
 use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
 
 extern crate num_cpus;
 
 use matrix::Matrix;
+use inversion_tree::InversionTree;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
     TooFewShards,
     WrongShardSize,
-    EmptyShrd
+    EmptyShard,
+    InversionTreeError(inversion_tree::Error)
 }
 
 /// Main data type used by this library
@@ -350,12 +351,13 @@ fn mut_shards_to_mut_refs<'a>(shards : &'a mut Vec<Shard>)
 ///  `byte_count` refers to number of bytes, starting from `offset` to use for encoding/decoding.
 ///
 ///  `byte_count` defaults to length of shard if it is `None`.
-#[derive(PartialEq, Debug)]
+#[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
     parity_shard_count : usize,
     total_shard_count  : usize,
     matrix             : Matrix,
+    tree               : InversionTree,
     //parity_rows        : Vec<Vec<[u8]>>,
     pparam             : ParallelParam
 }
@@ -437,6 +439,7 @@ impl ReedSolomon {
             parity_shard_count : parity_shards,
             total_shard_count  : total_shards,
             matrix,
+            tree               : InversionTree::new(data_shards, parity_shards),
             pparam
         }
     }
@@ -453,15 +456,55 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
+    fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [&'a mut Option<Shard>])
+                                       -> Vec<&'a mut [u8]> {
+        let mut result : Vec<&mut [u8]> =
+            Vec::with_capacity(shards.len());
+        for shard in shards.iter() {
+            match **shard {
+                None => panic!("Option shards slot is None"),
+                Some(ref mut s) => {
+                    result.push(s);
+                }
+            }
+        }
+        result
+    }
+
+    fn option_shards_to_slices<'a>(shards : &'a [Option<Shard>])
+                                   -> Vec<&'a [u8]> {
+        let mut result : Vec<&[u8]> =
+            Vec::with_capacity(shards.len());
+        for shard in shards.iter() {
+            match *shard {
+                None => panic!("Option shards slot is None"),
+                Some(ref s) => {
+                    result.push(s);
+                }
+            }
+        }
+        result
+    }
+
+    fn code_some_option_shards(&self,
+                               matrix_rows  : &[&[u8]],
+                               inputs       : &[&[u8]],
+                               outputs      : &mut [&mut Option<Shard>],
+                               output_count : usize) {
+        self.code_some_slices(matrix_rows,
+                              inputs,
+                              &mut Self::mut_option_shards_to_mut_slices(
+                                  outputs))
+    }
+
     fn code_some_slices(&self,
                         matrix_rows  : &[&[u8]],
                         inputs       : &[&[u8]],
-                        outputs      : &mut [&mut [u8]],
-                        output_count : usize) {
+                        outputs      : &mut [&mut [u8]]) {
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            misc_utils::break_down_slice_mut_with_index
-                (&mut outputs[0..output_count])
+            misc_utils::break_down_slice_mut_with_index(
+                outputs)
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
                     if c == 0 {
@@ -514,30 +557,75 @@ impl ReedSolomon {
         true
     }
 
-    fn check_shards(shards : &[&[u8]]) -> Result<(), Error> {
-        let size = shards[0].len();
+    fn check_slices(slices : &[&[u8]]) -> Result<(), Error> {
+        let size = slices[0].len();
         if size == 0 {
-            return Err(Error::EmptyShrd);
+            return Err(Error::EmptyShard);
         }
-        for shard in shards.iter() {
-            if shard.len() != size {
+        for slice in slices.iter() {
+            if slice.len() != size {
                 return Err(Error::WrongShardSize);
             }
         }
         Ok(())
     }
 
-    /*
+    fn option_shards_size(slices : &[Option<Shard>]) -> Result<usize, Error> {
+        let mut size = None;
+        for slice in slices.iter() {
+            match *slice {
+                None => {},
+                Some(s) => {
+                    size = Some(s.len());
+                    break;
+                }
+            }
+        }
+        match size {
+            None       => Err(Error::EmptyShard),
+            Some(size) => Ok(size)
+        }
+    }
+
+    fn check_option_shards(slices : &[Option<Shard>]) -> Result<(), Error> {
+        let mut size = None;
+        for slice in slices.iter() {
+            match *slice {
+                None => {},
+                Some(s) => {
+                    size = Some(s.len());
+                    break;
+                }
+            }
+        }
+        match size {
+            None    => return Err(Error::EmptyShard),
+            Some(size) => {
+                for slice in slices.iter() {
+                    match *slice {
+                        None => {},
+                        Some(slice) => {
+                            if slice.len() != size {
+                                return Err(Error::WrongShardSize);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn reconstruct_internal(&self,
-                            shards    : &mut [&mut Option<[u8]>],
+                            shards    : &mut [Option<Shard>],
                             data_only : bool) -> Result<(), Error> {
-        if shards.len < self.data_shard_count {
+        if shards.len() < self.data_shard_count {
             return Err(Error::TooFewShards)
         }
 
-        check_shards(shards)?
+        Self::check_option_shards(shards)?;
 
-        let shard_size = shards[0].len();
+        let shard_size = Self::option_shards_size(shards).unwrap();
 
 	      // Quick check: are all of the shards present?  If so, there's
 	      // nothing to do.
@@ -576,21 +664,108 @@ impl ReedSolomon {
         while      matrix_row < self.total_shard_count
             && sub_matrix_row < self.data_shard_count
         {
-            if shards[matrix_row] != 0 {
-                sub_shards.push(shards[matrix_row]);
-                valid_indices.push(matrix_row);
-                sub_matrix_row += 1;
-            } else {
-                invalid_indices.push(matrix_row);
+            match shards[matrix_row] {
+                Some(ref shard) => {
+                    sub_shards.push(shard);
+                    valid_indices.push(matrix_row);
+                    sub_matrix_row += 1;
+                },
+                None => {
+                    invalid_indices.push(matrix_row);
+                }
             }
 
             matrix_row += 1;
         }
 
-    // Attempt to get the cached inverted matrix out of the tree
-    // based on the indices of the invalid rows.
+        // Attempt to get the cached inverted matrix out of the tree
+        // based on the indices of the invalid rows.
+        let data_decode_matrix =
+            match self.tree.get_inverted_matrix(&invalid_indices) {
+	              // If the inverted matrix isn't cached in the tree yet we must
+	              // construct it ourselves and insert it into the tree for the
+	              // future.  In this way the inversion tree is lazily loaded.
+                None => {
+                    // Pull out the rows of the matrix that correspond to the
+                    // shards that we have and build a square matrix.  This
+                    // matrix could be used to generate the shards that we have
+                    // from the original data.
+                    let sub_matrix = Matrix::new(self.data_shard_count, self.data_shard_count);
+                    for sub_matrix_row in 0..valid_indices.len() {
+                        let valid_index = valid_indices[sub_matrix_row];
+                        for c in 0..self.data_shard_count {
+                            sub_matrix.set(sub_matrix_row, c,
+                                           self.matrix.get(valid_index, c));
+                        }
+                    }
+                    // Invert the matrix, so we can go from the encoded shards
+                    // back to the original data.  Then pull out the row that
+                    // generates the shard that we want to decode.  Note that
+                    // since this matrix maps back to the original data, it can
+                    // be used to create a data shard, but not a parity shard.
+                    let data_decode_matrix = Arc::new(sub_matrix.invert().unwrap());
+
+                    // Cache the inverted matrix in the tree for future use keyed on the
+                    // indices of the invalid rows.
+                    self.tree.insert_inverted_matrix(&invalid_indices,
+                                                     &data_decode_matrix,
+                                                     self.total_shard_count);
+                    data_decode_matrix
+                },
+                Some(m) => {
+                    m
+                }
+            };
+
+	      // Re-create any data shards that were missing.
+	      //
+	      // The input to the coding is all of the shards we actually
+	      // have, and the output is the missing data shards.  The computation
+	      // is done using the special decode matrix we just built.
+        let outputs     =
+            Vec::with_capacity(self.parity_shard_count);
+        let matrix_rows = Vec::with_capacity(self.parity_shard_count);
+        for i_shard in 0..self.data_shard_count {
+            if shards[i_shard] == None {
+                shards[i_shard] = Some(vec![0; shard_size].into_boxed_slice());
+                outputs.push(&mut shards[i_shard]);
+                matrix_rows.push(data_decode_matrix.get_row(i_shard));
+            }
+        }
+        self.code_some_option_shards(&matrix_rows,
+                                     &sub_shards,
+                                     &mut outputs,
+                                     shard_size);
+
+        if data_only {
+		        // Exit out early if we are only interested in the data shards
+            return Ok(())
+        }
+
+	      // Now that we have all of the data shards intact, we can
+	      // compute any of the parity that is missing.
+	      //
+	      // The input to the coding is ALL of the data shards, including
+	      // any that we just calculated.  The output is whichever of the
+	      // data shards were missing.
+        let outputs     : Vec<&mut [u8]> =
+            Vec::with_capacity(self.parity_shard_count);
+        let matrix_rows = Vec::with_capacity(self.parity_shard_count);
+        let parity_rows = self.get_parity_rows();
+        for i_shard in self.data_shard_count..self.total_shard_count {
+            if shards[i_shard] == None {
+                shards[i_shard] = Some(vec![0; shard_size].into_boxed_slice());
+                outputs.push(&mut shards[i_shard]);
+                matrix_rows.push(parity_rows[i_shard - self.data_shard_count]);
+            }
+        }
+        self.code_some_slices(&matrix_rows,
+                              &Self::option_shards_to_slices(
+                                  &shards[..self.data_shard_count]),
+                              &mut outputs);
+
+        Ok(())
     }
-    */
 }
 
     /*
