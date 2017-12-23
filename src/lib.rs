@@ -12,6 +12,7 @@
 mod misc_utils;
 mod galois;
 mod matrix;
+mod inversion_tree;
 
 extern crate rayon;
 use rayon::prelude::*;
