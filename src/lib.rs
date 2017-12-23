@@ -642,6 +642,16 @@ impl ReedSolomon {
         Ok(())
     }
 
+    pub fn reconstruct(&self,
+                       shards : &mut [Option<Shard>]) -> Result<(), Error> {
+        self.reconstruct_internal(shards, false)
+    }
+
+    pub fn reconstruct_data(&self,
+                            shards : &mut [Option<Shard>]) -> Result<(), Error> {
+        self.reconstruct_internal(shards, true)
+    }
+
     fn reconstruct_internal(&self,
                             shards    : &mut [Option<Shard>],
                             data_only : bool) -> Result<(), Error> {
