@@ -539,6 +539,56 @@ impl ReedSolomon {
                                   data_only)
     }
 
+    fn get_data_decode_matrix(&self,
+                              valid_indices : &[usize],
+                              invalid_indices : &[usize])
+                              -> Result<Arc<Matrix>, Error> {
+        // Attempt to get the cached inverted matrix out of the tree
+        // based on the indices of the invalid rows.
+        match self.tree.get_inverted_matrix(&invalid_indices) {
+            // If the inverted matrix isn't cached in the tree yet we must
+            // construct it ourselves and insert it into the tree for the
+            // future.  In this way the inversion tree is lazily loaded.
+            None => {
+                // Pull out the rows of the matrix that correspond to the
+                // shards that we have and build a square matrix.  This
+                // matrix could be used to generate the shards that we have
+                // from the original data.
+                let mut sub_matrix =
+                    Matrix::new(self.data_shard_count,
+                                self.data_shard_count);
+                for sub_matrix_row in 0..valid_indices.len() {
+                    let valid_index = valid_indices[sub_matrix_row];
+                    for c in 0..self.data_shard_count {
+                        sub_matrix.set(sub_matrix_row, c,
+                                       self.matrix.get(valid_index, c));
+                    }
+                }
+                // Invert the matrix, so we can go from the encoded shards
+                // back to the original data.  Then pull out the row that
+                // generates the shard that we want to decode.  Note that
+                // since this matrix maps back to the original data, it can
+                // be used to create a data shard, but not a parity shard.
+                let data_decode_matrix = Arc::new(sub_matrix.invert().unwrap());
+
+                // Cache the inverted matrix in the tree for future use keyed on the
+                // indices of the invalid rows.
+                let insert_result =
+                    self.tree.insert_inverted_matrix(&invalid_indices,
+                                                     &data_decode_matrix,
+                                                     self.total_shard_count);
+                match insert_result {
+                    Ok(()) => {},
+                    Err(x) => return Err(Error::InversionTreeError(x))
+                }
+                Ok(data_decode_matrix)
+            },
+            Some(m) => {
+                Ok(m)
+            }
+        }
+    }
+
     fn reconstruct_internal(&self,
                             slices        : &mut [&mut [u8]],
                             slice_present : &[bool],
@@ -615,57 +665,15 @@ impl ReedSolomon {
             matrix_row += 1;
         }
 
-        // Attempt to get the cached inverted matrix out of the tree
-        // based on the indices of the invalid rows.
         let data_decode_matrix =
-            match self.tree.get_inverted_matrix(&invalid_indices) {
-	              // If the inverted matrix isn't cached in the tree yet we must
-	              // construct it ourselves and insert it into the tree for the
-	              // future.  In this way the inversion tree is lazily loaded.
-                None => {
-                    // Pull out the rows of the matrix that correspond to the
-                    // shards that we have and build a square matrix.  This
-                    // matrix could be used to generate the shards that we have
-                    // from the original data.
-                    let mut sub_matrix =
-                        Matrix::new(self.data_shard_count,
-                                    self.data_shard_count);
-                    for sub_matrix_row in 0..valid_indices.len() {
-                        let valid_index = valid_indices[sub_matrix_row];
-                        for c in 0..self.data_shard_count {
-                            sub_matrix.set(sub_matrix_row, c,
-                                           self.matrix.get(valid_index, c));
-                        }
-                    }
-                    // Invert the matrix, so we can go from the encoded shards
-                    // back to the original data.  Then pull out the row that
-                    // generates the shard that we want to decode.  Note that
-                    // since this matrix maps back to the original data, it can
-                    // be used to create a data shard, but not a parity shard.
-                    let data_decode_matrix = Arc::new(sub_matrix.invert().unwrap());
+            self.get_data_decode_matrix(&valid_indices,
+                                        &invalid_indices)?;
 
-                    // Cache the inverted matrix in the tree for future use keyed on the
-                    // indices of the invalid rows.
-                    let insert_result =
-                        self.tree.insert_inverted_matrix(&invalid_indices,
-                                                         &data_decode_matrix,
-                                                         self.total_shard_count);
-                    match insert_result {
-                        Ok(()) => {},
-                        Err(x) => return Err(Error::InversionTreeError(x))
-                    }
-                    data_decode_matrix
-                },
-                Some(m) => {
-                    m
-                }
-            };
-
-	      // Re-create any data shards that were missing.
-	      //
-	      // The input to the coding is all of the shards we actually
-	      // have, and the output is the missing data shards.  The computation
-	      // is done using the special decode matrix we just built.
+        // Re-create any data shards that were missing.
+        //
+        // The input to the coding is all of the shards we actually
+        // have, and the output is the missing data shards.  The computation
+        // is done using the special decode matrix we just built.
         let mut matrix_rows = Vec::with_capacity(self.parity_shard_count);
         for i_slice in 0..self.data_shard_count {
             if !slice_present[i_slice] {
