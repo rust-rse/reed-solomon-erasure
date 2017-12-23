@@ -1,7 +1,6 @@
 use super::matrix::Matrix;
 
-use std::sync::RwLock;
-use std::cell::Cell;
+use std::sync::{RwLock, RwLockReadGuard};
 use std::sync::Arc;
 
 pub struct InversionTree {
@@ -27,6 +26,10 @@ impl InversionTree {
                 children
             })
         }
+    }
+
+    pub fn read_root(&self) -> RwLockReadGuard<InversionNode> {
+        self.root.read().unwrap()
     }
 
     pub fn get_inverted_matrix(&self,
@@ -164,5 +167,15 @@ impl InversionNode {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_new_inversion_tree() {
+        let tree = InversionTree::new(3, 2);
+
+        let children = tree.read_root().len();
     }
 }
