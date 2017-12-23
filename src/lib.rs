@@ -456,14 +456,28 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
-    fn break_down_mut_option_shards(shards : &mut [Option<Shard>])
+    fn breakdown_mut_option_shards(shards : &mut [Option<Shard>])
                                     -> Vec<&mut Option<Shard>> {
-        misc_utils::break_down_slice_mut(shards)
+        misc_utils::breakdown_slice_mut(shards)
     }
 
-    fn break_down_mut_shards(shards : &mut [Shard])
+    fn breakdown_mut_option_shards_to_refs<'a>(shards : &'a [&mut Option<Shard>])
+                                            -> Vec<&'a [u8]> {
+        let tmp = misc_utils::breakdown_slice(shards);
+        let mut result : Vec<&[u8]> =
+            Vec::with_capacity(tmp.len());
+        for s in tmp.into_iter() {
+            match **s {
+                None        => panic!("Slot is empty"),
+                Some(ref s) => result.push(s)
+            }
+        }
+        result
+    }
+
+    fn breakdown_mut_shards(shards : &mut [Shard])
                              -> Vec<&mut [u8]> {
-        let tmp = misc_utils::break_down_slice_mut(shards);
+        let tmp = misc_utils::breakdown_slice_mut(shards);
         let mut result : Vec<&mut [u8]> =
             Vec::with_capacity(tmp.len());
         for s in tmp.into_iter() {
@@ -472,9 +486,9 @@ impl ReedSolomon {
         result
     }
 
-    fn break_down_shards_ref<'a>(shards : &'a [&Shard])
+    fn breakdown_shards_ref<'a>(shards : &'a [&Shard])
                                  -> Vec<&'a [u8]> {
-        let tmp = misc_utils::break_down_slice(shards);
+        let tmp = misc_utils::breakdown_slice(shards);
         let mut result : Vec<&'a [u8]> =
             Vec::with_capacity(tmp.len());
         for s in tmp.into_iter() {
@@ -515,7 +529,7 @@ impl ReedSolomon {
                         outputs      : &mut [&mut [u8]]) {
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            misc_utils::break_down_slice_mut_with_index(
+            misc_utils::breakdown_slice_mut_with_index(
                 outputs)
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
@@ -552,7 +566,7 @@ impl ReedSolomon {
             make_blank_shards(inputs[0].len(), to_check.len());
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            misc_utils::break_down_slice_mut_with_index
+            misc_utils::breakdown_slice_mut_with_index
                 (&mut outputs[0..output_count])
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
@@ -663,7 +677,7 @@ impl ReedSolomon {
 
         // Change of arrangement
         let shards : Vec<&mut Option<Shard>> =
-            Self::break_down_mut_option_shards(shards);
+            Self::breakdown_mut_option_shards(shards);
 
 	      // Pull out an array holding just the shards that
 	      // correspond to the rows of the submatrix.  These shards
@@ -770,9 +784,9 @@ impl ReedSolomon {
         }
         {
             let mut outputs_refs : Vec<&mut [u8]> =
-                Self::break_down_mut_shards(&mut outputs);
+                Self::breakdown_mut_shards(&mut outputs);
             let sub_shards_refs : Vec<&[u8]> =
-                Self::break_down_shards_ref(&sub_shards);
+                Self::breakdown_shards_ref(&sub_shards);
             self.code_some_slices(&matrix_rows,
                                   &sub_shards_refs,
                                   &mut outputs_refs);
@@ -797,7 +811,38 @@ impl ReedSolomon {
 	          // The input to the coding is ALL of the data shards, including
 	          // any that we just calculated.  The output is whichever of the
 	          // data shards were missing.
-            
+            let mut outputs : Vec<Shard> =
+                Vec::with_capacity(self.parity_shard_count);
+            let mut matrix_rows =
+                Vec::with_capacity(self.parity_shard_count);
+            let parity_rows = self.get_parity_rows();
+            for i_shard in self.data_shard_count..self.total_shard_count {
+                if !shard_present[i_shard] {
+                    outputs.push(make_blank_shard(shard_size));
+                    matrix_rows.push(
+                        parity_rows[i_shard
+                                    - self.data_shard_count]);
+                }
+            }
+            {
+                let mut outputs_refs : Vec<&mut [u8]> =
+                    Self::breakdown_mut_shards(&mut outputs);
+                let sub_shards_refs : Vec<&[u8]> =
+                    Self::breakdown_shards_ref(&sub_shards);
+                let mut data_shards_refs : Vec<&[u8]> =
+                    Vec::with_capacity(self.data_shard_count);
+                let mut i_old_data_shard = 0;
+                let mut i_new_data_shard = 0;
+                for i_shard in 0..self.data_shard_count {
+                    /*let shard =
+                        if shard_present[i_shard] {
+                            let shard = sub_shards_ref[i_old_data_shard];
+                            i_old_data_shard += 1;
+                            shard
+                        } else {
+                        }*/
+                }
+            }
             Ok(())
         }
     }
