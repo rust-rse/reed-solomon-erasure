@@ -1,12 +1,20 @@
 use super::matrix::Matrix;
 
+#[derive(Copy, Clone, Debug)]
+pub enum Error {
+    AlreadySet,
+    NotSquare,
+}
+
 use std::sync::RwLock;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct InversionTree {
     pub root : RwLock<InversionNode>
 }
 
+#[derive(Debug)]
 pub struct InversionNode {
     pub matrix   : Arc<Matrix>,
     pub children : Vec<Option<InversionNode>>
@@ -38,6 +46,31 @@ impl InversionTree {
         self.root.read().unwrap().get_inverted_matrix(invalid_indices)
     }
 
+    pub fn insert_inverted_matrix(&self,
+                                  invalid_indices : &[usize],
+                                  matrix          : Matrix,
+                                  shards          : usize)
+                                  -> Result<(), Error> {
+	      // If no invalid indices were given then we are done because the
+	      // root node is already set with the identity matrix.
+        if invalid_indices.len() == 0 {
+            return Err(Error::AlreadySet);
+        }
+
+        if !matrix.is_square() {
+            return Err(Error::NotSquare);
+        }
+
+	      // Lock the tree for writing and reading before accessing the tree.
+	      // Recursively create nodes for the inverted matrix in the tree until
+	      // we reach the node to insert the matrix to.  We start by passing in
+	      // 0 as the parent index as we start at the root of the tree.
+        self.root.write().unwrap().insert_inverted_matrix(invalid_indices,
+                                                          matrix,
+                                                          shards);
+
+        Ok(())
+    }
 }
 
 impl InversionNode {
@@ -81,13 +114,14 @@ impl InversionNode {
                         // pass down is the first index plus one.
                         node_stack.push(node);
                         invalid_indices_stack.push(&invalid_indices[1..]);
-                        parent_stack = parent + 1;
+                        parent_stack = first_index + 1;
+                    } else {
+                        // If there aren't any more invalid indices to search, we've found our
+                        // node.  Return it, however keep in mind that the matrix could still be
+                        // nil because intermediary nodes in the tree are created sometimes with
+                        // their inversion matrices uninitialized.
+                        return Some(Arc::clone(&node.matrix))
                     }
-                    // If there aren't any more invalid indices to search, we've found our
-                    // node.  Return it, however keep in mind that the matrix could still be
-                    // nil because intermediary nodes in the tree are created sometimes with
-                    // their inversion matrices uninitialized.
-                    return Some(Arc::clone(&node.matrix))
                 }
             }
         }
@@ -96,8 +130,7 @@ impl InversionNode {
     pub fn insert_inverted_matrix(&mut self,
                                   invalid_indices : &[usize],
                                   matrix          : Matrix,
-                                  shards          : usize,
-                                  parent          : usize) {
+                                  shards          : usize) {
         // Set up stacks for storing the environment
         let mut node_stack            = Vec::with_capacity(1);
         let mut invalid_indices_stack = Vec::with_capacity(1);
@@ -210,5 +243,13 @@ mod tests {
 
         let matrix = tree.get_inverted_matrix(&[1]);
         assert_eq!(None, matrix);
+
+        let matrix = tree.get_inverted_matrix(&[1, 2]);
+        assert_eq!(None, matrix);
+
+        let matrix = matrix!([0, 0, 0],
+                             [0, 0, 0],
+                             [0, 0, 0]);
+        tree.insert_inverted_matrix(&[1], matrix, 5).unwrap();
     }
 }
