@@ -676,6 +676,10 @@ impl ReedSolomon {
             Vec::with_capacity(self.data_shard_count);
         let mut leftover_parity_shards1 : Vec<&Shard> =
             Vec::with_capacity(self.parity_shard_count);
+        let mut empty_data_slots        : Vec<&Option<Shard>> =
+            Vec::with_capacity(self.parity_shard_count);
+        let mut empty_parity_slots      : Vec<&Option<Shard>> =
+            Vec::with_capacity(self.parity_shard_count);
         let mut valid_indices   : Vec<usize> =
             Vec::with_capacity(self.data_shard_count);
         let mut invalid_indices : Vec<usize> =
@@ -692,6 +696,11 @@ impl ReedSolomon {
                     }
                 },
                 None => {
+                    if sub_shards.len() < self.data_shard_count {
+                        empty_data_slots.push(shard);
+                    } else {
+                        empty_parity_slots.push(shard);
+                    }
                     invalid_indices.push(matrix_row);
                 }
             }
