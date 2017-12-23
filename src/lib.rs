@@ -667,16 +667,16 @@ impl ReedSolomon {
     }*/
 
     fn reconstruct_internal(&self,
-                            slices      : &mut [&mut [u8]],
-                            slice_valid : &[bool],
-                            data_only   : bool) -> Result<(), Error> {
+                            slices        : &mut [&mut [u8]],
+                            slice_present : &[bool],
+                            data_only     : bool) -> Result<(), Error> {
         if slices.len() < self.total_shard_count {
             return Err(Error::TooFewShards);
         }
 
         Self::check_mut_slices(slices)?;
 
-        if slices.len() != slice_valid.len() {
+        if slices.len() != slice_present.len() {
             return Err(Error::InvalidShardsIndicator);
         }
 
@@ -684,7 +684,7 @@ impl ReedSolomon {
 	      // nothing to do.
         let mut number_present = 0;
         for i in 0..slices.len() {
-            if slice_valid[i] {
+            if slice_present[i] {
                 number_present += 1;
             }
         }
@@ -710,9 +710,9 @@ impl ReedSolomon {
             Vec::with_capacity(self.data_shard_count);
         let mut leftover_parity_shards : Vec<&[u8]> =
             Vec::with_capacity(self.parity_shard_count);
-        let mut missing_data_slots : Vec<&mut [u8]> =
+        let mut missing_data_slices    : Vec<&mut [u8]> =
             Vec::with_capacity(self.parity_shard_count);
-        let mut missing_parity_slots   : Vec<&mut [u8]> =
+        let mut missing_parity_slices  : Vec<&mut [u8]> =
             Vec::with_capacity(self.parity_shard_count);
         let mut valid_indices          : Vec<usize> =
             Vec::with_capacity(self.data_shard_count);
@@ -720,8 +720,9 @@ impl ReedSolomon {
             Vec::with_capacity(self.data_shard_count);
         let mut matrix_row = 0;
         let mut i          = 0;
+        // Separate the slices into groups
         for slice in slices.into_iter() {
-            if slice_valid[i] {
+            if slice_present[i] {
                 if sub_shards.len() < self.data_shard_count {
                     sub_shards.push(slice);
                     valid_indices.push(matrix_row);
@@ -730,9 +731,9 @@ impl ReedSolomon {
                 }
             } else {
                 if sub_shards.len() < self.data_shard_count {
-                    missing_data_slots.push(slice);
+                    missing_data_slices.push(slice);
                 } else {
-                    missing_parity_slots.push(slice);
+                    missing_parity_slices.push(slice);
                 }
                 invalid_indices.push(matrix_row);
             }
@@ -786,6 +787,21 @@ impl ReedSolomon {
                     m
                 }
             };
+
+	      // Re-create any data shards that were missing.
+	      //
+	      // The input to the coding is all of the shards we actually
+	      // have, and the output is the missing data shards.  The computation
+	      // is done using the special decode matrix we just built.
+        let mut matrix_rows = Vec::with_capacity(self.parity_shard_count);
+        for i_slice in 0..self.data_shard_count {
+            if !slice_present[i_slice] {
+                matrix_rows.push(data_decode_matrix.get_row(i_slice));
+            }
+        }
+        self.code_some_slices(&matrix_rows,
+                              &sub_shards,
+                              &mut missing_data_slices);
 
         Ok(())
     }
