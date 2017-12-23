@@ -135,3 +135,13 @@ pub fn slices_are_equal<T>(slice1 : &[T],
     }
     true
 }
+
+pub fn mut_slices_to_slices<'a>(slices : &'a [&mut [u8]])
+                                -> Vec<&'a [u8]> {
+    let mut result : Vec<&[u8]> =
+        Vec::with_capacity(slices.len());
+    for slice in slices.into_iter() {
+        result.push(slice);
+    }
+    result
+}
