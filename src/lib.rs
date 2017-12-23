@@ -827,21 +827,31 @@ impl ReedSolomon {
             {
                 let mut outputs_refs : Vec<&mut [u8]> =
                     Self::breakdown_mut_shards(&mut outputs);
+                // Gather references to all existing data shards
                 let sub_shards_refs : Vec<&[u8]> =
                     Self::breakdown_shards_ref(&sub_shards);
-                let mut data_shards_refs : Vec<&[u8]> =
+                let new_data_shards_refs : Vec<&[u8]> =
+                    Self::breakdown_mut_option_shards_to_refs(
+                        &empty_data_slots);
+                let mut all_data_shards_refs : Vec<&[u8]> =
                     Vec::with_capacity(self.data_shard_count);
                 let mut i_old_data_shard = 0;
                 let mut i_new_data_shard = 0;
                 for i_shard in 0..self.data_shard_count {
-                    /*let shard =
+                    let shard =
                         if shard_present[i_shard] {
-                            let shard = sub_shards_ref[i_old_data_shard];
+                            let shard = sub_shards_refs[i_old_data_shard];
                             i_old_data_shard += 1;
                             shard
                         } else {
-                        }*/
+                            let shard = new_data_shards_refs[i_new_data_shard];
+                            i_new_data_shard += 1;
+                            shard
+                        };
+                    all_data_shards_refs.push(shard);
                 }
+                // Now do the actual computation for the missing
+                // parity shards
             }
             Ok(())
         }
