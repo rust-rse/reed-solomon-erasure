@@ -29,6 +29,7 @@ pub enum Error {
     TooFewShards,
     WrongShardSize,
     EmptyShard,
+    InvalidShardsIndicator,
     InversionTreeError(inversion_tree::Error)
 }
 
@@ -596,6 +597,19 @@ impl ReedSolomon {
         Ok(())
     }
 
+    fn check_mut_slices(slices : &[&mut [u8]]) -> Result<(), Error> {
+        let size = slices[0].len();
+        if size == 0 {
+            return Err(Error::EmptyShard);
+        }
+        for slice in slices.iter() {
+            if slice.len() != size {
+                return Err(Error::WrongShardSize);
+            }
+        }
+        Ok(())
+    }
+
     fn option_shards_size(slices : &[Option<Shard>]) -> Result<usize, Error> {
         let mut size = None;
         for slice in slices.iter() {
@@ -642,7 +656,7 @@ impl ReedSolomon {
         Ok(())
     }
 
-    pub fn reconstruct(&self,
+    /*pub fn reconstruct(&self,
                        shards : &mut [Option<Shard>]) -> Result<(), Error> {
         self.reconstruct_internal(shards, false)
     }
@@ -650,28 +664,28 @@ impl ReedSolomon {
     pub fn reconstruct_data(&self,
                             shards : &mut [Option<Shard>]) -> Result<(), Error> {
         self.reconstruct_internal(shards, true)
-    }
+    }*/
 
     fn reconstruct_internal(&self,
-                            shards    : &mut [Option<Shard>],
-                            data_only : bool) -> Result<(), Error> {
-        if shards.len() < self.data_shard_count {
-            return Err(Error::TooFewShards)
+                            slices      : &mut [&mut [u8]],
+                            slice_valid : &[bool],
+                            data_only   : bool) -> Result<(), Error> {
+        if slices.len() < self.total_shard_count {
+            return Err(Error::TooFewShards);
         }
 
-        Self::check_option_shards(shards)?;
+        Self::check_mut_slices(slices)?;
 
-        let shard_size = Self::option_shards_size(shards).unwrap();
+        if slices.len() != slice_valid.len() {
+            return Err(Error::InvalidShardsIndicator);
+        }
 
 	      // Quick check: are all of the shards present?  If so, there's
 	      // nothing to do.
         let mut number_present = 0;
-        let mut shard_present  = Vec::with_capacity(shards.len());
-        for shard in shards.iter() {
-            match *shard {
-                None    => { shard_present.push(false); },
-                Some(_) => { number_present += 1;
-                             shard_present.push(true); }
+        for i in 0..slices.len() {
+            if slice_valid[i] {
+                number_present += 1;
             }
         }
         if number_present == self.data_shard_count {
@@ -684,6 +698,8 @@ impl ReedSolomon {
 	      if number_present < self.data_shard_count {
 		        return Err(Error::TooFewShards)
 	      }
+
+        Ok(())
     }
 }
 
