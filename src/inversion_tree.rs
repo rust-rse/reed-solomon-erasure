@@ -247,14 +247,41 @@ mod tests {
         let matrix = tree.get_inverted_matrix(&[1, 2]);
         assert_eq!(None, matrix);
 
-        let matrix = matrix!([0, 0, 0],
-                             [0, 0, 0],
-                             [0, 0, 0]);
+        let matrix = Matrix::new(3, 3);
         let matrix_copy = matrix.clone();
         tree.insert_inverted_matrix(&[1], matrix, 5).unwrap();
 
-        let cached_matrix = tree.get_inverted_matrix(&[1]);
-        assert!(cached_matrix != None);
-        assert_eq!(matrix_copy, *cached_matrix.unwrap());
+        let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
+        assert_eq!(matrix_copy, *cached_matrix);
+    }
+
+    #[test]
+    fn test_insert_inverted_matrix() {
+        let tree = InversionTree::new(3, 2);
+
+        let matrix = Matrix::new(3, 3);
+
+        tree.insert_inverted_matrix(&[], matrix, 5).unwrap_err();
+
+        let matrix = Matrix::new(3, 2);
+        tree.insert_inverted_matrix(&[2], matrix, 5).unwrap_err();
+
+        let matrix = Matrix::new(3, 3);
+        tree.insert_inverted_matrix(&[0, 1], matrix, 5).unwrap();
+    }
+
+    #[test]
+    fn test_double_insert_inverted_matrix() {
+        let tree = InversionTree::new(3, 2);
+
+        let matrix = Matrix::new(3, 3);
+        let matrix_copy1 = matrix.clone();
+        let matrix_copy2 = matrix.clone();
+
+        tree.insert_inverted_matrix(&[1], matrix, 5).unwrap();
+        tree.insert_inverted_matrix(&[1], matrix_copy1, 5).unwrap();
+
+        let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
+        assert_eq!(matrix_copy2, *cached_matrix);
     }
 }
