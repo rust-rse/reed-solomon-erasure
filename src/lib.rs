@@ -699,6 +699,48 @@ impl ReedSolomon {
 		        return Err(Error::TooFewShards)
 	      }
 
+	      // Pull out an array holding just the shards that
+	      // correspond to the rows of the submatrix.  These shards
+	      // will be the input to the decoding process that re-creates
+	      // the missing data shards.
+	      //
+	      // Also, create an array of indices of the valid rows we do have
+	      // and the invalid rows we don't have up until we have enough valid rows.
+        let mut sub_shards             : Vec<&[u8]> =
+            Vec::with_capacity(self.data_shard_count);
+        let mut leftover_parity_shards : Vec<&[u8]> =
+            Vec::with_capacity(self.parity_shard_count);
+        let mut missing_data_slots : Vec<&mut [u8]> =
+            Vec::with_capacity(self.parity_shard_count);
+        let mut missing_parity_slots   : Vec<&mut [u8]> =
+            Vec::with_capacity(self.parity_shard_count);
+        let mut valid_indices          : Vec<usize> =
+            Vec::with_capacity(self.data_shard_count);
+        let mut invalid_indices        : Vec<usize> =
+            Vec::with_capacity(self.data_shard_count);
+        let mut matrix_row = 0;
+        let mut i          = 0;
+        for slice in slices.into_iter() {
+            if slice_valid[i] {
+                if sub_shards.len() < self.data_shard_count {
+                    sub_shards.push(slice);
+                    valid_indices.push(matrix_row);
+                } else {
+                    leftover_parity_shards.push(slice);
+                }
+            } else {
+                if sub_shards.len() < self.data_shard_count {
+                    missing_data_slots.push(slice);
+                } else {
+                    missing_parity_slots.push(slice);
+                }
+                invalid_indices.push(matrix_row);
+            }
+
+            i          += 1;
+            matrix_row += 1;
+        }
+
         Ok(())
     }
 }
