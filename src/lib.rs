@@ -741,6 +741,52 @@ impl ReedSolomon {
             matrix_row += 1;
         }
 
+        // Attempt to get the cached inverted matrix out of the tree
+        // based on the indices of the invalid rows.
+        let data_decode_matrix =
+            match self.tree.get_inverted_matrix(&invalid_indices) {
+	              // If the inverted matrix isn't cached in the tree yet we must
+	              // construct it ourselves and insert it into the tree for the
+	              // future.  In this way the inversion tree is lazily loaded.
+                None => {
+                    // Pull out the rows of the matrix that correspond to the
+                    // shards that we have and build a square matrix.  This
+                    // matrix could be used to generate the shards that we have
+                    // from the original data.
+                    let mut sub_matrix =
+                        Matrix::new(self.data_shard_count,
+                                    self.data_shard_count);
+                    for sub_matrix_row in 0..valid_indices.len() {
+                        let valid_index = valid_indices[sub_matrix_row];
+                        for c in 0..self.data_shard_count {
+                            sub_matrix.set(sub_matrix_row, c,
+                                           self.matrix.get(valid_index, c));
+                        }
+                    }
+                    // Invert the matrix, so we can go from the encoded shards
+                    // back to the original data.  Then pull out the row that
+                    // generates the shard that we want to decode.  Note that
+                    // since this matrix maps back to the original data, it can
+                    // be used to create a data shard, but not a parity shard.
+                    let data_decode_matrix = Arc::new(sub_matrix.invert().unwrap());
+
+                    // Cache the inverted matrix in the tree for future use keyed on the
+                    // indices of the invalid rows.
+                    let insert_result =
+                        self.tree.insert_inverted_matrix(&invalid_indices,
+                                                         &data_decode_matrix,
+                                                         self.total_shard_count);
+                    match insert_result {
+                        Ok(()) => {},
+                        Err(x) => return Err(Error::InversionTreeError(x))
+                    }
+                    data_decode_matrix
+                },
+                Some(m) => {
+                    m
+                }
+            };
+
         Ok(())
     }
 }
