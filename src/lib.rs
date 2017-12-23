@@ -104,6 +104,21 @@ pub fn mut_shards_to_mut_slices(shards : &mut [Shard])
     result
 }
 
+pub fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
+                                       -> Vec<&'a mut [u8]> {
+    let mut result : Vec<&mut [u8]> =
+        Vec::with_capacity(shards.len());
+    for shard in shards.iter_mut() {
+        match *shard {
+            None => panic!("Option shards slot is None"),
+            Some(ref mut s) => {
+                result.push(s);
+            }
+        }
+    }
+    result
+}
+
 /// Reed-Solomon erasure code encoder/decoder
 ///
 /// # Remarks
@@ -261,21 +276,6 @@ impl ReedSolomon {
         }
         result
     }*/
-
-    fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
-                                   -> Vec<&'a mut [u8]> {
-        let mut result : Vec<&mut [u8]> =
-            Vec::with_capacity(shards.len());
-        for shard in shards.iter_mut() {
-            match *shard {
-                None => panic!("Option shards slot is None"),
-                Some(ref mut s) => {
-                    result.push(s);
-                }
-            }
-        }
-        result
-    }
 
     fn code_some_slices(&self,
                         matrix_rows  : &[&[u8]],
@@ -532,7 +532,7 @@ impl ReedSolomon {
         }
 
         let mut slices =
-            Self::mut_option_shards_to_mut_slices(shards);
+            mut_option_shards_to_mut_slices(shards);
 
         self.reconstruct_internal(&mut slices,
                                   &shard_present,
