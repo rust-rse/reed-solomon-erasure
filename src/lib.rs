@@ -803,7 +803,53 @@ impl ReedSolomon {
                               &sub_shards,
                               &mut missing_data_slices);
 
-        Ok(())
+        if data_only {
+            Ok(())
+        } else {
+	          // Now that we have all of the data shards intact, we can
+	          // compute any of the parity that is missing.
+	          //
+	          // The input to the coding is ALL of the data shards, including
+	          // any that we just calculated.  The output is whichever of the
+	          // data shards were missing.
+            let mut matrix_rows =
+                Vec::with_capacity(self.parity_shard_count);
+            let parity_rows = self.get_parity_rows();
+            for i_slice in self.data_shard_count..self.total_shard_count {
+                if !slice_present[i_slice] {
+                    matrix_rows.push(
+                        parity_rows[i_slice
+                                    - self.data_shard_count]);
+                }
+            }
+            {
+                // Gather up the references to all data slices
+                let mut i_old_data_slice = 0;
+                let mut i_new_data_slice = 0;
+                let mut all_data_slices : Vec<&[u8]> =
+                    Vec::with_capacity(self.data_shard_count);
+                for i_slice in 0..self.data_shard_count {
+                    let slice =
+                        if slice_present[i_slice] {
+                            let result = sub_shards[i_old_data_slice];
+                            i_old_data_slice += 1;
+                            result
+                        } else {
+                            let result = &missing_data_slices[i_new_data_slice];
+                            i_new_data_slice += 1;
+                            result
+                        };
+                    all_data_slices.push(slice);
+                }
+                // Now do the actual computation for the missing
+                // parity shards
+                self.code_some_slices(&matrix_rows,
+                                      &all_data_slices,
+                                      &mut missing_parity_slices);
+            }
+
+            Ok(())
+        }
     }
 }
 
