@@ -456,11 +456,11 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
-    fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [&'a mut Option<Shard>])
+    fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [&mut Option<Shard>])
                                        -> Vec<&'a mut [u8]> {
         let mut result : Vec<&mut [u8]> =
             Vec::with_capacity(shards.len());
-        for shard in shards.iter() {
+        for shard in shards.iter_mut() {
             match **shard {
                 None => panic!("Option shards slot is None"),
                 Some(ref mut s) => {
@@ -575,7 +575,7 @@ impl ReedSolomon {
         for slice in slices.iter() {
             match *slice {
                 None => {},
-                Some(s) => {
+                Some(ref s) => {
                     size = Some(s.len());
                     break;
                 }
@@ -722,7 +722,7 @@ impl ReedSolomon {
 	      // The input to the coding is all of the shards we actually
 	      // have, and the output is the missing data shards.  The computation
 	      // is done using the special decode matrix we just built.
-        let outputs     =
+        let mut outputs =
             Vec::with_capacity(self.parity_shard_count);
         let matrix_rows = Vec::with_capacity(self.parity_shard_count);
         for i_shard in 0..self.data_shard_count {
@@ -748,7 +748,7 @@ impl ReedSolomon {
 	      // The input to the coding is ALL of the data shards, including
 	      // any that we just calculated.  The output is whichever of the
 	      // data shards were missing.
-        let outputs     : Vec<&mut [u8]> =
+        let mut outputs : Vec<&mut Option<Shard>> =
             Vec::with_capacity(self.parity_shard_count);
         let matrix_rows = Vec::with_capacity(self.parity_shard_count);
         let parity_rows = self.get_parity_rows();
@@ -762,7 +762,8 @@ impl ReedSolomon {
         self.code_some_slices(&matrix_rows,
                               &Self::option_shards_to_slices(
                                   &shards[..self.data_shard_count]),
-                              &mut outputs);
+                              &mut Self::mut_option_shards_to_mut_slices(
+                                  &mut outputs));
 
         Ok(())
     }
