@@ -759,15 +759,30 @@ impl ReedSolomon {
                 matrix_rows.push(data_decode_matrix.get_row(i_shard));
             }
         }
-        let mut outputs_refs : Vec<&mut [u8]> =
-            Self::break_down_mut_shards(&mut outputs);
-        let sub_shards_refs : Vec<&[u8]> =
-            Self::break_down_shards_ref(&sub_shards);
-        self.code_some_slices(&matrix_rows,
-                              &sub_shards_refs,
-                              &mut outputs_refs);
+        {
+            let mut outputs_refs : Vec<&mut [u8]> =
+                Self::break_down_mut_shards(&mut outputs);
+            let sub_shards_refs : Vec<&[u8]> =
+                Self::break_down_shards_ref(&sub_shards);
+            self.code_some_slices(&matrix_rows,
+                                  &sub_shards_refs,
+                                  &mut outputs_refs);
+        }
 
-        Ok(())
+        // Patch outputs 
+
+        if data_only {
+            Ok(())
+        } else {
+	          // Now that we have all of the data shards intact, we can
+	          // compute any of the parity that is missing.
+	          //
+	          // The input to the coding is ALL of the data shards, including
+	          // any that we just calculated.  The output is whichever of the
+	          // data shards were missing.
+            
+            Ok(())
+        }
     }
 }
 
