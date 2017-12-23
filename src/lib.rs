@@ -656,6 +656,34 @@ impl ReedSolomon {
         Ok(())
     }
 
+    pub fn encode(&self,
+                  slices : &mut [&mut [u8]]) -> Result<(), Error> {
+        if slices.len() < self.total_shard_count {
+            return Err(Error::TooFewShards);
+        }
+
+        Self::check_mut_slices(slices)?;
+
+        let parity_rows = self.get_parity_rows();
+
+	      // Get the slice of output buffers.
+        let (mut_input, output) =
+            slices.split_at_mut(self.data_shard_count);
+
+        let mut input : Vec<&[u8]> =
+            Vec::with_capacity(mut_input.len());
+        for i in mut_input.into_iter() {
+            input.push(i);
+        }
+
+	      // Do the coding.
+        self.code_some_slices(&parity_rows,
+                              &input,
+                              output);
+
+        Ok(())
+    }
+
     pub fn reconstruct(&self,
                        slices        : &mut [&mut [u8]],
                        slice_present : &[bool]) -> Result<(), Error> {
@@ -686,7 +714,7 @@ impl ReedSolomon {
                                    shards    : &mut [Option<Shard>],
                                    data_only : bool)
                                    -> Result<(), Error> {
-        if shards.len() < self.data_shard_count {
+        if shards.len() < self.total_shard_count {
             return Err(Error::TooFewShards)
         }
 
