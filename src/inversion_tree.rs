@@ -250,6 +250,11 @@ mod tests {
         let matrix = matrix!([0, 0, 0],
                              [0, 0, 0],
                              [0, 0, 0]);
+        let matrix_copy = matrix.clone();
         tree.insert_inverted_matrix(&[1], matrix, 5).unwrap();
+
+        let cached_matrix = tree.get_inverted_matrix(&[1]);
+        assert!(cached_matrix != None);
+        assert_eq!(matrix_copy, *cached_matrix.unwrap());
     }
 }
