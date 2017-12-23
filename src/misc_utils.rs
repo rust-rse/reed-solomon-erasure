@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::cell::Cell;
 
 pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],

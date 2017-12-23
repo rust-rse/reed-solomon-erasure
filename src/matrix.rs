@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use galois;
 #[derive(Debug)]
 pub enum Error {

@@ -1,22 +1,5 @@
-/* Major functions are translated from Galois.java from Backblaze Reed-Solomon implementation
- * as part of the rust-SeqBox project
- *
- * Following is the original notice
- *
- * 8-bit Galois Field
- *
- * Copyright 2015, Backblaze, Inc.  All rights reserved.
- *
- * The test functions are translated from galois_test.go from Klaus Post's Reed-Solomon implementation
- * as part of the rust-SeqBox project
- *
- * Following is the original notice
- *
- * Unit tests for Galois
- *
- * Copyright 2015, Klaus Post
- * Copyright 2015, Backblaze, Inc.
- */
+#![allow(dead_code)]
+
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
 pub fn add(a : u8, b : u8) -> u8 {
