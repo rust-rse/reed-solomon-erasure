@@ -498,14 +498,14 @@ impl ReedSolomon {
         result
     }
 
-    fn option_shards_to_slices<'a>(shards : &'a [Option<Shard>])
-                                   -> Vec<&'a [u8]> {
-        let mut result : Vec<&[u8]> =
+    fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
+                                   -> Vec<&'a mut [u8]> {
+        let mut result : Vec<&mut [u8]> =
             Vec::with_capacity(shards.len());
-        for shard in shards.iter() {
+        for shard in shards.iter_mut() {
             match *shard {
                 None => panic!("Option shards slot is None"),
-                Some(ref s) => {
+                Some(ref mut s) => {
                     result.push(s);
                 }
             }
@@ -665,6 +665,55 @@ impl ReedSolomon {
                             shards : &mut [Option<Shard>]) -> Result<(), Error> {
         self.reconstruct_internal(shards, true)
     }*/
+
+    fn reconstruct_shards_internal(&self,
+                                   shards    : &mut [Option<Shard>],
+                                   data_only : bool)
+                                   -> Result<(), Error> {
+        if shards.len() < self.data_shard_count {
+            return Err(Error::TooFewShards)
+        }
+
+        Self::check_option_shards(shards)?;
+
+        let shard_size = Self::option_shards_size(shards).unwrap();
+
+	      // Quick check: are all of the shards present?  If so, there's
+	      // nothing to do.
+        let mut number_present = 0;
+        let mut shard_present  = Vec::with_capacity(shards.len());
+        for shard in shards.iter() {
+            match *shard {
+                None    => { shard_present.push(false); },
+                Some(_) => { number_present += 1;
+                             shard_present.push(true); }
+            }
+        }
+        if number_present == self.data_shard_count {
+            // Cool.  All of the shards data data.  We don't
+            // need to do anything.
+            return Ok(())
+        }
+
+	      // More complete sanity check
+	      if number_present < self.data_shard_count {
+		        return Err(Error::TooFewShards)
+	      }
+
+        // Fill in new shards
+        for i in 0..shards.len() {
+            if !shard_present[i] {
+                shards[i] = Some(make_blank_shard(shard_size));
+            }
+        }
+
+        let mut slices =
+            Self::mut_option_shards_to_mut_slices(shards);
+
+        self.reconstruct_internal(&mut slices,
+                                  &shard_present,
+                                  data_only)
+    }
 
     fn reconstruct_internal(&self,
                             slices        : &mut [&mut [u8]],
