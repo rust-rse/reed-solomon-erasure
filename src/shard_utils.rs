@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::Shard;
 
 mod helper {
