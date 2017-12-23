@@ -656,13 +656,29 @@ impl ReedSolomon {
         Ok(())
     }
 
-    pub fn reconstruct_shards(&self,
-                       shards : &mut [Option<Shard>]) -> Result<(), Error> {
-        self.reconstruct_shards_internal(shards, false)
+    pub fn reconstruct(&self,
+                       slices        : &mut [&mut [u8]],
+                       slice_present : &[bool]) -> Result<(), Error> {
+        self.reconstruct_internal(slices,
+                                  slice_present,
+                                  false)
     }
 
     pub fn reconstruct_data(&self,
-                            shards : &mut [Option<Shard>]) -> Result<(), Error> {
+                            slices        : &mut [&mut [u8]],
+                            slice_present : &[bool]) -> Result<(), Error> {
+        self.reconstruct_internal(slices,
+                                  slice_present,
+                                  true)
+    }
+
+    pub fn reconstruct_shards(&self,
+                              shards : &mut [Option<Shard>]) -> Result<(), Error> {
+        self.reconstruct_shards_internal(shards, false)
+    }
+
+    pub fn reconstruct_data_shards(&self,
+                                   shards : &mut [Option<Shard>]) -> Result<(), Error> {
         self.reconstruct_shards_internal(shards, true)
     }
 
