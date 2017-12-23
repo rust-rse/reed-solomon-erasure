@@ -45,15 +45,21 @@ impl InversionNode {
     pub fn get_inverted_matrix(&self,
                                invalid_indices : &[usize])
                                -> Option<Arc<Matrix>> {
+        // Set up stacks for storing the environment
         let mut node_stack            = Vec::with_capacity(1);
         let mut invalid_indices_stack = Vec::with_capacity(1);
-        let mut parent_stack      = 0;
+        let mut parent_stack          = 0;
+
+        // Initialise the stacks
         node_stack.push(self);
         invalid_indices_stack.push(invalid_indices);
+
         loop {
+            // Extract current environment to use
             let cur_node        = node_stack.pop().unwrap();
             let invalid_indices = invalid_indices_stack.pop().unwrap();
             let parent          = parent_stack;
+
             // Get the child node to search next from the list of children.  The
             // list of children starts relative to the parent index passed in
             // because the indices of invalid rows is sorted (by default).  As we
@@ -93,12 +99,17 @@ impl InversionNode {
                                   matrix          : Matrix,
                                   shards          : usize,
                                   parent          : usize) {
+        // Set up stacks for storing the environment
         let mut node_stack            = Vec::with_capacity(1);
         let mut invalid_indices_stack = Vec::with_capacity(1);
         let mut parent_stack          = 0;
+
+        // Initialise the stacks
         node_stack.push(self);
         invalid_indices_stack.push(invalid_indices);
+
         loop {
+            // Extract current environment to use
             let cur_node        = node_stack.pop().unwrap();
             let invalid_indices = invalid_indices_stack.pop().unwrap();
             let parent          = parent_stack;
