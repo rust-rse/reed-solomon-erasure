@@ -8,7 +8,7 @@
 //! and simply leave out the corrupted shards when attempting to reconstruct
 //! the missing data.
 
-#![allow(dead_code)]
+//#![allow(dead_code)]
 mod misc_utils;
 mod galois;
 mod matrix;
@@ -85,7 +85,7 @@ mod helper {
         }
     }
 
-    pub fn calc_byte_count(shards     : &Vec<Shard>,
+    /*pub fn calc_byte_count(shards     : &Vec<Shard>,
                            byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
@@ -95,9 +95,9 @@ mod helper {
         if result == 0 { panic!("Byte count is zero"); }
 
         result
-    }
+    }*/
 
-    pub fn calc_offset_and_byte_count(offset : Option<usize>,
+    /*pub fn calc_offset_and_byte_count(offset : Option<usize>,
                                       shards : &Vec<Shard>,
                                       byte_count : Option<usize>)
                                       -> (usize, usize) {
@@ -105,9 +105,9 @@ mod helper {
         let byte_count = calc_byte_count(shards, byte_count);
 
         (offset, byte_count)
-    }
+    }*/
 
-    pub fn calc_byte_count_option_shards(shards     : &Vec<Option<Shard>>,
+    /*pub fn calc_byte_count_option_shards(shards     : &Vec<Option<Shard>>,
                                          byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
@@ -130,9 +130,9 @@ mod helper {
         if result == 0 { panic!("Byte count is zero"); }
 
         result
-    }
+    }*/
 
-    pub fn calc_offset_and_byte_count_option_shards(offset : Option<usize>,
+    /*pub fn calc_offset_and_byte_count_option_shards(offset : Option<usize>,
                                                     shards : &Vec<Option<Shard>>,
                                                     byte_count : Option<usize>)
                                                     -> (usize, usize) {
@@ -140,8 +140,7 @@ mod helper {
         let byte_count = calc_byte_count_option_shards(shards, byte_count);
 
         (offset, byte_count)
-    }
-
+    }*/
 }
 
 /// Makes shard with byte array of zero length
@@ -468,12 +467,12 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
-    fn breakdown_mut_option_shards(shards : &mut [Option<Shard>])
+    /*fn breakdown_mut_option_shards(shards : &mut [Option<Shard>])
                                     -> Vec<&mut Option<Shard>> {
         misc_utils::breakdown_slice_mut(shards)
-    }
+    }*/
 
-    fn breakdown_mut_option_shards_to_refs<'a>(shards : &'a [&mut Option<Shard>])
+    /*fn breakdown_mut_option_shards_to_refs<'a>(shards : &'a [&mut Option<Shard>])
                                             -> Vec<&'a [u8]> {
         let tmp = misc_utils::breakdown_slice(shards);
         let mut result : Vec<&[u8]> =
@@ -485,9 +484,9 @@ impl ReedSolomon {
             }
         }
         result
-    }
+    }*/
 
-    fn breakdown_mut_shards(shards : &mut [Shard])
+    /*fn breakdown_mut_shards(shards : &mut [Shard])
                              -> Vec<&mut [u8]> {
         let tmp = misc_utils::breakdown_slice_mut(shards);
         let mut result : Vec<&mut [u8]> =
@@ -496,9 +495,9 @@ impl ReedSolomon {
             result.push(s)
         }
         result
-    }
+    }*/
 
-    fn breakdown_shards_ref<'a>(shards : &'a [&Shard])
+    /*fn breakdown_shards_ref<'a>(shards : &'a [&Shard])
                                  -> Vec<&'a [u8]> {
         let tmp = misc_utils::breakdown_slice(shards);
         let mut result : Vec<&'a [u8]> =
@@ -507,7 +506,7 @@ impl ReedSolomon {
             result.push(s)
         }
         result
-    }
+    }*/
 
     fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
                                    -> Vec<&'a mut [u8]> {
@@ -557,7 +556,7 @@ impl ReedSolomon {
         }
     }
 
-    fn check_some_shards(&self,
+    /*fn check_some_shards(&self,
                          matrix_rows  : &[&[u8]],
                          inputs       : &[&[u8]],
                          to_check     : &[&[u8]],
@@ -582,7 +581,7 @@ impl ReedSolomon {
             }
         }
         true
-    }
+    }*/
 
     fn check_slices(slices : &[&[u8]]) -> Result<(), Error> {
         let size = slices[0].len();
