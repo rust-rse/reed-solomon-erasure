@@ -16,7 +16,7 @@ mod inversion_tree;
 
 extern crate rayon;
 use rayon::prelude::*;
-use std::ops::{Deref, DerefMut};
+//use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 extern crate num_cpus;
@@ -323,19 +323,30 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
     result
 }
 
-fn shards_to_refs<'a>(shards : &'a Vec<Shard>) -> Vec<&'a [u8]> {
-    let mut result = Vec::with_capacity(shards.len());
-    for shard in shards.iter() {
-        result.push(shard.deref());
+pub fn mut_refs_to_refs<'a>(slices : &'a [&mut [u8]]) -> Vec<&'a [u8]> {
+    let mut result : Vec<&[u8]> =
+        Vec::with_capacity(slices.len());
+    for slice in slices.into_iter() {
+        result.push(slice);
     }
     result
 }
 
-fn mut_shards_to_mut_refs<'a>(shards : &'a mut Vec<Shard>)
-                              -> Vec<&'a mut [u8]> {
-    let mut result = Vec::with_capacity(shards.len());
-    for shard in shards.iter_mut() {
-        result.push(shard.deref_mut());
+pub fn shards_to_slices<'a>(shards : &'a Vec<Shard>) -> Vec<&'a [u8]> {
+    let mut result : Vec<&[u8]> =
+        Vec::with_capacity(shards.len());
+    for shard in shards.into_iter() {
+        result.push(shard);
+    }
+    result
+}
+
+pub fn mut_shards_to_mut_slices(shards : &mut [Shard])
+                            -> Vec<&mut [u8]> {
+    let mut result : Vec<&mut [u8]> =
+        Vec::with_capacity(shards.len());
+    for shard in shards.into_iter() {
+        result.push(shard);
     }
     result
 }
@@ -654,6 +665,17 @@ impl ReedSolomon {
             }
         }
         Ok(())
+    }
+
+    pub fn encode_shards(&self,
+                         shards : &mut [Shard]) -> Result<(), Error> {
+        if shards.len() < self.total_shard_count {
+            return Err(Error::TooFewShards);
+        }
+
+        let mut slices = mut_shards_to_mut_slices(shards);
+
+        self.encode(&mut slices)
     }
 
     pub fn encode(&self,
