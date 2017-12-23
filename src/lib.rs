@@ -656,15 +656,15 @@ impl ReedSolomon {
         Ok(())
     }
 
-    /*pub fn reconstruct(&self,
+    pub fn reconstruct_shards(&self,
                        shards : &mut [Option<Shard>]) -> Result<(), Error> {
-        self.reconstruct_internal(shards, false)
+        self.reconstruct_shards_internal(shards, false)
     }
 
     pub fn reconstruct_data(&self,
                             shards : &mut [Option<Shard>]) -> Result<(), Error> {
-        self.reconstruct_internal(shards, true)
-    }*/
+        self.reconstruct_shards_internal(shards, true)
+    }
 
     fn reconstruct_shards_internal(&self,
                                    shards    : &mut [Option<Shard>],
