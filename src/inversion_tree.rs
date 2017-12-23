@@ -195,4 +195,20 @@ mod tests {
                              [0, 0, 1]);
         assert_eq!(expect, *tree.root.read().unwrap().matrix);
     }
+
+    #[test]
+    fn test_get_inverted_matrix() {
+        let tree = InversionTree::new(3, 2);
+
+        let matrix = &*tree.get_inverted_matrix(&[]).unwrap();
+
+        let expect = matrix!([1, 0, 0],
+                             [0, 1, 0],
+                             [0, 0, 1]);
+
+        assert_eq!(expect, *matrix);
+
+        let matrix = tree.get_inverted_matrix(&[1]);
+        assert_eq!(None, matrix);
+    }
 }
