@@ -286,4 +286,16 @@ mod tests {
         let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
         assert_eq!(matrix_copy2, *cached_matrix);
     }
+
+    #[test]
+    fn test_extended_inverted_matrix() {
+        let tree = InversionTree::new(10, 3);
+        let matrix = Matrix::new(10, 10);
+        let matrix_copy = matrix.clone();
+        
+        tree.insert_inverted_matrix(&[1, 2], &Arc::new(matrix), 13).unwrap();
+        
+        let result = tree.get_inverted_matrix(&[1, 2]).unwrap();
+        assert_eq!(matrix_copy, *result);
+    }
 }
