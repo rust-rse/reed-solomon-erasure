@@ -276,103 +276,6 @@ fn test_reedsolomon_clone() {
 fn test_reedsolomon_too_many_shards() {
     ReedSolomon::new(256, 1); }
 
-/*
-#[test]
-fn test_rc_counts_carries_over_decode_missing() {
-    let r = ReedSolomon::new(3, 2);
-
-    let mut master_copy = shards!([0, 1,  2,  3],
-                                  [4, 5,  6,  7],
-                                  [8, 9, 10, 11],
-                                  [0, 0,  0,  0],
-                                  [0, 0,  0,  0]);
-
-    r.encode_parity(&mut master_copy, None, None);
-
-    // the cloning below increases rc counts from 1 to 2
-    let mut shards = shards_into_option_shards(master_copy.clone());
-
-    shards[0] = None;
-    shards[4] = None;
-
-    // the new shards constructed by decode_missing
-    // will have rc count of just 1
-    r.decode_missing(&mut shards, None, None).unwrap();
-    
-    let result = option_shards_into_shards(shards);
-    
-    assert!(r.is_parity_correct(&result, None, None));
-    assert_eq!(1, Arc::strong_count(&result[0]));
-    assert_eq!(2, Arc::strong_count(&result[1]));
-    assert_eq!(2, Arc::strong_count(&result[2]));
-    assert_eq!(2, Arc::strong_count(&result[3]));
-    assert_eq!(1, Arc::strong_count(&result[4]));
-}
-
-#[test]
-fn test_shards_to_option_shards_does_not_change_rc_counts() {
-    let shards = make_random_shards!(1_000, 10);
-
-    let option_shards =
-        shards_to_option_shards(&shards);
-
-    for v in shards.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-    for v in option_shards.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-}
-
-#[test]
-fn test_shards_into_option_shards_does_not_change_rc_counts() {
-    let shards = make_random_shards!(1_000, 10);
-
-    let option_shards =
-        shards_into_option_shards(shards);
-
-    for v in option_shards.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-}
-
-#[test]
-fn test_option_shards_to_shards_does_not_change_rc_counts() {
-    let option_shards =
-        shards_to_option_shards(
-            &make_random_shards!(1_000, 10));
-
-    let shards =
-        option_shards_to_shards(&option_shards, None, None);
-
-    for v in option_shards.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-    for v in shards.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-}
-
-#[test]
-fn test_option_shards_into_shards_does_not_change_rc_counts() {
-    let option_shards =
-        shards_to_option_shards(
-            &make_random_shards!(1_000, 10));
-
-    let shards =
-        option_shards_into_shards(option_shards);
-
-    for v in shards.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-}
-
 #[test]
 fn test_encoding() {
     let per_shard = 50_000;
@@ -381,22 +284,11 @@ fn test_encoding() {
 
     let mut shards = make_random_shards!(per_shard, 13);
 
-    r.encode_parity(&mut shards, None, None);
-    assert!(r.is_parity_correct(&shards, None, None));
+    r.encode_shards(&mut shards).unwrap();
+    assert!(r.verify_shards(&shards).unwrap());
 }
 
-#[test]
-fn test_encoding_with_range() {
-    let per_shard = 50_000;
-
-    let r = ReedSolomon::new(10, 3);
-
-    let mut shards = make_random_shards!(per_shard, 13);
-
-    r.encode_parity(&mut shards, Some(7), Some(100));
-    assert!(r.is_parity_correct(&shards, Some(7), Some(100)));
-}
-
+/*
 #[test]
 fn test_decode_missing() {
     let per_shard = 100_000;

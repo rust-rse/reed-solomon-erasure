@@ -86,7 +86,7 @@ macro_rules! shards {
     }}
 }
 
-pub fn shards_to_slices<'a>(shards : &'a Vec<Shard>) -> Vec<&'a [u8]> {
+pub fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
     let mut result : Vec<&[u8]> =
         Vec::with_capacity(shards.len());
     for shard in shards.into_iter() {
@@ -380,10 +380,6 @@ impl ReedSolomon {
 
     pub fn encode_shards(&self,
                          shards : &mut [Shard]) -> Result<(), Error> {
-        if shards.len() < self.total_shard_count {
-            return Err(Error::TooFewShards);
-        }
-
         let mut slices = mut_shards_to_mut_slices(shards);
 
         self.encode(&mut slices)
@@ -415,6 +411,14 @@ impl ReedSolomon {
                               output);
 
         Ok(())
+    }
+
+    pub fn verify_shards(&self,
+                         shards : &[Shard]) -> Result<bool, Error> {
+        let slices =
+            shards_to_slices(shards);
+
+        self.verify(&slices)
     }
 
     pub fn verify(&self,
