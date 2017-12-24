@@ -2,6 +2,7 @@
 extern crate rand;
 
 use super::*;
+use super::shard_utils;
 use self::rand::{thread_rng, Rng};
 //use std::rc::Rc;
 
@@ -134,22 +135,21 @@ fn test_shard_count() {
     }
 }
 
-/*
 #[test]
 #[should_panic]
 fn test_calc_byte_count_byte_count_is_zero_case1() {
     let shards = make_random_shards!(1_000, 1);
 
-    helper::calc_byte_count(&shards,
-                            Some(0)); }
+    shard_utils::helper::calc_byte_count(&shards,
+                                         Some(0)); }
 
 #[test]
 #[should_panic]
 fn test_calc_byte_count_byte_count_is_zero_case2() {
     let shards = make_random_shards!(1_000, 0);
 
-    helper::calc_byte_count(&shards,
-                            None); }
+    shard_utils::helper::calc_byte_count(&shards,
+                                         None); }
 
 #[test]
 #[should_panic]
@@ -157,9 +157,10 @@ fn test_calc_byte_count_option_shards_byte_count_is_zero_case1() {
     let shards = make_random_shards!(1_000, 1);
     let option_shards = shards_into_option_shards(shards);
 
-    helper::calc_byte_count_option_shards(&option_shards,
-                                          Some(0)); }
+    shard_utils::helper::calc_byte_count_option_shards(&option_shards,
+                                                       Some(0)); }
 
+/*
 #[test]
 #[should_panic]
 fn test_calc_byte_count_option_shards_byte_count_is_zero_case2() {
