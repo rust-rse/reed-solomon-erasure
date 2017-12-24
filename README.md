@@ -19,7 +19,7 @@ See [Notes](#notes) and [License](#license) section for details.
 Add the following to your `Cargo.toml`
 ```toml
 [dependencies]
-reed-solomon-erasure = "1.1"
+reed-solomon-erasure = "2.0"
 ```
 and the following to your crate root
 ```rust
