@@ -14,6 +14,7 @@ mod galois;
 mod matrix;
 mod inversion_tree;
 mod shard_utils;
+mod lib_test;
 
 pub use shard_utils::make_zero_len_shard;
 pub use shard_utils::make_zero_len_shards;
