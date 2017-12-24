@@ -328,12 +328,20 @@ impl ReedSolomon {
                         })
                 })
         }
-        for i in 0..outputs.len() {
+        let any_shard_inequal = misc_utils::breakdown_slice_with_index
+            (&outputs)
+            .into_par_iter()
+            .map(|(i, output)| {
+                misc_utils::slices_are_equal(output, to_check[i])
+            })
+            .any(|x| !x);
+        /*for i in 0..outputs.len() {
             if !misc_utils::slices_are_equal(&outputs[i], to_check[i]) {
                 return false;
             }
-        }
-        true
+        }*/
+        //true
+        !any_shard_inequal
     }
 
     fn check_slices(slices : &[&[u8]]) -> Result<(), Error> {
