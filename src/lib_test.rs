@@ -3,6 +3,7 @@
 extern crate rand;
 
 use super::*;
+use super::Error;
 use super::shard_utils;
 use self::rand::{thread_rng, Rng};
 
@@ -105,7 +106,7 @@ fn fill_random(arr : &mut Shard) {
     }
 }
 
-fn assert_eq_shards_with_range(shards1    : &Vec<Shard>,
+/*fn assert_eq_shards_with_range(shards1    : &Vec<Shard>,
                                shards2    : &Vec<Shard>,
                                offset     : usize,
                                byte_count : usize) {
@@ -114,7 +115,7 @@ fn assert_eq_shards_with_range(shards1    : &Vec<Shard>,
         let slice2 = &shards2[s][offset..offset + byte_count];
         assert_eq!(slice1, slice2);
     }
-}
+}*/
 
 #[test]
 #[should_panic]
@@ -286,6 +287,14 @@ fn test_encoding() {
 
     r.encode_shards(&mut shards).unwrap();
     assert!(r.verify_shards(&shards).unwrap());
+
+    assert_eq!(Error::TooFewShards,
+               r.encode_shards(&mut shards[0..1]).unwrap_err());
+
+    let mut bad_shards = make_random_shards!(per_shard, 13);
+    bad_shards[0] = vec![0 as u8].into_boxed_slice();
+    assert_eq!(Error::IncorrectShardSize,
+               r.encode_shards(&mut bad_shards).unwrap_err());
 }
 
 /*
