@@ -1,4 +1,5 @@
 #![cfg(test)]
+#![allow(dead_code)]
 extern crate rand;
 
 use super::*;
@@ -160,15 +161,14 @@ fn test_calc_byte_count_option_shards_byte_count_is_zero_case1() {
     shard_utils::helper::calc_byte_count_option_shards(&option_shards,
                                                        Some(0)); }
 
-/*
 #[test]
 #[should_panic]
 fn test_calc_byte_count_option_shards_byte_count_is_zero_case2() {
     let shards = make_random_shards!(1_000, 0);
     let option_shards = shards_into_option_shards(shards);
 
-    helper::calc_byte_count_option_shards(&option_shards,
-                                          None); }
+    shard_utils::helper::calc_byte_count_option_shards(&option_shards,
+                                                       None); }
 
 #[test]
 #[should_panic]
@@ -180,9 +180,10 @@ fn test_calc_byte_count_option_shards_no_shards_present() {
     option_shards[0] = None;
     option_shards[1] = None;
 
-    helper::calc_byte_count_option_shards(&option_shards,
-                                          None); }
+    shard_utils::helper::calc_byte_count_option_shards(&option_shards,
+                                                       None); }
 
+/*
 #[test]
 fn test_shards_into_option_shards_into_shards() {
     for _ in 0..100 {
