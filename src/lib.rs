@@ -153,17 +153,20 @@ pub struct ReedSolomon {
 /// Parameters for parallelism
 #[derive(PartialEq, Debug, Clone)]
 pub struct ParallelParam {
-    pub bytes_per_encode  : Option<usize>,
-    //pub shards_per_encode : usize,
+    pub bytes_per_encode  : usize,
+    pub shards_per_encode : usize,
 }
 
 impl ParallelParam {
-    pub fn new(bytes_per_encode  : Option<usize>) -> ParallelParam {
-        ParallelParam { bytes_per_encode }
+    pub fn new(bytes_per_encode  : usize,
+               shards_per_encode : usize) -> ParallelParam {
+        ParallelParam { bytes_per_encode,
+                        shards_per_encode }
     }
 
     pub fn with_default() -> ParallelParam {
-        Self::new(Some(8192))
+        Self::new(8192,
+                  4)
     }
 }
 
@@ -261,43 +264,34 @@ impl ReedSolomon {
                 outputs)
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
-                    match self.pparam.bytes_per_encode {
-                        None => {
-                            if c == 0 {
+                    if c == 0 {
+                        misc_utils::split_slice_mut_with_index(
+                            output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|(i, output)| {
+                                let start =
+                                    i * self.pparam.bytes_per_encode;
                                 galois::mul_slice(matrix_rows[i_row][c],
-                                input,
-                                output);
-                            } else {
+                                                  &input[start..start + output.len()],
+                                                  output);
+                            })
+                        /*galois::mul_slice(matrix_rows[i_row][c],
+                                          input,
+                                          output);*/
+                    } else {
+                        misc_utils::split_slice_mut_with_index(
+                            output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|(i, output)| {
+                                let start =
+                                    i * self.pparam.bytes_per_encode;
                                 galois::mul_slice_xor(matrix_rows[i_row][c],
-                                input,
-                                output);
-                            }
-                        },
-                        Some(bytes_per_encode) => {
-                            if c == 0 {
-                                misc_utils::split_slice_mut_with_index(
-                                    output, bytes_per_encode)
-                                    .into_par_iter()
-                                    .for_each(|(i, output)| {
-                                        let start =
-                                            i * bytes_per_encode;
-                                        galois::mul_slice(matrix_rows[i_row][c],
-                                                          &input[start..start + output.len()],
-                                                          output);
-                                    })
-                            } else {
-                                misc_utils::split_slice_mut_with_index(
-                                    output, bytes_per_encode)
-                                    .into_par_iter()
-                                    .for_each(|(i, output)| {
-                                        let start =
-                                            i * bytes_per_encode;
-                                        galois::mul_slice_xor(matrix_rows[i_row][c],
-                                                              &input[start..start + output.len()],
-                                                              output);
-                                    })
-                            }
-                        }
+                                                      &input[start..start + output.len()],
+                                                      output);
+                            })
+                        /*galois::mul_slice_xor(matrix_rows[i_row][c],
+                                              input,
+                                              output);*/
                     }
                 })
         }
