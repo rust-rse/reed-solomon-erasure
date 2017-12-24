@@ -13,7 +13,7 @@ pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
     loop {
         if chunk_size < rem_len {
             let slice = rem_slice.take();
-            let (l, r) = slice.split_at_mut(1);
+            let (l, r) = slice.split_at_mut(chunk_size);
             result.push((cur_index, l));
             rem_slice.set(r);
         } else {
@@ -38,7 +38,7 @@ pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
     loop {
         if chunk_size < rem_len {
             let slice = rem_slice.take();
-            let (l, r) = slice.split_at(1);
+            let (l, r) = slice.split_at(chunk_size);
             result.push((cur_index, l));
             rem_slice.set(r);
         } else {
