@@ -297,129 +297,61 @@ fn test_encoding() {
                r.encode_shards(&mut bad_shards).unwrap_err());
 }
 
+#[test]
+fn test_reconstruct() {
+    let per_shard = 100_000;
+
+    let r = ReedSolomon::new(8, 5);
+
+    let mut shards = make_random_shards!(per_shard, 13);
+
+    r.encode_shards(&mut shards).unwrap();
+
+    let master_copy = shards.clone();
+
+    let mut shards = shards_to_option_shards(&shards);
+
+    // Try to decode with all shards present
+    r.reconstruct_shards(&mut shards).unwrap();
+    {
+        let shards = option_shards_to_shards(&shards, None, None);
+        assert!(r.verify_shards(&shards).unwrap());
+        assert_eq_shards(&shards, &master_copy);
+    }
+
+    // Try to decode with 10 shards
+    shards[0] = None;
+    shards[2] = None;
+    //shards[4] = None;
+    r.reconstruct_shards(&mut shards).unwrap();
+    {
+        let shards = option_shards_to_shards(&shards, None, None);
+        assert!(r.verify_shards(&shards).unwrap());
+        assert_eq_shards(&shards, &master_copy);
+    }
+
+    // Try to deocde with 6 data and 4 parity shards
+    shards[0] = None;
+    shards[2] = None;
+    shards[12] = None;
+    r.reconstruct_shards(&mut shards).unwrap();
+    {
+        let shards = option_shards_to_shards(&shards, None, None);
+        assert!(r.verify_shards(&shards).unwrap());
+    }
+
+    // Try to decode with 7 data and 1 parity shards
+    shards[0] = None;
+    shards[1] = None;
+    shards[9] = None;
+    shards[10] = None;
+    shards[11] = None;
+    shards[12] = None;
+    assert_eq!(r.reconstruct_shards(&mut shards).unwrap_err(),
+               Error::TooFewShards);
+}
+
 /*
-#[test]
-fn test_decode_missing() {
-    let per_shard = 100_000;
-
-    let r = ReedSolomon::new(8, 5);
-
-    let mut shards = make_random_shards!(per_shard, 13);
-
-    r.encode_parity(&mut shards, None, None);
-
-    let master_copy = shards.clone();
-
-    let mut shards = shards_to_option_shards(&shards);
-
-    // Try to decode with all shards present
-    r.decode_missing(&mut shards,
-                     None, None).unwrap();
-    {
-        let shards = option_shards_to_shards(&shards, None, None);
-        assert!(r.is_parity_correct(&shards, None, None));
-        assert_eq_shards(&shards, &master_copy);
-    }
-
-    // Try to decode with 10 shards
-    shards[0] = None;
-    shards[2] = None;
-    //shards[4] = None;
-    r.decode_missing(&mut shards,
-                     None, None).unwrap();
-    {
-        let shards = option_shards_to_shards(&shards, None, None);
-        assert!(r.is_parity_correct(&shards, None, None));
-        assert_eq_shards(&shards, &master_copy);
-    }
-
-    // Try to deocde with 6 data and 4 parity shards
-    shards[0] = None;
-    shards[2] = None;
-    shards[12] = None;
-    r.decode_missing(&mut shards,
-                     None, None).unwrap();
-    {
-        let shards = option_shards_to_shards(&shards, None, None);
-        assert!(r.is_parity_correct(&shards, None, None));
-    }
-
-    // Try to decode with 7 data and 1 parity shards
-    shards[0] = None;
-    shards[1] = None;
-    shards[9] = None;
-    shards[10] = None;
-    shards[11] = None;
-    shards[12] = None;
-    assert_eq!(r.decode_missing(&mut shards,
-                                None, None).unwrap_err(),
-               Error::NotEnoughShards);
-}
-
-#[test]
-fn test_decode_missing_with_range() {
-    let per_shard = 100_000;
-
-    let offset = 7;
-    let byte_count = 100;
-    let op_offset = Some(offset);
-    let op_byte_count = Some(byte_count);
-
-    let r = ReedSolomon::new(8, 5);
-
-    let mut shards = make_random_shards!(per_shard, 13);
-
-    r.encode_parity(&mut shards, Some(7), Some(100));
-
-    let master_copy = shards.clone();
-
-    let mut shards = shards_to_option_shards(&shards);
-
-    // Try to decode with all shards present
-    r.decode_missing(&mut shards,
-                     Some(7), Some(100)).unwrap();
-    {
-        let shards = option_shards_to_shards(&shards, None, None);
-        assert!(r.is_parity_correct(&shards, op_offset, op_byte_count));
-        assert_eq_shards_with_range(&shards, &master_copy, offset, byte_count);
-    }
-
-    // Try to decode with 10 shards
-    shards[0] = None;
-    shards[2] = None;
-    //shards[4] = None;
-    r.decode_missing(&mut shards,
-                     op_offset, op_byte_count).unwrap();
-    {
-        let shards = option_shards_to_shards(&shards, None, None);
-        assert!(r.is_parity_correct(&shards, op_offset, op_byte_count));
-        assert_eq_shards_with_range(&shards, &master_copy, offset, byte_count);
-    }
-
-    // Try to deocde with 6 data and 4 parity shards
-    shards[0] = None;
-    shards[2] = None;
-    shards[12] = None;
-    r.decode_missing(&mut shards,
-                     None, None).unwrap();
-    {
-        let shards = option_shards_to_shards(&shards, None, None);
-        assert!(r.is_parity_correct(&shards, op_offset, op_byte_count));
-        assert_eq_shards_with_range(&shards, &master_copy, offset, byte_count);
-    }
-
-    // Try to decode with 7 data and 1 parity shards
-    shards[0] = None;
-    shards[1] = None;
-    shards[9] = None;
-    shards[10] = None;
-    shards[11] = None;
-    shards[12] = None;
-    assert_eq!(r.decode_missing(&mut shards,
-                                op_offset, op_byte_count).unwrap_err(),
-               Error::NotEnoughShards);
-}
-
 #[test]
 fn test_is_parity_correct() {
     let per_shard = 33_333;
