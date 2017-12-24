@@ -16,8 +16,10 @@ pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
             let (l, r) = slice.split_at_mut(chunk_size);
             result.push((cur_index, l));
             rem_slice.set(r);
-        } else {
+        } else if rem_len > 0 {
             result.push((cur_index, rem_slice.take()));
+            break;
+        } else {
             break;
         }
 
@@ -41,8 +43,10 @@ pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
             let (l, r) = slice.split_at(chunk_size);
             result.push((cur_index, l));
             rem_slice.set(r);
-        } else {
+        } else if rem_len > 0 {
             result.push((cur_index, rem_slice.take()));
+            break;
+        } else {
             break;
         }
 
