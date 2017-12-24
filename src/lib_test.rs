@@ -6,6 +6,14 @@ use super::*;
 use super::shard_utils;
 use self::rand::{thread_rng, Rng};
 
+macro_rules! shards {
+    (
+        $( [ $( $x:expr ),* ] ),*
+    ) => {{
+        vec![ $( Box::new([ $( $x ),* ]) ),* ]
+    }}
+}
+
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{
         let mut shards = Vec::with_capacity(13);
@@ -211,7 +219,6 @@ fn test_shards_to_option_shards_to_shards() {
     }
 }
 
-/*
 #[test]
 #[should_panic]
 fn test_option_shards_to_shards_missing_shards_case1() {
@@ -220,7 +227,7 @@ fn test_option_shards_to_shards_missing_shards_case1() {
 
     option_shards[0] = None;
 
-    option_shards_to_shards(&option_shards, None, None);
+    shard_utils::option_shards_to_shards(&option_shards, None, None);
 }
 
 #[test]
@@ -231,7 +238,7 @@ fn test_option_shards_to_shards_missing_shards_case2() {
     option_shards[0] = None;
     option_shards[9] = None;
 
-    option_shards_to_shards(&option_shards, Some(1), Some(8));
+    shard_utils::option_shards_to_shards(&option_shards, Some(1), Some(8));
 }
 
 #[test]
@@ -242,7 +249,7 @@ fn test_option_shards_into_missing_shards() {
 
     option_shards[2] = None;
 
-    option_shards_into_shards(option_shards);
+    shard_utils::option_shards_into_shards(option_shards);
 }
 
 #[test]
@@ -251,7 +258,7 @@ fn test_option_shards_to_shards_too_few_shards() {
     let shards = make_random_shards!(1_000, 10);
     let option_shards = shards_into_option_shards(shards);
 
-    option_shards_to_shards(&option_shards,
+    shard_utils::option_shards_to_shards(&option_shards,
                             None,
                             Some(11));
 }
@@ -269,180 +276,7 @@ fn test_reedsolomon_clone() {
 fn test_reedsolomon_too_many_shards() {
     ReedSolomon::new(256, 1); }
 
-#[test]
-#[should_panic]
-fn test_check_buffer_and_sizes_total_shard_count() {
-    let r = ReedSolomon::new(10, 3);
-    let shards = make_random_shards!(1_000, 12);
-
-    r.check_buffer_and_sizes(&shards, 0, 12);
-}
-
-#[test]
-#[should_panic]
-fn test_check_buffer_and_sizes_shards_same_size() {
-    let r = ReedSolomon::new(3, 2);
-    let shards = shards!([0, 1, 2],
-                         [0, 1, 2, 4],
-                         [0, 1, 2],
-                         [0, 1, 2],
-                         [0, 1, 2]);
-
-    r.check_buffer_and_sizes(&shards, 0, 3);
-}
-
-#[test]
-#[should_panic]
-fn test_check_buffer_and_sizes_shards_too_small() {
-    let r = ReedSolomon::new(3, 2);
-    let shards = shards!([0, 1, 2],
-                         [0, 1, 2],
-                         [0, 1, 2],
-                         [0, 1, 2],
-                         [0, 1, 2]);
-
-    r.check_buffer_and_sizes(&shards, 0, 4);
-}
-
-#[test]
-#[should_panic]
-fn test_check_buffer_and_sizes_option_shards_total_shard_count() {
-    let r = ReedSolomon::new(10, 3);
-    let shards =
-        shards_into_option_shards(
-            make_random_shards!(1_000, 12));
-
-    r.check_buffer_and_sizes_option_shards(&shards, 0, 12);
-}
-
-#[test]
-#[should_panic]
-fn test_check_buffer_and_sizes_option_shards_shards_same_size() {
-    let r = ReedSolomon::new(3, 2);
-    let shards =
-        shards_into_option_shards(
-            shards!([0, 1, 2],
-                    [0, 1, 2, 4],
-                    [0, 1, 2],
-                    [0, 1, 2],
-                    [0, 1, 2]));
-
-    r.check_buffer_and_sizes_option_shards(&shards, 0, 3);
-}
-
-#[test]
-#[should_panic]
-fn test_check_buffer_and_sizes_option_shards_shards_too_small() {
-    let r = ReedSolomon::new(3, 2);
-    let shards =
-        shards_into_option_shards(
-            shards!([0, 1, 2],
-                    [0, 1, 2],
-                    [0, 1, 2],
-                    [0, 1, 2],
-                    [0, 1, 2]));
-
-    r.check_buffer_and_sizes_option_shards(&shards, 0, 4);
-}
-
-#[test]
-fn test_shallow_clone_shards() {
-    let shards1 = make_random_shards!(1_000, 10);
-
-    for v in shards1.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-
-    let shards2 = shards1.clone();
-
-    for v in shards1.iter() {
-        assert_eq!(2, Arc::strong_count(v));
-    }
-    for v in shards2.iter() {
-        assert_eq!(2, Arc::strong_count(v));
-    }
-}
-
-#[test]
-fn test_deep_clone_shards() {
-    let shards1 = make_random_shards!(1_000, 10);
-
-    for v in shards1.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-
-    let shards2 = deep_clone_shards(&shards1);
-
-    for v in shards1.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-    for v in shards2.iter() {
-        assert_eq!(1, Arc::strong_count(v));
-    }
-}
-
-#[test]
-fn test_shallow_clone_option_shards() {
-    let shards1 =
-        shards_into_option_shards(
-            make_random_shards!(1_000, 10));
-
-    for v in shards1.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-
-    let shards2 = shards1.clone();
-
-    for v in shards1.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(2, Arc::strong_count(x));
-        }
-    }
-    for v in shards2.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(2, Arc::strong_count(x));
-        }
-    }
-}
-
-#[test]
-fn test_deep_clone_option_shards() {
-    let mut shards1 =
-        shards_into_option_shards(
-            make_random_shards!(1_000, 10));
-
-    for v in shards1.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-
-    let shards2 = deep_clone_option_shards(&shards1);
-
-    for v in shards1.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-    for v in shards2.iter() {
-        if let Some(ref x) = *v {
-            assert_eq!(1, Arc::strong_count(x));
-        }
-    }
-
-    shards1[0] = None;
-    shards1[4] = None;
-    shards1[7] = None;
-
-    let shards3 = deep_clone_option_shards(&shards1);
-
-    if let Some(_) = shards3[0] { panic!() }
-    if let Some(_) = shards3[4] { panic!() }
-    if let Some(_) = shards3[7] { panic!() }
-}
-
+/*
 #[test]
 fn test_rc_counts_carries_over_decode_missing() {
     let r = ReedSolomon::new(3, 2);

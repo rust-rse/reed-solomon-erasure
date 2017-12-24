@@ -171,6 +171,16 @@ impl Clone for ReedSolomon {
     }
 }
 
+impl PartialEq for ReedSolomon {
+    fn eq(&self, rhs : &ReedSolomon) -> bool {
+        self.data_shard_count == rhs.data_shard_count
+            && self.parity_shard_count == rhs.parity_shard_count
+            && self.total_shard_count  == rhs.total_shard_count
+            && self.matrix             == rhs.matrix
+            && self.pparam             == rhs.pparam
+    }
+}
+
 impl ReedSolomon {
     fn get_parity_rows(&self) -> Vec<&[u8]> {
         let mut parity_rows  = Vec::with_capacity(self.parity_shard_count);
