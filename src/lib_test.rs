@@ -117,7 +117,6 @@ fn test_no_data_shards() {
 fn test_no_parity_shards() {
     ReedSolomon::new(1, 0); }
 
-/*
 #[test]
 fn test_shard_count() {
     let mut rng = thread_rng();
@@ -135,6 +134,7 @@ fn test_shard_count() {
     }
 }
 
+/*
 #[test]
 #[should_panic]
 fn test_calc_byte_count_byte_count_is_zero_case1() {
