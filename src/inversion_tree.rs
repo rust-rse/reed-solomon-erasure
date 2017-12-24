@@ -242,10 +242,40 @@ mod tests {
         let tree = InversionTree::new(10, 3);
         let matrix = Matrix::new(10, 10);
         let matrix_copy = matrix.clone();
-        
+        let matrix2 = matrix!([0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let matrix2_copy = matrix2.clone();
+        let matrix3 = matrix!([9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+                              [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+                              [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+                              [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+                              [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                              [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let matrix3_copy = matrix3.clone();
+
         tree.insert_inverted_matrix(&[1, 2], &Arc::new(matrix), 13).unwrap();
-        
-        //let result = tree.get_inverted_matrix(&[1, 2]).unwrap();
-        //assert_eq!(matrix_copy, *result);
+
+        let result = tree.get_inverted_matrix(&[1, 2]).unwrap();
+        assert_eq!(matrix_copy, *result);
+
+        tree.insert_inverted_matrix(&[1, 2, 5, 12], &Arc::new(matrix2), 13).unwrap();
+        let result = tree.get_inverted_matrix(&[1, 2, 5, 12]).unwrap();
+        assert_eq!(matrix2_copy, *result);
+
+        tree.insert_inverted_matrix(&[0, 3, 4, 11], &Arc::new(matrix3), 13).unwrap();
+        let result = tree.get_inverted_matrix(&[0, 3, 4, 11]).unwrap();
+        assert_eq!(matrix3_copy, *result);
     }
 }
