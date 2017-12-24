@@ -74,16 +74,20 @@ cargo test
 [Changelog](CHANGELOG.md)
 
 ## Notes
-The implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), and the test suite mirrors [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
+The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon).
+
+The `2.X.X` implementation mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
+
+The test suite for both versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
 ## License
 #### BackBlaze Java Reed-Solomon implementation
-The tables and main functions of ```build.rs``` and ```src/*``` are translated from [BackBlaze Java Implementation](https://github.com/Backblaze/JavaReedSolomon), and are under the same MIT License as used by the BackBlaze project
+The tables and main functions of ```build.rs``` are translated from [BackBlaze Java Implementation](https://github.com/Backblaze/JavaReedSolomon), and are under the same MIT License as used by the BackBlaze project
 
 The source code copied directly from BackBlaze's project repo are under the MIT License as used by the project, the files are in ```BackBlaze_JavaReedSolomon```
 
 #### Klaus Post Go Reed-Solomon implementation
-The tables and test functions of ```src/*``` are translated from [Klaus Post's Go Implementation](https://github.com/klauspost/reedsolomon), and are under the same MIT License as used by Klaus Post's project
+The tables and main functions of ```src/*``` are translated from [Klaus Post's Go Implementation](https://github.com/klauspost/reedsolomon), and are under the same MIT License as used by Klaus Post's project
 
 The source code copied directly from Klaus Post's project repo are under the MIT License as used by the project, the files are in ```KlausPost_reedsolomon```
 
