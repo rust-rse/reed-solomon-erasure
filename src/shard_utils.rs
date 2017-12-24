@@ -12,7 +12,7 @@ pub mod helper {
         }
     }
 
-    pub fn calc_byte_count(shards     : &Vec<Shard>,
+    /*pub fn calc_byte_count(shards     : &Vec<Shard>,
                            byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
@@ -22,7 +22,7 @@ pub mod helper {
         if result == 0 { panic!("Byte count is zero"); }
 
         result
-    }
+    }*/
 
     /*pub fn calc_offset_and_byte_count(offset : Option<usize>,
                                       shards : &Vec<Shard>,
@@ -34,7 +34,7 @@ pub mod helper {
         (offset, byte_count)
     }*/
 
-    pub fn calc_byte_count_option_shards(shards     : &Vec<Option<Shard>>,
+    /*pub fn calc_byte_count_option_shards(shards     : &Vec<Option<Shard>>,
                                          byte_count : Option<usize>) -> usize {
         let result = match byte_count {
             Some(x) => x,
@@ -57,7 +57,7 @@ pub mod helper {
         if result == 0 { panic!("Byte count is zero"); }
 
         result
-    }
+    }*/
 
     /*pub fn calc_offset_and_byte_count_option_shards(offset : Option<usize>,
                                                     shards : &Vec<Option<Shard>>,
