@@ -36,7 +36,7 @@ use inversion_tree::InversionTree;
 #[derive(PartialEq, Debug)]
 pub enum Error {
     TooFewShards,
-    WrongShardSize,
+    IncorrectShardSize,
     EmptyShard,
     InvalidShardsIndicator,
     InversionTreeError(inversion_tree::Error)
@@ -330,7 +330,7 @@ impl ReedSolomon {
         }
         for slice in slices.iter() {
             if slice.len() != size {
-                return Err(Error::WrongShardSize);
+                return Err(Error::IncorrectShardSize);
             }
         }
         Ok(())
@@ -343,7 +343,7 @@ impl ReedSolomon {
         }
         for slice in slices.iter() {
             if slice.len() != size {
-                return Err(Error::WrongShardSize);
+                return Err(Error::IncorrectShardSize);
             }
         }
         Ok(())
@@ -385,7 +385,7 @@ impl ReedSolomon {
                         None => {},
                         Some(ref slice) => {
                             if slice.len() != size {
-                                return Err(Error::WrongShardSize);
+                                return Err(Error::IncorrectShardSize);
                             }
                         }
                     }
