@@ -120,6 +120,15 @@ pub fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
     result
 }
 
+mod helper {
+    pub fn calc_slice_start_end(i : usize, chunk_size : usize)
+                                -> (usize, usize) {
+        let s = i * chunk_size;
+        let e = s + chunk_size - 1;
+        (s, e)
+    }
+}
+
 /// Reed-Solomon erasure code encoder/decoder
 ///
 /// # Remarks
@@ -258,23 +267,13 @@ impl ReedSolomon {
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
                     if c == 0 {
-                        misc_utils::split_slice_mut
-                            (output, self.pparam.bytes_per_encode)
-                            .into_par_iter()
-                            .for_each(|output| {
-                                galois::mul_slice(matrix_rows[i_row][c],
-                                                  input,
-                                                  output);
-                            })
+                        galois::mul_slice(matrix_rows[i_row][c],
+                                          input,
+                                          output);
                     } else {
-                        misc_utils::split_slice_mut
-                            (output, self.pparam.bytes_per_encode)
-                            .into_par_iter()
-                            .for_each(|output| {
-                                galois::mul_slice_xor(matrix_rows[i_row][c],
-                                                      input,
-                                                      output);
-                            })
+                        galois::mul_slice_xor(matrix_rows[i_row][c],
+                                              input,
+                                              output);
                     }
                 })
         }
