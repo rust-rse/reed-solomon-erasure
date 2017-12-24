@@ -120,14 +120,14 @@ pub fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
     result
 }
 
-mod helper {
+/*mod helper {
     pub fn calc_slice_start_end(i : usize, chunk_size : usize)
                                 -> (usize, usize) {
         let s = i * chunk_size;
         let e = s + chunk_size - 1;
         (s, e)
     }
-}
+}*/
 
 /// Reed-Solomon erasure code encoder/decoder
 ///
@@ -167,7 +167,7 @@ impl ParallelParam {
     }
 
     pub fn with_default() -> ParallelParam {
-        Self::new(4096,
+        Self::new(10240,
                   4)
     }
 }
