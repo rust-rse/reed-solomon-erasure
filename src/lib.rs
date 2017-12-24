@@ -167,7 +167,7 @@ impl ParallelParam {
     }
 
     pub fn with_default() -> ParallelParam {
-        Self::new(10240,
+        Self::new(16384,
                   4)
     }
 }
