@@ -338,6 +338,7 @@ fn test_reconstruct() {
     {
         let shards = option_shards_to_shards(&shards, None, None);
         assert!(r.verify_shards(&shards).unwrap());
+        assert_eq_shards(&shards, &master_copy);
     }
 
     // Try to decode with 7 data and 1 parity shards
