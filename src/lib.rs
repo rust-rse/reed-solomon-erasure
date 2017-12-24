@@ -30,8 +30,6 @@ use rayon::prelude::*;
 //use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-extern crate num_cpus;
-
 use matrix::Matrix;
 use inversion_tree::InversionTree;
 
