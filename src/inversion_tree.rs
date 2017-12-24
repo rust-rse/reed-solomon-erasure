@@ -170,13 +170,13 @@ mod tests {
     fn test_new_inversion_tree() {
         let tree = InversionTree::new(3, 2);
 
-        let children = tree.root.read().unwrap().children.len();
+        let children = tree.root.lock().unwrap().children.len();
         assert_eq!(5, children);
 
         let expect = matrix!([1, 0, 0],
                              [0, 1, 0],
                              [0, 0, 1]);
-        assert_eq!(expect, *tree.root.read().unwrap().matrix.unwrap());
+        assert_eq!(expect, *tree.get_inverted_matrix(&[]).unwrap());
     }
 
     #[test]
