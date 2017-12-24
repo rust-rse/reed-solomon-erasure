@@ -22,8 +22,6 @@ pub use shard_utils::make_blank_shard;
 pub use shard_utils::make_blank_shards;
 pub use shard_utils::shards_to_option_shards;
 pub use shard_utils::shards_into_option_shards;
-pub use shard_utils::deep_clone_shards;
-pub use shard_utils::deep_clone_option_shards;
 
 extern crate rayon;
 use rayon::prelude::*;

@@ -200,6 +200,7 @@ pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
     result
 }
 
+/*
 /// Deep copies vector of shards
 ///
 /// # Remarks
@@ -221,8 +222,9 @@ pub fn deep_clone_shards(shards : &Vec<Shard>) -> Vec<Shard> {
         result.push(inner);
     }
     result
-}
+}*/
 
+/*
 /// Deep copies vector of option shards
 ///
 /// # Remarks
@@ -248,4 +250,4 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
         result.push(inner);
     }
     result
-}
+}*/
