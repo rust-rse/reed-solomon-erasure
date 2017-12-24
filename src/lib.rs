@@ -58,12 +58,12 @@ pub type Shard = Box<[u8]>;
 /// # }
 /// ```
 #[macro_export]
-macro_rules! shard {
+macro_rules! shards {
     (
-        $( $x:expr ),*
-    ) => {
-        Box::new([ $( $x ),* ])
-    }
+        $( [ $( $x:expr ),* ] ),*
+    ) => {{
+        vec![ $( vec![ $( $x as u8),* ].into_boxed_slice() ),* ]
+    }}
 }
 
 /// Constructs vector of shards

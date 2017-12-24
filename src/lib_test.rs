@@ -10,7 +10,7 @@ macro_rules! shards {
     (
         $( [ $( $x:expr ),* ] ),*
     ) => {{
-        vec![ $( Box::new([ $( $x ),* ]) ),* ]
+        vec![ $( vec![ $( $x as u8),* ].into_boxed_slice() ),* ]
     }}
 }
 
@@ -457,6 +457,7 @@ fn test_is_parity_correct_with_range() {
     fill_random(&mut shards[1]);
     assert!(!r.is_parity_correct(&shards, op_offset, op_byte_count));
 }
+*/
 
 #[test]
 fn test_one_encode() {
@@ -473,21 +474,20 @@ fn test_one_encode() {
                              [0, 0],
                              [0, 0]);
 
-    r.encode_parity(&mut shards, None, None);
-    { assert_eq!(shards[5].read().unwrap()[0], 12);
-      assert_eq!(shards[5].read().unwrap()[1], 13); }
-    { assert_eq!(shards[6].read().unwrap()[0], 10);
-      assert_eq!(shards[6].read().unwrap()[1], 11); }
-    { assert_eq!(shards[7].read().unwrap()[0], 14);
-      assert_eq!(shards[7].read().unwrap()[1], 15); }
-    { assert_eq!(shards[8].read().unwrap()[0], 90);
-      assert_eq!(shards[8].read().unwrap()[1], 91); }
-    { assert_eq!(shards[9].read().unwrap()[0], 94);
-      assert_eq!(shards[9].read().unwrap()[1], 95); }
+    r.encode_shards(&mut shards).unwrap();
+    { assert_eq!(shards[5][0], 12);
+      assert_eq!(shards[5][1], 13); }
+    { assert_eq!(shards[6][0], 10);
+      assert_eq!(shards[6][1], 11); }
+    { assert_eq!(shards[7][0], 14);
+      assert_eq!(shards[7][1], 15); }
+    { assert_eq!(shards[8][0], 90);
+      assert_eq!(shards[8][1], 91); }
+    { assert_eq!(shards[9][0], 94);
+      assert_eq!(shards[9][1], 95); }
 
-    assert!(r.is_parity_correct(&shards, None, None));
+    assert!(r.verify_shards(&shards).unwrap());
 
-    shards[8].write().unwrap()[0] += 1;
-    assert!(!r.is_parity_correct(&shards, None, None));
+    shards[8][0] += 1;
+    assert!(!r.verify_shards(&shards).unwrap());
 }
-*/
