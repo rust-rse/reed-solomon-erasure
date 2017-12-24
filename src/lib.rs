@@ -286,7 +286,6 @@ impl ReedSolomon {
                             galois::mul_slice_xor(matrix_rows[i_row][c],
                                                   input,
                                                   output);
-                            
                         } else {
                             misc_utils::split_slice_mut_with_index(
                                 output, self.pparam.bytes_per_encode)
