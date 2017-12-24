@@ -236,47 +236,6 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
-    /*fn breakdown_mut_option_shards(shards : &mut [Option<Shard>])
-                                    -> Vec<&mut Option<Shard>> {
-        misc_utils::breakdown_slice_mut(shards)
-    }*/
-
-    /*fn breakdown_mut_option_shards_to_refs<'a>(shards : &'a [&mut Option<Shard>])
-                                            -> Vec<&'a [u8]> {
-        let tmp = misc_utils::breakdown_slice(shards);
-        let mut result : Vec<&[u8]> =
-            Vec::with_capacity(tmp.len());
-        for s in tmp.into_iter() {
-            match **s {
-                None        => panic!("Slot is empty"),
-                Some(ref s) => result.push(s)
-            }
-        }
-        result
-    }*/
-
-    /*fn breakdown_mut_shards(shards : &mut [Shard])
-                             -> Vec<&mut [u8]> {
-        let tmp = misc_utils::breakdown_slice_mut(shards);
-        let mut result : Vec<&mut [u8]> =
-            Vec::with_capacity(tmp.len());
-        for s in tmp.into_iter() {
-            result.push(s)
-        }
-        result
-    }*/
-
-    /*fn breakdown_shards_ref<'a>(shards : &'a [&Shard])
-                                 -> Vec<&'a [u8]> {
-        let tmp = misc_utils::breakdown_slice(shards);
-        let mut result : Vec<&'a [u8]> =
-            Vec::with_capacity(tmp.len());
-        for s in tmp.into_iter() {
-            result.push(s)
-        }
-        result
-    }*/
-
     fn code_some_slices(&self,
                         matrix_rows  : &[&[u8]],
                         inputs       : &[&[u8]],
