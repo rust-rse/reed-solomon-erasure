@@ -260,8 +260,10 @@ mod tests {
         let tree = InversionTree::new(3, 2);
 
         let matrix = Matrix::new(3, 3);
+        let matrix_copy = matrix.clone();
 
-        tree.insert_inverted_matrix(&[], &Arc::new(matrix), 5).unwrap_err();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix), 5).unwrap();
+        tree.insert_inverted_matrix(&[], &Arc::new(matrix_copy), 5).unwrap_err();
 
         let matrix = Matrix::new(3, 2);
         tree.insert_inverted_matrix(&[2], &Arc::new(matrix), 5).unwrap_err();
