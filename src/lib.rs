@@ -281,9 +281,19 @@ impl ReedSolomon {
                                           input,
                                           output);*/
                     } else {
-                        galois::mul_slice_xor(matrix_rows[i_row][c],
+                        misc_utils::split_slice_mut_with_index(
+                            output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|(i, output)| {
+                                let start =
+                                    i * self.pparam.bytes_per_encode;
+                                galois::mul_slice_xor(matrix_rows[i_row][c],
+                                                      &input[start..start + output.len()],
+                                                      output);
+                            })
+                        /*galois::mul_slice_xor(matrix_rows[i_row][c],
                                               input,
-                                              output);
+                                              output);*/
                     }
                 })
         }
