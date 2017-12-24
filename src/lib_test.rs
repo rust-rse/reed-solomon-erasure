@@ -5,7 +5,6 @@ extern crate rand;
 use super::*;
 use super::shard_utils;
 use self::rand::{thread_rng, Rng};
-//use std::rc::Rc;
 
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{
@@ -183,14 +182,15 @@ fn test_calc_byte_count_option_shards_no_shards_present() {
     shard_utils::helper::calc_byte_count_option_shards(&option_shards,
                                                        None); }
 
-/*
 #[test]
 fn test_shards_into_option_shards_into_shards() {
     for _ in 0..100 {
         let shards = make_random_shards!(1_000, 10);
         let expect = shards.clone();
-        let inter  = shards_into_option_shards(shards);
-        let result = option_shards_into_shards(inter);
+        let inter  =
+            shard_utils::shards_into_option_shards(shards);
+        let result =
+            shard_utils::option_shards_into_shards(inter);
 
         assert_eq_shards(&expect, &result);
     }
@@ -202,14 +202,16 @@ fn test_shards_to_option_shards_to_shards() {
         let shards = make_random_shards!(1_000, 10);
         let expect = shards.clone();
         let option_shards =
-            shards_to_option_shards(&shards);
+            shard_utils::shards_to_option_shards(&shards);
         let result        =
-            option_shards_to_shards(&option_shards, None, None);
+            shard_utils::option_shards_to_shards(&option_shards,
+                                                 None, None);
 
         assert_eq_shards(&expect, &result);
     }
 }
 
+/*
 #[test]
 #[should_panic]
 fn test_option_shards_to_shards_missing_shards_case1() {
