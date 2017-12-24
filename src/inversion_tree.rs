@@ -6,33 +6,31 @@ pub enum Error {
     NotSquare,
 }
 
-use std::sync::RwLock;
+use std::sync::Mutex;
 use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct InversionTree {
-    pub root : RwLock<InversionNode>
+    pub root : Mutex<InversionNode>,
+    shards   : usize,
 }
 
 #[derive(Debug)]
 pub struct InversionNode {
-    pub matrix   : Arc<Matrix>,
+    pub matrix   : Option<Arc<Matrix>>,
     pub children : Vec<Option<InversionNode>>
 }
 
 impl InversionTree {
     pub fn new(data_shards : usize,
-           parity_shards : usize)
+               parity_shards : usize)
            -> InversionTree {
-        let mut children = Vec::with_capacity(data_shards + parity_shards);
-        for _ in 0..data_shards + parity_shards {
-            children.push(None);
-        }
         InversionTree {
-            root : RwLock::new(InversionNode {
-                matrix   : Arc::new(Matrix::identity(data_shards)),
-                children
-            })
+            root   : Mutex::new(
+                InversionNode::new(
+                    Some(Arc::new(Matrix::identity(data_shards))),
+                    data_shards + parity_shards)),
+            shards : data_shards + parity_shards
         }
     }
 
@@ -40,10 +38,14 @@ impl InversionTree {
                                invalid_indices : &[usize])
                                -> Option<Arc<Matrix>> {
         if invalid_indices.len() == 0 {
-            return Some(Arc::clone(&self.root.read().unwrap().matrix));
+            match self.root.lock().unwrap().matrix {
+                None        => panic!(),
+                Some(ref x) => return Some(Arc::clone(x))
+            }
         }
 
-        self.root.read().unwrap().get_inverted_matrix(invalid_indices,
+        self.root.lock().unwrap().get_inverted_matrix(invalid_indices,
+                                                      self.shards,
                                                       0)
     }
 
@@ -66,8 +68,8 @@ impl InversionTree {
 	      // Recursively create nodes for the inverted matrix in the tree until
 	      // we reach the node to insert the matrix to.  We start by passing in
 	      // 0 as the parent index as we start at the root of the tree.
-        self.root.write().unwrap().insert_inverted_matrix(invalid_indices,
-                                                          matrix,
+        self.root.lock().unwrap().insert_inverted_matrix(matrix,
+                                                          invalid_indices,
                                                           shards,
                                                           0);
 
@@ -76,17 +78,74 @@ impl InversionTree {
 }
 
 impl InversionNode {
-    pub fn get_inverted_matrix(&self,
+    pub fn new(matrix         : Option<Arc<Matrix>>,
+               children_count : usize) -> InversionNode {
+        let mut children = Vec::with_capacity(children_count);
+        for _ in 0..children_count {
+            children.push(None);
+        }
+        InversionNode {
+            matrix,
+            children
+        }
+    }
+
+    fn get_child<'a>(&'a mut self,
+                     offset          : usize,
+                     requested_index : usize,
+                     shards          : usize)
+                     -> &'a mut InversionNode {
+        let node_index = requested_index - offset;
+        {
+            let node = &mut self.children[node_index];
+            match *node {
+                None    => { *node = Some(Self::new(None,
+                                                    shards - offset)); },
+                Some(_) => {}
+            }
+        }
+        match self.children[node_index] {
+            None            => panic!(),
+            Some(ref mut x) => x
+        }
+    }
+
+    pub fn get_inverted_matrix(&mut self,
                                invalid_indices : &[usize],
-                               parent          : usize)
+                               shards          : usize,
+                               offset          : usize)
                                -> Option<Arc<Matrix>> {
+        if invalid_indices.len() == 0 {
+            match self.matrix {
+                None        => None,
+                Some(ref m) => Some(Arc::clone(m))
+            }
+        } else {
+            let requested_index   = invalid_indices[0];
+            let remaining_indices = &invalid_indices[1..];
+            self.get_child(offset, requested_index, shards)
+                .get_inverted_matrix(remaining_indices,
+                                     shards,
+                                     requested_index + 1)
+        }
     }
 
     pub fn insert_inverted_matrix(&mut self,
-                                  invalid_indices : &[usize],
                                   matrix          : &Arc<Matrix>,
+                                  invalid_indices : &[usize],
                                   shards          : usize,
-                                  parent          : usize) {
+                                  offset          : usize) {
+        if invalid_indices.len() == 0 {
+            self.matrix = Some(Arc::clone(matrix));
+        } else {
+            let requested_index   = invalid_indices[0];
+            let remaining_indices = &invalid_indices[1..];
+            self.get_child(offset, requested_index, shards)
+                .insert_inverted_matrix(matrix,
+                                        remaining_indices,
+                                        shards,
+                                        requested_index + 1)
+        }
     }
 }
 
@@ -117,7 +176,7 @@ mod tests {
         let expect = matrix!([1, 0, 0],
                              [0, 1, 0],
                              [0, 0, 1]);
-        assert_eq!(expect, *tree.root.read().unwrap().matrix);
+        assert_eq!(expect, *tree.root.read().unwrap().matrix.unwrap());
     }
 
     #[test]
