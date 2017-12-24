@@ -316,8 +316,8 @@ impl ReedSolomon {
                 (&mut outputs)
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
-                    misc_utils::split_slice_mut_with_index(
-                        output, self.pparam.bytes_per_encode)
+                    misc_utils::split_slice_mut_with_index
+                        (output, self.pparam.bytes_per_encode)
                         .into_par_iter()
                         .for_each(|(i, output)| {
                             let start =
