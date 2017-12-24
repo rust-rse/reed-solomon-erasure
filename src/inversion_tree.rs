@@ -80,7 +80,7 @@ impl InversionNode {
         // Set up stacks for storing the environment
         let mut node_stack            = Vec::with_capacity(1);
         let mut invalid_indices_stack = Vec::with_capacity(1);
-        let mut parent_stack          = 0;
+        let mut parent                = 0;
 
         // Initialise the stacks
         node_stack.push(self);
@@ -90,7 +90,6 @@ impl InversionNode {
             // Extract current environment to use
             let cur_node        = node_stack.pop().unwrap();
             let invalid_indices = invalid_indices_stack.pop().unwrap();
-            let parent          = parent_stack;
 
             // Get the child node to search next from the list of children.  The
             // list of children starts relative to the parent index passed in
@@ -114,7 +113,7 @@ impl InversionNode {
                         // pass down is the first index plus one.
                         node_stack.push(node);
                         invalid_indices_stack.push(&invalid_indices[1..]);
-                        parent_stack = first_index + 1;
+                        parent = first_index + 1;
                     } else {
                         // If there aren't any more invalid indices to search, we've found our
                         // node.  Return it, however keep in mind that the matrix could still be
@@ -134,7 +133,7 @@ impl InversionNode {
         // Set up stacks for storing the environment
         let mut node_stack            = Vec::with_capacity(1);
         let mut invalid_indices_stack = Vec::with_capacity(1);
-        let mut parent_stack          = 0;
+        let mut parent                = 0;
 
         // Initialise the stacks
         node_stack.push(self);
@@ -144,7 +143,6 @@ impl InversionNode {
             // Extract current environment to use
             let cur_node        = node_stack.pop().unwrap();
             let invalid_indices = invalid_indices_stack.pop().unwrap();
-            let parent          = parent_stack;
             // As above, get the child node to search next from the list of children.
             // The list of children starts relative to the parent index passed in
             // because the indices of invalid rows is sorted (by default).  As we
@@ -187,7 +185,7 @@ impl InversionNode {
 		                    // which is equal to the first index plus one.
                         node_stack.push(node);
                         invalid_indices_stack.push(&invalid_indices[1..]);
-                        parent_stack = first_index + 1;
+                        parent = first_index + 1;
                     } else {
 		                    // If there aren't any more invalid indices to search, we've found our
 		                    // node.  Cache the inverted matrix in this node.
