@@ -70,10 +70,12 @@ Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 
 Version `1.X.X`, `2.X.X` do not utilise SIMD, as stable Rust still does not support SIMD yet. And also I am clueless on writing assembly code in general or linking to assembly code in Rust code(any help on the assembly code side of things would be really nice - shoot me an email/open issue/open PR/etc if you'd like to help). So for the time being, the library is written in pure Rust.
 
 Version `2.X.X` is roughly 4-5x faster than version `1.X.X` for encoding, depending on threading etc, but is always faster than version `1.X.X`.
-For `10x2x1M`, `2.X.X` clocks at `~1100MB/s`, `1.X.X` clocks at `~250MB/s`.
 
 Klaus Post's Go implementation is roughly 7-8x faster for encoding compared to version `2.X.X`, depending on threading etc, but is always faster as it supports SIMD operations.
-For `10x2x1M`, `Klaus Post's` clocks at `~7800MB/s`, `2.X.X` clocks at `~1100MB/s`.
+
+|Configuration| Klaus Post's | 2.X.X | 1.X.X |
+|---|---|---|---|
+|10x2x1M|~7800MB/s|~1100MB/s|~250MB/s|
 
 ## Changelog
 [Changelog](CHANGELOG.md)
