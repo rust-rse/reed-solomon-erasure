@@ -29,6 +29,7 @@ coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
 rayon = "0.9"
+smallvec = "0.6"
 
 [dev-dependencies]
 rand  = "0.4"
