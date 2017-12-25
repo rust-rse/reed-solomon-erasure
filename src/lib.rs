@@ -708,7 +708,7 @@ impl ReedSolomon {
 	          //
 	          // The input to the coding is ALL of the data shards, including
 	          // any that we just calculated.  The output is whichever of the
-	          // data shards were missing.
+	          // parity shards were missing.
             let mut matrix_rows =
                 Vec::with_capacity(self.parity_shard_count);
             let parity_rows = self.get_parity_rows();
