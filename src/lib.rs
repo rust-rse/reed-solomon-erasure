@@ -151,7 +151,7 @@ pub struct ReedSolomon {
 }
 
 /// Parameters for parallelism
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub struct ParallelParam {
     pub bytes_per_encode  : usize,
     pub shards_per_encode : usize,
