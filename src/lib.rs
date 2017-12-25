@@ -328,20 +328,30 @@ impl ReedSolomon {
                         })
                 })
         }
-        let any_shard_inequal = misc_utils::breakdown_slice_with_index
+        let any_shard_mismatch = misc_utils::breakdown_slice_with_index
             (&outputs)
             .into_par_iter()
             .map(|(i, output)| {
-                misc_utils::slices_are_equal(output, to_check[i])
+                let to_check = to_check[i];
+                misc_utils::split_slice_with_index
+                    (output, self.pparam.bytes_per_encode)
+                    .into_par_iter()
+                    .map(|(i, output)| {
+                        let start =
+                            i * self.pparam.bytes_per_encode;
+                        // the following returns true if the chunks match
+                        misc_utils::slices_are_equal(output, &to_check[start..start + output.len()])
+                    })
+                    .any(|x| !x)  // find the first false(some chunks are inequal), which will cause this to return true
             })
-            .any(|x| !x);
+            .any(|x| x);  // find the first true(some chunks are inequal)
         /*for i in 0..outputs.len() {
             if !misc_utils::slices_are_equal(&outputs[i], to_check[i]) {
                 return false;
             }
         }*/
         //true
-        !any_shard_inequal
+        !any_shard_mismatch  // if it is not that case that any of the shard has a mismatch
     }
 
     fn check_slices(slices : &[&[u8]]) -> Result<(), Error> {
