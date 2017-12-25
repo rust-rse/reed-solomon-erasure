@@ -260,8 +260,8 @@ impl ReedSolomon {
                         outputs      : &mut [&mut [u8]]) {
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            misc_utils::breakdown_slice_mut_with_index(
-                outputs)
+            misc_utils::breakdown_slice_mut_with_index
+                (outputs)
                 .into_par_iter()
                 .for_each(|(i_row, output)| {
                     if c == 0 {
