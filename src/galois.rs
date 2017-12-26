@@ -52,44 +52,23 @@ pub fn exp(a : u8, n : usize) -> u8 {
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     let mt = &MULT_TABLE[c as usize];
 
-    let mut n = 0;
-    let len   = input.len();
-    while n < len {
-        out[n] = mt[input[n] as usize];
-
-        n += 1;
-    }
-    /*for n in 0..input.len() {
+    for n in 0..input.len() {
         out[n] = mt[input[n] as usize]
-    }*/
+    }
 }
 
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     let mt = &MULT_TABLE[c as usize];
 
-    let mut n = 0;
-    let len   = input.len();
-    while n < len {
+    for n in 0..input.len() {
         out[n] ^= mt[input[n] as usize];
-
-        n += 1;
     }
-    /*for n in 0..input.len() {
-        out[n] ^= mt[input[n] as usize];
-    }*/
 }
 
 pub fn slice_xor(input : &[u8], out : &mut [u8]) {
-    let mut n = 0;
-    let len   = input.len();
-    while n < len {
-        out[n] ^= input[n];
-
-        n += 1;
-    }
-    /*for n in 0..input.len() {
+    for n in 0..input.len() {
         out[n] ^= input[n]
-    }*/
+    }
 }
 
 #[cfg(test)]
