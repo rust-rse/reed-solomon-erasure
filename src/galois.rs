@@ -120,7 +120,6 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
             n += 1;
         }
     }
-
     /*for n in 0..input.len() {
         out[n] ^= mt[input[n] as usize];
     }*/
