@@ -73,6 +73,8 @@ Version `2.X.X` is roughly 4-5x faster than version `1.X.X` for encoding, depend
 
 Klaus Post's Go implementation is roughly 7-8x faster for encoding compared to version `2.X.X`, depending on threading etc, but is always faster as it supports SIMD operations.
 
+Below shows the result of one of the test configurations, other configurations show similar results(Klaus Post's is at least 7-8x faster for all operations).
+
 |Configuration| Klaus Post's | 2.X.X | 1.X.X |
 |---|---|---|---|
 |10x2x1M|~7800MB/s|~1100MB/s|~250MB/s|
