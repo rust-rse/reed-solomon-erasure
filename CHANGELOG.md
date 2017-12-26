@@ -1,3 +1,8 @@
+## 2.0.0
+  - Complete rewrite of most code following Klaus Post's design
+  - Added optimsations(parallelism, loop unrolling)
+  - 4-5x faster than `1.X.X`
+
 ## 1.1.1
   - Documentation polish
   - Added documentation badge to README
