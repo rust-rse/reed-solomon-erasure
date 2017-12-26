@@ -54,18 +54,6 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
 
     let mut n = 0;
     let len   = input.len();
-    while n + 8 < len {
-        out[n  ] = mt[input[n  ] as usize];
-        out[n+1] = mt[input[n+1] as usize];
-        out[n+2] = mt[input[n+2] as usize];
-        out[n+3] = mt[input[n+3] as usize];
-        out[n+4] = mt[input[n+4] as usize];
-        out[n+5] = mt[input[n+5] as usize];
-        out[n+6] = mt[input[n+6] as usize];
-        out[n+7] = mt[input[n+7] as usize];
-
-        n += 8;
-    }
     while n < len {
         out[n] = mt[input[n] as usize];
 
@@ -81,18 +69,6 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
 
     let mut n = 0;
     let len   = input.len();
-    while n + 8 < len {
-        out[n  ] ^= mt[input[n  ] as usize];
-        out[n+1] ^= mt[input[n+1] as usize];
-        out[n+2] ^= mt[input[n+2] as usize];
-        out[n+3] ^= mt[input[n+3] as usize];
-        out[n+4] ^= mt[input[n+4] as usize];
-        out[n+5] ^= mt[input[n+5] as usize];
-        out[n+6] ^= mt[input[n+6] as usize];
-        out[n+7] ^= mt[input[n+7] as usize];
-
-        n += 8;
-    }
     while n < len {
         out[n] ^= mt[input[n] as usize];
 
@@ -106,18 +82,6 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
 pub fn slice_xor(input : &[u8], out : &mut [u8]) {
     let mut n = 0;
     let len   = input.len();
-    while n + 8 < len {
-        out[n  ] ^= input[n  ];
-        out[n+1] ^= input[n+1];
-        out[n+2] ^= input[n+2];
-        out[n+3] ^= input[n+3];
-        out[n+4] ^= input[n+4];
-        out[n+5] ^= input[n+5];
-        out[n+6] ^= input[n+6];
-        out[n+7] ^= input[n+7];
-
-        n += 8;
-    }
     while n < len {
         out[n] ^= input[n];
 
