@@ -80,6 +80,9 @@ Klaus Post's Go implementation is roughly 7-8x faster for encoding compared to v
 ## Changelog
 [Changelog](CHANGELOG.md)
 
+## Contributions
+Contributions are welcome. Note that by submitting contributions, you agree that your work will be under the same license used by this project(MIT).
+
 ## Notes
 The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon).
 
