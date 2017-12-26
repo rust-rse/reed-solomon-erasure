@@ -61,28 +61,23 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     let mut n = 0;
     let len = input.len();
     unsafe {
-        if len > 8 {
-            let len_minus_8 = len - 8;
-            while n < len_minus_8 {
+        if len > 4 {
+            let len_minus_4 = len - 4;
+            while n < len_minus_4 {
                 *out_ptr           = *mt_ptr.offset(*input_ptr           as isize);
                 *out_ptr.offset(1) = *mt_ptr.offset(*input_ptr.offset(1) as isize);
                 *out_ptr.offset(2) = *mt_ptr.offset(*input_ptr.offset(2) as isize);
                 *out_ptr.offset(3) = *mt_ptr.offset(*input_ptr.offset(3) as isize);
-                *out_ptr.offset(4) = *mt_ptr.offset(*input_ptr.offset(4) as isize);
-                *out_ptr.offset(5) = *mt_ptr.offset(*input_ptr.offset(5) as isize);
-                *out_ptr.offset(6) = *mt_ptr.offset(*input_ptr.offset(6) as isize);
-                *out_ptr.offset(7) = *mt_ptr.offset(*input_ptr.offset(7) as isize);
 
-                input_ptr = input_ptr.offset(8);
-                out_ptr   =   out_ptr.offset(8);
-                n += 8;
+                input_ptr = input_ptr.offset(4);
+                out_ptr   = out_ptr.offset(4);
+                n += 4;
             }
         }
         while n < len {
-            *out_ptr  = *mt_ptr.offset(*input_ptr as isize);
-
+            *out_ptr  = *mt_ptr.offset(*input_ptr           as isize);
             input_ptr = input_ptr.offset(1);
-            out_ptr   =   out_ptr.offset(1);
+            out_ptr   = out_ptr.offset(1);
             n += 1;
         }
     }
@@ -103,28 +98,23 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     let mut n = 0;
     let len = input.len();
     unsafe {
-        if len > 8 {
-            let len_minus_8 = len - 8;
-            while n < len_minus_8 {
+        if len > 4 {
+            let len_minus_4 = len - 4;
+            while n < len_minus_4 {
                 *out_ptr           ^= *mt_ptr.offset(*input_ptr           as isize);
                 *out_ptr.offset(1) ^= *mt_ptr.offset(*input_ptr.offset(1) as isize);
                 *out_ptr.offset(2) ^= *mt_ptr.offset(*input_ptr.offset(2) as isize);
                 *out_ptr.offset(3) ^= *mt_ptr.offset(*input_ptr.offset(3) as isize);
-                *out_ptr.offset(4) ^= *mt_ptr.offset(*input_ptr.offset(4) as isize);
-                *out_ptr.offset(5) ^= *mt_ptr.offset(*input_ptr.offset(5) as isize);
-                *out_ptr.offset(6) ^= *mt_ptr.offset(*input_ptr.offset(6) as isize);
-                *out_ptr.offset(7) ^= *mt_ptr.offset(*input_ptr.offset(7) as isize);
 
-                input_ptr = input_ptr.offset(8);
-                out_ptr   =   out_ptr.offset(8);
-                n += 8;
+                input_ptr = input_ptr.offset(4);
+                out_ptr   = out_ptr.offset(4);
+                n += 4;
             }
         }
         while n < len {
-            *out_ptr ^= *mt_ptr.offset(*input_ptr as isize);
-
+            *out_ptr  ^= *mt_ptr.offset(*input_ptr           as isize);
             input_ptr = input_ptr.offset(1);
-            out_ptr   =   out_ptr.offset(1);
+            out_ptr   = out_ptr.offset(1);
             n += 1;
         }
     }
@@ -135,42 +125,9 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
 }
 
 pub fn slice_xor(input : &[u8], out : &mut [u8]) {
-    assert_eq!(input.len(), out.len());
-
-    let mut input_ptr : *const u8 = &input[0];
-    let mut out_ptr   : *mut   u8 = &mut out[0];
-
-    let mut n = 0;
-    let len = input.len();
-    unsafe {
-        if len > 8 {
-            let len_minus_8 = len - 8;
-            while n < len_minus_8 {
-                *out_ptr           ^= *input_ptr;
-                *out_ptr.offset(1) ^= *input_ptr.offset(1);
-                *out_ptr.offset(2) ^= *input_ptr.offset(2);
-                *out_ptr.offset(3) ^= *input_ptr.offset(3);
-                *out_ptr.offset(4) ^= *input_ptr.offset(4);
-                *out_ptr.offset(5) ^= *input_ptr.offset(5);
-                *out_ptr.offset(6) ^= *input_ptr.offset(6);
-                *out_ptr.offset(7) ^= *input_ptr.offset(7);
-
-                input_ptr = input_ptr.offset(8);
-                out_ptr   =   out_ptr.offset(8);
-                n += 8;
-            }
-        }
-        while n < len {
-            *out_ptr ^= *input_ptr;
-
-            input_ptr = input_ptr.offset(1);
-            out_ptr   =   out_ptr.offset(1);
-            n += 1;
-        }
-    }
-    /*for n in 0..input.len() {
+    for n in 0..input.len() {
         out[n] ^= input[n]
-    }*/
+    }
 }
 
 #[cfg(test)]
