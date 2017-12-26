@@ -154,19 +154,19 @@ pub struct ReedSolomon {
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct ParallelParam {
     pub bytes_per_encode  : usize,
-    pub shards_per_encode : usize,
+    //pub shards_per_encode : usize,
 }
 
 impl ParallelParam {
     pub fn new(bytes_per_encode  : usize,
-               shards_per_encode : usize) -> ParallelParam {
+               /*shards_per_encode : usize*/) -> ParallelParam {
         ParallelParam { bytes_per_encode,
-                        shards_per_encode }
+                        /*shards_per_encode*/ }
     }
 
     pub fn with_default() -> ParallelParam {
         Self::new(8192,
-                  4)
+                  /*4*/)
     }
 }
 
