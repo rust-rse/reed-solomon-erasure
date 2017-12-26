@@ -51,18 +51,77 @@ pub fn exp(a : u8, n : usize) -> u8 {
 
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     let mt = &MULT_TABLE[c as usize];
+    let mt_ptr : *const u8 = &mt[0] as *const u8;
 
-    for n in 0..input.len() {
-        out[n] = mt[input[n] as usize]
+    assert_eq!(input.len(), out.len());
+
+    let mut input_ptr : *const u8 = &input[0];
+    let mut out_ptr   : *mut   u8 = &mut out[0];
+
+    let mut n = 0;
+    let len = input.len();
+    unsafe {
+        if len > 4 {
+            let len_minus_4 = len - 4;
+            while n < len_minus_4 {
+                *out_ptr           = *mt_ptr.offset(*input_ptr           as isize);
+                *out_ptr.offset(1) = *mt_ptr.offset(*input_ptr.offset(1) as isize);
+                *out_ptr.offset(2) = *mt_ptr.offset(*input_ptr.offset(2) as isize);
+                *out_ptr.offset(3) = *mt_ptr.offset(*input_ptr.offset(3) as isize);
+
+                input_ptr = input_ptr.offset(4);
+                out_ptr   = out_ptr.offset(4);
+                n += 4;
+            }
+        }
+        while n < len {
+            *out_ptr  = *mt_ptr.offset(*input_ptr           as isize);
+            input_ptr = input_ptr.offset(1);
+            out_ptr   = out_ptr.offset(1);
+            n += 1;
+        }
     }
+    /*for n in 0..input.len() {
+        out[n] = mt[input[n] as usize]
+    }*/
 }
 
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     let mt = &MULT_TABLE[c as usize];
+    let mt_ptr : *const u8 = &mt[0] as *const u8;
 
-    for n in 0..input.len() {
-        out[n] ^= mt[input[n] as usize];
+    assert_eq!(input.len(), out.len());
+
+    let mut input_ptr : *const u8 = &input[0];
+    let mut out_ptr   : *mut   u8 = &mut out[0];
+
+    let mut n = 0;
+    let len = input.len();
+    unsafe {
+        if len > 4 {
+            let len_minus_4 = len - 4;
+            while n < len_minus_4 {
+                *out_ptr           ^= *mt_ptr.offset(*input_ptr           as isize);
+                *out_ptr.offset(1) ^= *mt_ptr.offset(*input_ptr.offset(1) as isize);
+                *out_ptr.offset(2) ^= *mt_ptr.offset(*input_ptr.offset(2) as isize);
+                *out_ptr.offset(3) ^= *mt_ptr.offset(*input_ptr.offset(3) as isize);
+
+                input_ptr = input_ptr.offset(4);
+                out_ptr   = out_ptr.offset(4);
+                n += 4;
+            }
+        }
+        while n < len {
+            *out_ptr  ^= *mt_ptr.offset(*input_ptr           as isize);
+            input_ptr = input_ptr.offset(1);
+            out_ptr   = out_ptr.offset(1);
+            n += 1;
+        }
     }
+
+    /*for n in 0..input.len() {
+        out[n] ^= mt[input[n] as usize];
+    }*/
 }
 
 pub fn slice_xor(input : &[u8], out : &mut [u8]) {
