@@ -70,14 +70,15 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
                 *out_ptr.offset(3) = *mt_ptr.offset(*input_ptr.offset(3) as isize);
 
                 input_ptr = input_ptr.offset(4);
-                out_ptr   = out_ptr.offset(4);
+                out_ptr   =   out_ptr.offset(4);
                 n += 4;
             }
         }
         while n < len {
-            *out_ptr  = *mt_ptr.offset(*input_ptr           as isize);
+            *out_ptr  = *mt_ptr.offset(*input_ptr as isize);
+
             input_ptr = input_ptr.offset(1);
-            out_ptr   = out_ptr.offset(1);
+            out_ptr   =   out_ptr.offset(1);
             n += 1;
         }
     }
@@ -107,14 +108,15 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
                 *out_ptr.offset(3) ^= *mt_ptr.offset(*input_ptr.offset(3) as isize);
 
                 input_ptr = input_ptr.offset(4);
-                out_ptr   = out_ptr.offset(4);
+                out_ptr   =   out_ptr.offset(4);
                 n += 4;
             }
         }
         while n < len {
-            *out_ptr  ^= *mt_ptr.offset(*input_ptr           as isize);
+            *out_ptr  ^= *mt_ptr.offset(*input_ptr as isize);
+
             input_ptr = input_ptr.offset(1);
-            out_ptr   = out_ptr.offset(1);
+            out_ptr   =   out_ptr.offset(1);
             n += 1;
         }
     }
