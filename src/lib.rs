@@ -30,6 +30,9 @@ use rayon::prelude::*;
 //use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
+extern crate smallvec;
+use smallvec::SmallVec;
+
 use matrix::Matrix;
 use inversion_tree::InversionTree;
 
@@ -189,8 +192,8 @@ impl PartialEq for ReedSolomon {
 }
 
 impl ReedSolomon {
-    fn get_parity_rows(&self) -> Vec<&[u8]> {
-        let mut parity_rows  = Vec::with_capacity(self.parity_shard_count);
+    fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
+        let mut parity_rows  = SmallVec::with_capacity(self.parity_shard_count);
         let matrix           = &self.matrix;
         for i in self.data_shard_count..self.total_shard_count {
             parity_rows.push(matrix.get_row(i));
@@ -645,18 +648,18 @@ impl ReedSolomon {
 	      //
 	      // Also, create an array of indices of the valid rows we do have
 	      // and the invalid rows we don't have up until we have enough valid rows.
-        let mut sub_shards             : Vec<&[u8]> =
-            Vec::with_capacity(self.data_shard_count);
-        let mut leftover_parity_shards : Vec<&[u8]> =
-            Vec::with_capacity(self.parity_shard_count);
-        let mut missing_data_slices    : Vec<&mut [u8]> =
-            Vec::with_capacity(self.parity_shard_count);
-        let mut missing_parity_slices  : Vec<&mut [u8]> =
-            Vec::with_capacity(self.parity_shard_count);
-        let mut valid_indices          : Vec<usize> =
-            Vec::with_capacity(self.data_shard_count);
-        let mut invalid_indices        : Vec<usize> =
-            Vec::with_capacity(self.data_shard_count);
+        let mut sub_shards             : SmallVec<[&[u8];     32]> =
+            SmallVec::with_capacity(self.data_shard_count);
+        let mut leftover_parity_shards : SmallVec<[&[u8];     32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
+        let mut missing_data_slices    : SmallVec<[&mut [u8]; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
+        let mut missing_parity_slices  : SmallVec<[&mut [u8]; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
+        let mut valid_indices          : SmallVec<[usize;     32]> =
+            SmallVec::with_capacity(self.data_shard_count);
+        let mut invalid_indices        : SmallVec<[usize;     32]> =
+            SmallVec::with_capacity(self.data_shard_count);
         let mut matrix_row = 0;
         let mut i          = 0;
         // Separate the slices into groups
@@ -709,8 +712,8 @@ impl ReedSolomon {
 	          // The input to the coding is ALL of the data shards, including
 	          // any that we just calculated.  The output is whichever of the
 	          // parity shards were missing.
-            let mut matrix_rows =
-                Vec::with_capacity(self.parity_shard_count);
+            let mut matrix_rows : SmallVec<[&[u8]; 32]> =
+                SmallVec::with_capacity(self.parity_shard_count);
             let parity_rows = self.get_parity_rows();
             for i_slice in self.data_shard_count..self.total_shard_count {
                 if !slice_present[i_slice] {
@@ -723,8 +726,8 @@ impl ReedSolomon {
                 // Gather up the references to all data slices
                 let mut i_old_data_slice = 0;
                 let mut i_new_data_slice = 0;
-                let mut all_data_slices : Vec<&[u8]> =
-                    Vec::with_capacity(self.data_shard_count);
+                let mut all_data_slices : SmallVec<[&[u8]; 32]> =
+                    SmallVec::with_capacity(self.data_shard_count);
                 for i_slice in 0..self.data_shard_count {
                     let slice =
                         if slice_present[i_slice] {
