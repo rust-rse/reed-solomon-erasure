@@ -50,8 +50,8 @@ pub fn exp(a : u8, n : usize) -> u8 {
 }
 
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
-    let mt = &MULT_TABLE[c as usize];
-    let mt_ptr : *const u8 = &mt[0] as *const u8;
+    let mt                 = &MULT_TABLE[c as usize];
+    let mt_ptr : *const u8 = &mt[0];
 
     assert_eq!(input.len(), out.len());
 
@@ -88,8 +88,8 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
 }
 
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
-    let mt = &MULT_TABLE[c as usize];
-    let mt_ptr : *const u8 = &mt[0] as *const u8;
+    let mt                 = &MULT_TABLE[c as usize];
+    let mt_ptr : *const u8 = &mt[0];
 
     assert_eq!(input.len(), out.len());
 
