@@ -524,7 +524,8 @@ impl ReedSolomon {
 	      // Quick check: are all of the shards present?  If so, there's
 	      // nothing to do.
         let mut number_present = 0;
-        let mut shard_present  = Vec::with_capacity(shards.len());
+        let mut shard_present : SmallVec<[bool; 32]> =
+            SmallVec::with_capacity(shards.len());
         for shard in shards.iter() {
             match *shard {
                 None    => { shard_present.push(false); },
