@@ -251,3 +251,19 @@ pub fn deep_clone_option_shards(shards : &Vec<Option<Shard>>) -> Vec<Option<Shar
     }
     result
 }*/
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_zero_len_shard() {
+        assert_eq!(vec![].into_boxed_slice(), make_zero_len_shard());
+    }
+
+    #[test]
+    fn test_zero_len_shards() {
+        assert_eq!(vec![vec![].into_boxed_slice(), vec![].into_boxed_slice()],
+                   make_zero_len_shards(2));
+    }
+}
