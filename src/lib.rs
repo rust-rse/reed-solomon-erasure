@@ -88,24 +88,49 @@ macro_rules! shards {
     }}
 }
 
-/// Makes it easier to work with 2D slices.
+/// Makes it easier to work with 2D slices, arrays, etc.
+///
+/// # Example
+/// ## Byte arrays on stack to Vec<&[u8]>
+/// ```rust
+/// #[macro_use] extern crate reed_solomon_erasure;
+/// # use reed_solomon_erasure::*;
+/// # fn main () {
+/// let array : [[u8; 3]; 2] = [[1, 2, 3],
+///                             [4, 5, 6]];
+/// let refs : Vec<&[u8]> =
+///     convert_2D_slices!(array =to_vec=> &[u8]);
+/// # }
+/// ```
 #[macro_export]
 macro_rules! convert_2D_slices {
     (
-        $slice:ident =into=> $dst_type:ty
+        $slice:ident =into_vec=> $dst_type:ty
+    ) => {
+        convert_2D_slices!($slice =into=> Vec<$dst_type>;
+                           Vec::with_capacity)
+    };
+    (
+        $slice:ident =to_vec=> $dst_type:ty
+    ) => {
+        convert_2D_slices!($slice =to=> Vec<$dst_type>;
+                           Vec::with_capacity)
+    };
+    (
+        $slice:ident =into=> $dst_type:ty; $with_capacity:path
     ) => {{
-        let mut result : Vec<$dst_type> =
-            Vec::with_capacity($slice.len());
+        let mut result : $dst_type =
+            $with_capacity($slice.len());
         for i in $slice.into_iter() {
             result.push(i);
         }
         result
     }};
     (
-        $slice:ident =to=> $dst_type:ty
+        $slice:ident =to=> $dst_type:ty; $with_capacity:path
     ) => {{
-        let mut result : Vec<$dst_type> =
-            Vec::with_capacity($slice.len());
+        let mut result : $dst_type =
+            $with_capacity($slice.len());
         for i in $slice.iter_mut() {
             result.push(i);
         }
@@ -478,7 +503,8 @@ impl ReedSolomon {
             slices.split_at_mut(self.data_shard_count);
 
         let input =
-            convert_2D_slices!(mut_input =into=> &[u8]);
+            convert_2D_slices!(mut_input =into=> SmallVec<[&[u8]; 32]>;
+                               SmallVec::with_capacity);
 
 	      // Do the coding.
         self.code_some_slices(&parity_rows,

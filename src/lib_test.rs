@@ -7,6 +7,41 @@ use super::Error;
 use super::shard_utils;
 use self::rand::{thread_rng, Rng};
 
+macro_rules! convert_2D_slices {
+    (
+        $slice:ident =into_vec=> $dst_type:ty
+    ) => {
+        convert_2D_slices!($slice =into=> Vec<$dst_type>;
+                           Vec::with_capacity)
+    };
+    (
+        $slice:ident =to_vec=> $dst_type:ty
+    ) => {
+        convert_2D_slices!($slice =to=> Vec<$dst_type>;
+                           Vec::with_capacity)
+    };
+    (
+        $slice:ident =into=> $dst_type:ty; $with_capacity:path
+    ) => {{
+        let mut result : $dst_type =
+            $with_capacity($slice.len());
+        for i in $slice.into_iter() {
+            result.push(i);
+        }
+        result
+    }};
+    (
+        $slice:ident =to=> $dst_type:ty; $with_capacity:path
+    ) => {{
+        let mut result : $dst_type =
+            $with_capacity($slice.len());
+        for i in $slice.iter_mut() {
+            result.push(i);
+        }
+        result
+    }}
+}
+
 macro_rules! shards {
     (
         $( [ $( $x:expr ),* ] ),*
@@ -387,12 +422,8 @@ fn test_reconstruct() {
     }
 
     {
-        let mut shard_refs : Vec<&mut [u8]> =
-            Vec::with_capacity(3);
-
-        for shard in shards.iter_mut() {
-            shard_refs.push(shard);
-        }
+        let mut shard_refs =
+            convert_2D_slices!(shards =to_vec=> &mut [u8]);
 
         shard_refs[0][0] = 101;
         shard_refs[0][1] = 102;
@@ -410,12 +441,8 @@ fn test_reconstruct() {
     assert_eq!(expect, shards);
 
     {
-        let mut shard_refs : Vec<&mut [u8]> =
-            Vec::with_capacity(3);
-
-        for shard in shards.iter_mut() {
-            shard_refs.push(shard);
-        }
+        let mut shard_refs =
+            convert_2D_slices!(shards =to_vec=> &mut [u8]);
 
         shard_refs[0][0] = 201;
         shard_refs[0][1] = 202;
@@ -438,12 +465,8 @@ fn test_reconstruct() {
     assert_eq!(expect, shards);
 
     {
-        let mut shard_refs : Vec<&mut [u8]> =
-            Vec::with_capacity(3);
-
-        for shard in shards.iter_mut() {
-            shard_refs.push(shard);
-        }
+        let mut shard_refs =
+            convert_2D_slices!(shards =to_vec=> &mut [u8]);
 
         shard_refs[2][0] = 101;
         shard_refs[2][1] = 102;
