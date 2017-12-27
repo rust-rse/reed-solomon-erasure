@@ -275,6 +275,30 @@ mod tests {
     use super::Matrix;
 
     #[test]
+    fn test_matrix_col_count() {
+        let m1 = matrix!([1, 0, 0]);
+        let m2 = matrix!([0, 0, 0],
+                         [0, 0, 0]);
+        let m3 = Matrix::new(1, 4);
+
+        assert_eq!(3, m1.col_count());
+        assert_eq!(3, m2.col_count());
+        assert_eq!(4, m3.col_count());
+    }
+
+    #[test]
+    fn test_matrix_row_count() {
+        let m1 = matrix!([1, 0, 0]);
+        let m2 = matrix!([0, 0, 0],
+                         [0, 0, 0]);
+        let m3 = Matrix::new(1, 4);
+
+        assert_eq!(1, m1.row_count());
+        assert_eq!(2, m2.row_count());
+        assert_eq!(1, m3.row_count());
+    }
+
+    #[test]
     #[should_panic]
     fn test_inconsistent_row_sizes() {
         matrix!([1, 0, 0], [0, 1], [0, 0, 1]); }
