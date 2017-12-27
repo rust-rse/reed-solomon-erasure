@@ -671,7 +671,7 @@ impl ReedSolomon {
         // Separate the slices into groups
         for slice in slices.into_iter() {
             if slice_present[i] {
-                if i < self.data_shard_count {
+                if sub_shards.len() < self.data_shard_count {
                     sub_shards.push(slice);
                     valid_indices.push(matrix_row);
                 } else {
