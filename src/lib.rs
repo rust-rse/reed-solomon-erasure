@@ -88,6 +88,31 @@ macro_rules! shards {
     }}
 }
 
+/// Makes it easier to work with 2D slices.
+#[macro_export]
+macro_rules! convert_2D_slices {
+    (
+        $slice:ident =into=> $dst_type:ty
+    ) => {{
+        let mut result : Vec<$dst_type> =
+            Vec::with_capacity($slice.len());
+        for i in $slice.into_iter() {
+            result.push(i);
+        }
+        result
+    }};
+    (
+        $slice:ident =to=> $dst_type:ty
+    ) => {{
+        let mut result : Vec<$dst_type> =
+            Vec::with_capacity($slice.len());
+        for i in $slice.iter_mut() {
+            result.push(i);
+        }
+        result
+    }}
+}
+
 fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
     let mut result : Vec<&[u8]> =
         Vec::with_capacity(shards.len());
@@ -452,11 +477,8 @@ impl ReedSolomon {
         let (mut_input, output) =
             slices.split_at_mut(self.data_shard_count);
 
-        let mut input : Vec<&[u8]> =
-            Vec::with_capacity(mut_input.len());
-        for i in mut_input.into_iter() {
-            input.push(i);
-        }
+        let input =
+            convert_2D_slices!(mut_input =into=> &[u8]);
 
 	      // Do the coding.
         self.code_some_slices(&parity_rows,
