@@ -567,6 +567,8 @@ impl ReedSolomon {
     /// Generates the parity shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// This is a wrapper of `encode`.
     pub fn encode_shards(&self,
                          shards : &mut [Shard]) -> Result<(), Error> {
         let mut slices = mut_shards_to_mut_slices(shards);
@@ -578,8 +580,6 @@ impl ReedSolomon {
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
-    /// This shares the same code base with `encode_shards`, but
-    /// this interface provides more flexibility.
     pub fn encode(&self,
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
         check_piece_count!(self, slices);
@@ -604,6 +604,9 @@ impl ReedSolomon {
         Ok(())
     }
 
+    /// Checks if the parity shards are correct.
+    ///
+    /// This is a wrapper of `verify`.
     pub fn verify_shards(&self,
                          shards : &[Shard]) -> Result<bool, Error> {
         let slices =
@@ -612,6 +615,7 @@ impl ReedSolomon {
         self.verify(&slices)
     }
 
+    /// Checks if the parity shards are correct.
     pub fn verify(&self,
                   slices : &[&[u8]]) -> Result<bool, Error> {
         check_piece_count!(self, slices);
@@ -627,6 +631,10 @@ impl ReedSolomon {
                                   to_check))
     }
 
+    /// Reconstructs all shards.
+    ///
+    /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
+    /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct(&self,
                        slices        : &mut [&mut [u8]],
                        slice_present : &[bool]) -> Result<(), Error> {
@@ -635,6 +643,10 @@ impl ReedSolomon {
                                   false)
     }
 
+    /// Reconstructs only the data shards.
+    ///
+    /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
+    /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct_data(&self,
                             slices        : &mut [&mut [u8]],
                             slice_present : &[bool]) -> Result<(), Error> {
@@ -643,11 +655,28 @@ impl ReedSolomon {
                                   true)
     }
 
+    /// Reconstructs all shards.
+    ///
+    /// This fills in the missing shards with blank shards only
+    /// if there are enough shards for reconstruction.
+    ///
+    /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
+    /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct_shards(&self,
                               shards : &mut [Option<Shard>]) -> Result<(), Error> {
         self.reconstruct_shards_internal(shards, false)
     }
 
+    /// Reconstructs only the data shards.
+    ///
+    /// This fills in the missing shards with blank shards only
+    /// if there are enough shards for reconstruction.
+    ///
+    /// Note that the missing parity shards are filled in with
+    /// blank shards even though they are not used.
+    ///
+    /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
+    /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct_data_shards(&self,
                                    shards : &mut [Option<Shard>]) -> Result<(), Error> {
         self.reconstruct_shards_internal(shards, true)
