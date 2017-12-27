@@ -97,7 +97,7 @@ pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
     result
 }
 
-/// Transforms vector of shards to vector of option shards
+/// Transforms vector of shards to vector of option shards.
 ///
 /// # Remarks
 ///
@@ -116,7 +116,7 @@ pub fn shards_to_option_shards(shards : &Vec<Shard>)
     result
 }
 
-/// Transforms vector of shards into vector of option shards
+/// Transforms vector of shards into vector of option shards.
 ///
 /// # Remarks
 ///
@@ -134,7 +134,7 @@ pub fn shards_into_option_shards(shards : Vec<Shard>)
     result
 }
 
-/// Transforms a section of vector of option shards to vector of shards
+/// Transforms a section of vector of option shards to vector of shards.
 ///
 /// # Arguments
 ///
@@ -176,7 +176,7 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
     result
 }
 
-/// Transforms vector of option shards into vector of shards
+/// Transforms vector of option shards into vector of shards.
 ///
 /// # Remarks
 ///

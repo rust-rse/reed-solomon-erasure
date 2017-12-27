@@ -1,4 +1,4 @@
-//! This crate providers an encoder/decoder for Reed-Solomon erasure code
+//! This crate providers an encoder/decoder for Reed-Solomon erasure code.
 //!
 //! Please note that erasure coding means errors are not directly detected or corrected,
 //! but missing data pieces(shards) can be reconstructed given that
@@ -27,7 +27,6 @@ pub use shard_utils::option_shards_into_shards;
 
 extern crate rayon;
 use rayon::prelude::*;
-//use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 extern crate smallvec;
@@ -47,10 +46,10 @@ pub enum Error {
     InversionTreeError(inversion_tree::Error)
 }
 
-/// Main data type used by this library
+/// Convenience data type provided by this library
 pub type Shard = Box<[u8]>;
 
-/// Constructs a shard
+/// Constructs a shard.
 ///
 /// # Example
 /// ```rust
@@ -69,7 +68,7 @@ macro_rules! shard {
     }}
 }
 
-/// Constructs vector of shards
+/// Constructs vector of shards.
 ///
 /// # Example
 /// ```rust
@@ -89,7 +88,7 @@ macro_rules! shards {
     }}
 }
 
-pub fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
+fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
     let mut result : Vec<&[u8]> =
         Vec::with_capacity(shards.len());
     for shard in shards.into_iter() {
@@ -98,7 +97,7 @@ pub fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
     result
 }
 
-pub fn mut_shards_to_mut_slices(shards : &mut [Shard])
+fn mut_shards_to_mut_slices(shards : &mut [Shard])
                             -> Vec<&mut [u8]> {
     let mut result : Vec<&mut [u8]> =
         Vec::with_capacity(shards.len());
@@ -108,7 +107,7 @@ pub fn mut_shards_to_mut_slices(shards : &mut [Shard])
     result
 }
 
-pub fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
+fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
                                        -> Vec<&'a mut [u8]> {
     let mut result : Vec<&mut [u8]> =
         Vec::with_capacity(shards.len());
@@ -132,18 +131,7 @@ pub fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
     }
 }*/
 
-/// Reed-Solomon erasure code encoder/decoder
-///
-/// # Remarks
-/// Notes about usage of `offset` and `byte_count` for all methods/functions below
-///
-/// `offset` refers to start of the shard you want to as starting point for encoding/decoding.
-///
-/// `offset` defaults to 0 if it is `None`.
-///
-///  `byte_count` refers to number of bytes, starting from `offset` to use for encoding/decoding.
-///
-///  `byte_count` defaults to length of shard if it is `None`.
+/// Reed-Solomon erasure code encoder/decoder.
 #[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
@@ -155,9 +143,13 @@ pub struct ReedSolomon {
     pparam             : ParallelParam
 }
 
-/// Parameters for parallelism
+/// Parameters for parallelism.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct ParallelParam {
+    /// Number of bytes to split the slices into for computations
+    /// which can be done in parallel.
+    ///
+    /// Default is 8192.
     pub bytes_per_encode  : usize,
     //pub shards_per_encode : usize,
 }
@@ -225,6 +217,7 @@ impl ReedSolomon {
         vandermonde.multiply(&top.invert().unwrap())
     }
 
+    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
     pub fn new(data_shards : usize,
                parity_shards : usize) -> ReedSolomon {
         Self::with_pparam(data_shards,
@@ -232,7 +225,7 @@ impl ReedSolomon {
                           ParallelParam::with_default())
     }
 
-    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder
+    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with custom `ParallelParam`.
     pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
                        pparam        : ParallelParam) -> ReedSolomon {
