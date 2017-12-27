@@ -71,7 +71,7 @@ pub mod helper {
 }
 
 
-/// Makes shard with byte array of zero length
+/// Makes shard with byte array of zero length.
 pub fn make_zero_len_shard() -> Shard {
     Box::new([])
 }
@@ -84,7 +84,7 @@ pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
     result
 }
 
-/// Makes shard with byte array filled with zeros of some length
+/// Makes shard with byte array filled with zeros of some length.
 pub fn make_blank_shard(size : usize) -> Shard {
     vec![0; size].into_boxed_slice()
 }
