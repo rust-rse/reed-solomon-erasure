@@ -110,14 +110,14 @@ macro_rules! write_table {
         $file.write_all(table_str.as_bytes()).unwrap();
     }};
     (2D => $file:ident, $table:ident, $name:expr, $type:expr) => {{
-        let len1 = $table.len();
-        let len2 = $table[0].len();
+        let rows = $table.len();
+        let cols = $table[0].len();
         let mut table_str =
             String::from(format!("pub static {} : [[{}; {}]; {}] = [",
                                  $name,
                                  $type,
-                                 len1,
-                                 len2));
+                                 cols,
+                                 rows));
 
         for a in $table.iter() {
             table_str.push_str("[");
@@ -139,13 +139,15 @@ fn main() {
     let exp_table = gen_exp_table(&log_table);
     let mul_table = gen_mul_table(&log_table, &exp_table);
 
-    let (low, high) = gen_mul_table_half(&log_table, &exp_table);
+    let (mul_table_low, mul_table_high) = gen_mul_table_half(&log_table, &exp_table);
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("table.rs");
     let mut f = File::create(&dest_path).unwrap();
 
-    write_table!(1D => f, log_table, "LOG_TABLE", "u8");
-    write_table!(1D => f, exp_table, "EXP_TABLE", "u8");
-    write_table!(2D => f, mul_table, "MUL_TABLE", "u8");
+    write_table!(1D => f, log_table,      "LOG_TABLE",      "u8");
+    write_table!(1D => f, exp_table,      "EXP_TABLE",      "u8");
+    write_table!(2D => f, mul_table,      "MUL_TABLE",      "u8");
+    write_table!(2D => f, mul_table_low,  "MUL_TABLE_LOW",  "u8");
+    write_table!(2D => f, mul_table_high, "MUL_TABLE_HIGH", "u8");
 }
