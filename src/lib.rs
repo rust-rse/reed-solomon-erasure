@@ -671,14 +671,14 @@ impl ReedSolomon {
         // Separate the slices into groups
         for slice in slices.into_iter() {
             if slice_present[i] {
-                if sub_shards.len() < self.data_shard_count {
+                if i < self.data_shard_count {
                     sub_shards.push(slice);
                     valid_indices.push(matrix_row);
                 } else {
                     leftover_parity_shards.push(slice);
                 }
             } else {
-                if sub_shards.len() < self.data_shard_count {
+                if i < self.data_shard_count {
                     missing_data_slices.push(slice);
                 } else {
                     missing_parity_slices.push(slice);
