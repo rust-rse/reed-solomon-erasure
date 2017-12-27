@@ -76,7 +76,7 @@ fn gen_mul_table_half(log_table : &[u8; FIELD_SIZE],
     let mut high : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
 
     for a in 0..low.len() {
-        for b in 0..high.len() {
+        for b in 0..low.len() {
             let mut result = 0;
             if !(a == 0 || b == 0) {
                 let log_a = log_table[a];
