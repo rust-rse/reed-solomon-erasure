@@ -299,6 +299,32 @@ mod tests {
     }
 
     #[test]
+    fn test_matrix_swap_rows() {
+        {
+            let mut m1 = matrix!([1, 2, 3],
+                                 [4, 5, 6],
+                                 [7, 8, 9]);
+            let expect = matrix!([7, 8, 9],
+                                 [4, 5, 6],
+                                 [1, 2, 3]);
+            m1.swap_rows(0, 2);
+            assert_eq!(expect, m1);
+        }
+        {
+            let mut m1 = matrix!([1, 2, 3],
+                                 [4, 5, 6],
+                                 [7, 8, 9]);
+            let expect = m1.clone();
+            m1.swap_rows(0, 0);
+            assert_eq!(expect, m1);
+            m1.swap_rows(1, 1);
+            assert_eq!(expect, m1);
+            m1.swap_rows(2, 2);
+            assert_eq!(expect, m1);
+        }
+    }
+
+    #[test]
     #[should_panic]
     fn test_inconsistent_row_sizes() {
         matrix!([1, 0, 0], [0, 1], [0, 0, 1]); }
