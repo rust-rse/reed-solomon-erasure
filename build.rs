@@ -53,7 +53,7 @@ fn multiply(log_table : &[u8; FIELD_SIZE],
     }
 }
 
-fn gen_mult_table(log_table : &[u8; FIELD_SIZE],
+fn gen_mul_table(log_table : &[u8; FIELD_SIZE],
                   exp_table : &[u8; EXP_TABLE_SIZE])
                   -> [[u8; FIELD_SIZE]; FIELD_SIZE] {
     let mut result : [[u8; FIELD_SIZE]; FIELD_SIZE] = [[0; 256]; 256];
@@ -67,7 +67,7 @@ fn gen_mult_table(log_table : &[u8; FIELD_SIZE],
     result
 }
 
-fn gen_mult_table_half(log_table : &[u8; FIELD_SIZE],
+fn gen_mul_table_half(log_table : &[u8; FIELD_SIZE],
                        exp_table : &[u8; EXP_TABLE_SIZE])
                        -> ([[u8; 16]; FIELD_SIZE],
                            [[u8; 16]; FIELD_SIZE])
@@ -137,7 +137,9 @@ macro_rules! write_table {
 fn main() {
     let log_table = gen_log_table(GENERATING_POLYNOMIAL);
     let exp_table = gen_exp_table(&log_table);
-    let mult_table = gen_mult_table(&log_table, &exp_table);
+    let mul_table = gen_mul_table(&log_table, &exp_table);
+
+    let (low, high) = gen_mul_table_half(&log_table, &exp_table);
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("table.rs");
@@ -145,5 +147,5 @@ fn main() {
 
     write_table!(1D => f, log_table, "LOG_TABLE", "u8");
     write_table!(1D => f, exp_table, "EXP_TABLE", "u8");
-    write_table!(2D => f, mult_table, "MULT_TABLE", "u8");
+    write_table!(2D => f, mul_table, "MUL_TABLE", "u8");
 }
