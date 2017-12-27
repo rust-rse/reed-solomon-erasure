@@ -198,6 +198,22 @@ macro_rules! check_piece_count {
     }}
 }
 
+macro_rules! check_slices {
+    (
+        $slices:ident
+    ) => {{
+        let size = $slices[0].len();
+        if size == 0 {
+            return Err(Error::EmptyShard);
+        }
+        for slice in $slices.iter() {
+            if slice.len() != size {
+                return Err(Error::IncorrectShardSize);
+            }
+        }
+    }}
+}
+
 impl ReedSolomon {
     fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
         let mut parity_rows  = SmallVec::with_capacity(self.parity_shard_count);
@@ -359,32 +375,6 @@ impl ReedSolomon {
         !any_shard_mismatch  // if it is not that case that any of the shard has a mismatch
     }
 
-    fn check_slices(slices : &[&[u8]]) -> Result<(), Error> {
-        let size = slices[0].len();
-        if size == 0 {
-            return Err(Error::EmptyShard);
-        }
-        for slice in slices.iter() {
-            if slice.len() != size {
-                return Err(Error::IncorrectShardSize);
-            }
-        }
-        Ok(())
-    }
-
-    fn check_mut_slices(slices : &[&mut [u8]]) -> Result<(), Error> {
-        let size = slices[0].len();
-        if size == 0 {
-            return Err(Error::EmptyShard);
-        }
-        for slice in slices.iter() {
-            if slice.len() != size {
-                return Err(Error::IncorrectShardSize);
-            }
-        }
-        Ok(())
-    }
-
     fn option_shards_size(slices : &[Option<Shard>]) -> Result<usize, Error> {
         let mut size = None;
         for slice in slices.iter() {
@@ -445,7 +435,7 @@ impl ReedSolomon {
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
         check_piece_count!(self, slices);
 
-        Self::check_mut_slices(slices)?;
+        check_slices!(slices);
 
         let parity_rows = self.get_parity_rows();
 
@@ -479,7 +469,7 @@ impl ReedSolomon {
                   slices : &[&[u8]]) -> Result<bool, Error> {
         check_piece_count!(self, slices);
 
-        Self::check_slices(slices)?;
+        check_slices!(slices);
 
         let to_check = &slices[self.data_shard_count..];
 
@@ -620,7 +610,7 @@ impl ReedSolomon {
                             data_only     : bool) -> Result<(), Error> {
         check_piece_count!(self, slices);
 
-        Self::check_mut_slices(slices)?;
+        check_slices!(slices);
 
         if slices.len() != slice_present.len() {
             return Err(Error::InvalidShardsIndicator);
