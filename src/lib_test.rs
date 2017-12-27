@@ -7,21 +7,28 @@ use super::Error;
 use super::shard_utils;
 use self::rand::{thread_rng, Rng};
 
+#[macro_export]
 macro_rules! convert_2D_slices {
     (
         $slice:ident =into_vec=> $dst_type:ty
     ) => {
-        convert_2D_slices!($slice =into=> Vec<$dst_type>;
+        convert_2D_slices!($slice =into=> Vec<$dst_type>,
                            Vec::with_capacity)
     };
     (
         $slice:ident =to_vec=> $dst_type:ty
     ) => {
-        convert_2D_slices!($slice =to=> Vec<$dst_type>;
+        convert_2D_slices!($slice =to=> Vec<$dst_type>,
                            Vec::with_capacity)
     };
     (
-        $slice:ident =into=> $dst_type:ty; $with_capacity:path
+        $slice:ident =to_mut_vec=> $dst_type:ty
+    ) => {
+        convert_2D_slices!($slice =to_mut=> Vec<$dst_type>,
+                           Vec::with_capacity)
+    };
+    (
+        $slice:ident =into=> $dst_type:ty, $with_capacity:path
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
@@ -31,7 +38,7 @@ macro_rules! convert_2D_slices {
         result
     }};
     (
-        $slice:ident =to=> $dst_type:ty; $with_capacity:path
+        $slice:ident =to=> $dst_type:ty, $with_capacity:path
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
@@ -41,7 +48,7 @@ macro_rules! convert_2D_slices {
         result
     }};
     (
-        $slice:ident =to_mut=> $dst_type:ty; $with_capacity:path
+        $slice:ident =to_mut=> $dst_type:ty, $with_capacity:path
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
