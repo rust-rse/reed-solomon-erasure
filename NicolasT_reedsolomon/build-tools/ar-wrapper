@@ -1,0 +1,17 @@
+#!/bin/bash -ue
+
+set -ue
+
+set +e
+# The `tr` below turns Windows path separators into Unix ones for the `grep` to
+# succeed.
+echo $@ | tr '\\' '/' | grep "Data/ReedSolomon/Galois/SIMD" > /dev/null 2>&1
+RC=$?
+set -e
+
+if test ${RC} -eq 0; then
+    exec $@ ${CABAL_BUILD_DIR}/cbits/libreedsolomon_*_a-reedsolomon.o \
+            ${CABAL_BUILD_DIR}/cbits/reedsolomon_dispatch.o
+else
+    exec $@
+fi

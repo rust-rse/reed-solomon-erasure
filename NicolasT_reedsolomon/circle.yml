@@ -1,0 +1,31 @@
+general:
+  branches:
+    ignore:
+      - /^appveyor-.*$/
+      - /^travisci-.*$/
+
+machine:
+  ghc:
+    version: 7.10.2
+
+dependencies:
+  pre:
+    - sudo apt-get update
+    - sudo apt-get install hscolour
+
+  override:
+    - cabal update
+    - cabal sandbox init
+    - cabal install --constraint="template-haskell installed" --dependencies-only --enable-tests -fexamples
+    - cabal configure --enable-tests -fexamples
+
+test:
+  override:
+    - cd cbits; autoreconf -vi
+    - cabal build
+    - cabal test --show-details=always --test-options="+RTS -N2"
+    - cabal test --show-details=always --test-options="--xml $CIRCLE_TEST_REPORTS/junit.xml +RTS -N2"
+
+  post:
+    - cabal haddock --hyperlink-source
+    - mv dist/doc/html/reedsolomon/* $CIRCLE_ARTIFACTS/
