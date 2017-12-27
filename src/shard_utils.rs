@@ -3,7 +3,7 @@
 use super::Shard;
 
 pub mod helper {
-    use super::super::Shard;
+    //use super::super::Shard;
 
     pub fn calc_offset(offset : Option<usize>) -> usize {
         match offset {
