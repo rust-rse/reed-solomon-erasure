@@ -253,6 +253,25 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 }*/
 
 /// Reed-Solomon erasure code encoder/decoder.
+///
+/// # Common error handling
+///
+/// ### For `encode`, `encode_shards`, `verify`, `verify_shards`, `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
+///
+/// Return `Error::TooFewShards` or `Error::TooManyShards`
+/// when the number of provided shards
+/// does not match the codec's one.
+///
+/// Return `Error::EmptyShard` when the first shard provided is
+/// of zero length
+///
+/// Return `Error::IncorrectShardSize` when the provided shards
+/// are of different length.
+///
+/// ### For `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
+///
+/// Return `Error::TooFewShardsPresent` when there are not
+/// enough shards for reconstruction.
 #[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
