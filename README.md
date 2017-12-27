@@ -7,11 +7,11 @@
 
 Rust implementation of Reed-Solomon erasure coding
 
-This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon) and [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
+This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and [NicolasT's Haskell implementation](https://github.com/NicolasT/reedsolomon).
 
 Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
 
-Version `2.X.X` copies Klaus Post's implementation.
+Version `2.X.X` copies Klaus Post's implementation, and uses C source files from NicolasT's Haskell implementation.
 
 See [Notes](#notes) and [License](#license) section for details.
 
@@ -93,15 +93,20 @@ The `2.X.X` implementation mostly copies [Klaus Post's Go implementation](https:
 The test suite for both versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
 ## License
-#### BackBlaze Java Reed-Solomon implementation
+#### BackBlaze's Java Reed-Solomon implementation
 The tables and main functions of ```build.rs``` are translated from [BackBlaze Java Implementation](https://github.com/Backblaze/JavaReedSolomon), and are under the same MIT License as used by the BackBlaze project
 
-The source code copied directly from BackBlaze's project repo are under the MIT License as used by the project, the files are in ```BackBlaze_JavaReedSolomon```
+The source code copied directly from BackBlaze's project repo are under the MIT License as used by the project, the files are in `BackBlaze_JavaReedSolomon`
 
-#### Klaus Post Go Reed-Solomon implementation
+#### Klaus Post's Go Reed-Solomon implementation
 The tables and main functions of ```src/*``` are translated from [Klaus Post's Go Implementation](https://github.com/klauspost/reedsolomon), and are under the same MIT License as used by Klaus Post's project
 
-The source code copied directly from Klaus Post's project repo are under the MIT License as used by the project, the files are in ```KlausPost_reedsolomon```
+The source code copied directly from Klaus Post's project repo are under the MIT License as used by the project, the files are in `KlausPost_reedsolomon`
+
+#### NicolasT's Haskell Reed-Solomon implementation
+The C files for SIMD operations are copied(with none/minor modifications) from [NicolasT's Haskell implementation](https://github.com/NicolasT/reedsolomon), and are under the same MIT License as used by NicolasT's project
+
+The source code copied directly from NicolasT's project repo are under the MIT License as used by the project, the files are in `NicolasT_reedsolomon`
 
 #### TL;DR
 All files are released under MIT License
