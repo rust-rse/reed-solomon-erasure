@@ -68,9 +68,9 @@ fn gen_mul_table(log_table : &[u8; FIELD_SIZE],
 }
 
 fn gen_mul_table_half(log_table : &[u8; FIELD_SIZE],
-                       exp_table : &[u8; EXP_TABLE_SIZE])
-                       -> ([[u8; 16]; FIELD_SIZE],
-                           [[u8; 16]; FIELD_SIZE])
+                      exp_table : &[u8; EXP_TABLE_SIZE])
+                      -> ([[u8; 16]; FIELD_SIZE],
+                          [[u8; 16]; FIELD_SIZE])
 {
     let mut low  : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
     let mut high : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
