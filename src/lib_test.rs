@@ -342,6 +342,19 @@ fn test_reconstruct_shards() {
         assert_eq_shards(&shards, &master_copy);
     }
 
+    // Try to reconstruct data only
+    shards[0] = None;
+    shards[1] = None;
+    shards[12] = None;
+    r.reconstruct_data_shards(&mut shards).unwrap();
+    {
+        let shards = option_shards_to_shards(&shards, None, None);
+        let blank_shard = make_blank_shard(per_shard);
+        assert_eq!(master_copy[0], shards[0]);
+        assert_eq!(master_copy[1], shards[1]);
+        assert_eq!(blank_shard, shards[12]);
+    }
+
     // Try to decode with 7 data and 1 parity shards
     shards[0] = None;
     shards[1] = None;
@@ -350,9 +363,7 @@ fn test_reconstruct_shards() {
     shards[11] = None;
     shards[12] = None;
     assert_eq!(r.reconstruct_shards(&mut shards).unwrap_err(),
-               Error::TooFewShards);
-
-    // Try to reconstruct data only
+               Error::TooFewShardsPresent);
 }
 
 #[test]
@@ -569,5 +580,94 @@ fn test_slices_or_shards_count_check() {
         let mut option_shards = shards_to_option_shards(&shards);
 
         assert_eq!(Error::TooManyShards, r.reconstruct_shards(&mut option_shards).unwrap_err());
+    }
+}
+
+#[test]
+fn test_check_slices_or_shards_size() {
+    let r = ReedSolomon::new(2, 2);
+
+    {
+        let mut shards = shards!([0, 0, 0],
+                                 [0, 1],
+                                 [1, 2, 3],
+                                 [0, 0, 0]);
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.encode_shards(&mut shards)
+                   .unwrap_err());
+        assert_eq!(Error::IncorrectShardSize,
+                   r.verify_shards(&shards)
+                   .unwrap_err());
+
+        let mut option_shards = shards_to_option_shards(&shards);
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.reconstruct_shards(&mut option_shards)
+                   .unwrap_err());
+    }
+    {
+        let mut shards = shards!([0, 1],
+                                 [0, 1],
+                                 [1, 2, 3],
+                                 [0, 0, 0]);
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.encode_shards(&mut shards)
+                   .unwrap_err());
+        assert_eq!(Error::IncorrectShardSize,
+                   r.verify_shards(&shards)
+                   .unwrap_err());
+
+        let mut option_shards = shards_to_option_shards(&shards);
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.reconstruct_shards(&mut option_shards)
+                   .unwrap_err());
+    }
+    {
+        let mut shards = shards!([0, 1],
+                                 [0, 1, 4],
+                                 [1, 2, 3],
+                                 [0, 0, 0]);
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.encode_shards(&mut shards)
+                   .unwrap_err());
+        assert_eq!(Error::IncorrectShardSize,
+                   r.verify_shards(&shards)
+                   .unwrap_err());
+
+        let mut option_shards = shards_to_option_shards(&shards);
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.reconstruct_shards(&mut option_shards)
+                   .unwrap_err());
+    }
+    {
+        let mut shards = shards!([],
+                                 [0, 1, 3],
+                                 [1, 2, 3],
+                                 [0, 0, 0]);
+
+        assert_eq!(Error::EmptyShard,
+                   r.encode_shards(&mut shards)
+                   .unwrap_err());
+        assert_eq!(Error::EmptyShard,
+                   r.verify_shards(&shards)
+                   .unwrap_err());
+
+        let mut option_shards = shards_to_option_shards(&shards);
+
+        assert_eq!(Error::EmptyShard,
+                   r.reconstruct_shards(&mut option_shards)
+                   .unwrap_err());
+    }
+    {
+        let mut option_shards = vec![None, None, None, None];
+
+        assert_eq!(Error::TooFewShardsPresent,
+                   r.reconstruct_shards(&mut option_shards)
+                   .unwrap_err());
     }
 }
