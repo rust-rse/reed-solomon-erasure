@@ -351,15 +351,18 @@ fn test_reconstruct_shards() {
     shards[12] = None;
     assert_eq!(r.reconstruct_shards(&mut shards).unwrap_err(),
                Error::TooFewShards);
+
+    // Try to reconstruct data only
 }
 
 #[test]
 fn test_reconstruct() {
-    let r = ReedSolomon::new(2, 1);
+    let r = ReedSolomon::new(2, 2);
 
-    let mut shards : [[u8; 3]; 3] = [[0, 1, 2],
+    let mut shards : [[u8; 3]; 4] = [[0, 1, 2],
                                      [3, 4, 5],
-                                     [0, 0, 0]];
+                                     [200, 201, 203],
+                                     [100, 101, 102]];
 
     {
         let mut shard_refs : Vec<&mut [u8]> =
@@ -372,7 +375,28 @@ fn test_reconstruct() {
         r.encode(&mut shard_refs).unwrap();
     }
 
-    let expect = shards.clone();
+    {
+        let mut shard_refs : Vec<&mut [u8]> =
+            Vec::with_capacity(3);
+
+        for shard in shards.iter_mut() {
+            shard_refs.push(shard);
+        }
+
+        shard_refs[0][0] = 101;
+        shard_refs[0][1] = 102;
+        shard_refs[0][2] = 103;
+
+        let shards_present = [false, true, true, true];
+
+        r.reconstruct(&mut shard_refs, &shards_present).unwrap();
+    }
+
+    let expect : [[u8; 3]; 4] = [[0, 1, 2],
+                                 [3, 4, 5],
+                                 [6, 11, 12],
+                                 [5, 14, 11]];
+    assert_eq!(expect, shards);
 
     {
         let mut shard_refs : Vec<&mut [u8]> =
@@ -382,15 +406,52 @@ fn test_reconstruct() {
             shard_refs.push(shard);
         }
 
-        shard_refs[0][0] = 0;
-        shard_refs[0][1] = 0;
-        shard_refs[0][2] = 0;
+        shard_refs[0][0] = 201;
+        shard_refs[0][1] = 202;
+        shard_refs[0][2] = 203;
 
-        let shards_present = [false, true, true];
+        shard_refs[2][0] = 101;
+        shard_refs[2][1] = 102;
+        shard_refs[2][2] = 103;
 
-        r.reconstruct(&mut shard_refs, &shards_present).unwrap();
+        let shards_present = [false, true, false, true];
+
+        r.reconstruct_data(&mut shard_refs,
+                           &shards_present).unwrap();
     }
 
+    let expect : [[u8; 3]; 4] = [[0, 1, 2],
+                                 [3, 4, 5],
+                                 [101, 102, 103],
+                                 [5, 14, 11]];
+    assert_eq!(expect, shards);
+
+    {
+        let mut shard_refs : Vec<&mut [u8]> =
+            Vec::with_capacity(3);
+
+        for shard in shards.iter_mut() {
+            shard_refs.push(shard);
+        }
+
+        shard_refs[2][0] = 101;
+        shard_refs[2][1] = 102;
+        shard_refs[2][2] = 103;
+
+        shard_refs[3][0] = 201;
+        shard_refs[3][1] = 202;
+        shard_refs[3][2] = 203;
+
+        let shards_present = [true, true, false, false];
+
+        r.reconstruct_data(&mut shard_refs,
+                           &shards_present).unwrap();
+    }
+
+    let expect : [[u8; 3]; 4] = [[0, 1, 2],
+                                 [3, 4, 5],
+                                 [101, 102, 103],
+                                 [201, 202, 203]];
     assert_eq!(expect, shards);
 }
 
