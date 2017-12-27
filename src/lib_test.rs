@@ -38,6 +38,7 @@ fn assert_eq_shards(s1 : &Vec<Shard>, s2 : &Vec<Shard>) {
     }
 }
 
+/*
 fn is_increasing_and_contains_data_row(indices : &Vec<usize>) -> bool {
     let cols = indices.len();
     for i in 0..cols-1 {
@@ -98,7 +99,7 @@ fn find_singular_sub_matrix(m : Matrix) -> Option<Matrix> {
         };
     }
     None
-}
+}*/
 
 fn fill_random(arr : &mut Shard) {
     for a in arr.iter_mut() {
