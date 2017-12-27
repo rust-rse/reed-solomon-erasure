@@ -140,6 +140,7 @@ pub fn slices_are_equal<T>(slice1 : &[T],
     true
 }
 
+/*
 pub fn mut_slices_to_slices<'a>(slices : &'a [&mut [u8]])
                                 -> Vec<&'a [u8]> {
     let mut result : Vec<&[u8]> =
@@ -148,4 +149,4 @@ pub fn mut_slices_to_slices<'a>(slices : &'a [&mut [u8]])
         result.push(slice);
     }
     result
-}
+}*/
