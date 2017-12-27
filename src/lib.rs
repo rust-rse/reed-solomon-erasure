@@ -39,6 +39,7 @@ use inversion_tree::InversionTree;
 #[derive(PartialEq, Debug)]
 pub enum Error {
     TooFewShards,
+    TooManyShards,
     IncorrectShardSize,
     EmptyShard,
     InvalidShardsIndicator,
@@ -615,6 +616,10 @@ impl ReedSolomon {
                             data_only     : bool) -> Result<(), Error> {
         if slices.len() < self.total_shard_count {
             return Err(Error::TooFewShards);
+        }
+
+        if slices.len() > self.total_shard_count {
+            return Err(Error::TooManyShards);
         }
 
         Self::check_mut_slices(slices)?;
