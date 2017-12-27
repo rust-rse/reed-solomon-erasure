@@ -545,3 +545,29 @@ fn test_verify_too_few_shards() {
 
     assert_eq!(Error::TooFewShards, r.verify_shards(&shards).unwrap_err());
 }
+
+#[test]
+fn test_slices_or_shards_count_check() {
+    let r = ReedSolomon::new(3, 2);
+
+    {
+        let mut shards = make_random_shards!(10, 4);
+
+        assert_eq!(Error::TooFewShards, r.encode_shards(&mut shards).unwrap_err());
+        assert_eq!(Error::TooFewShards, r.verify_shards(&shards).unwrap_err());
+
+        let mut option_shards = shards_to_option_shards(&shards);
+
+        assert_eq!(Error::TooFewShards, r.reconstruct_shards(&mut option_shards).unwrap_err());
+    }
+    {
+        let mut shards = make_random_shards!(10, 6);
+
+        assert_eq!(Error::TooManyShards, r.encode_shards(&mut shards).unwrap_err());
+        assert_eq!(Error::TooManyShards, r.verify_shards(&shards).unwrap_err());
+
+        let mut option_shards = shards_to_option_shards(&shards);
+
+        assert_eq!(Error::TooManyShards, r.reconstruct_shards(&mut option_shards).unwrap_err());
+    }
+}
