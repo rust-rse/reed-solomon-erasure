@@ -141,16 +141,16 @@ macro_rules! shards {
 ///                        SmallVec::with_capacity);
 /// # }
 /// ```
-/// ## Byte arrays to `Vec<&mut [u8]>` (borrow mutably) to `SmallVec<[&mut [u8]; 32]>` (move)
+/// ## Shard array to `Vec<&mut [u8]>` (borrow mutably) to `SmallVec<[&mut [u8]; 32]>` (move)
 /// ```rust
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # extern crate smallvec;
 /// # use smallvec::SmallVec;
 /// # fn main () {
-/// let mut array : [[u8; 3]; 2] = [[1, 2, 3],
-///                                 [4, 5, 6]];
+/// let mut shards = shards!([1, 2, 3],
+///                          [4, 5, 6]);
 ///
-/// let refs1 = convert_2D_slices!(array =to_mut_vec=> &mut [u8]);
+/// let refs1 = convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 ///
 /// let refs2 : SmallVec<[&mut [u8]; 32]> =
 ///     convert_2D_slices!(refs1 =into=> SmallVec<[&mut [u8]; 32]>,
