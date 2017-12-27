@@ -67,6 +67,33 @@ fn gen_mult_table(log_table : &[u8; FIELD_SIZE],
     result
 }
 
+fn gen_mult_table_half(log_table : &[u8; FIELD_SIZE],
+                       exp_table : &[u8; EXP_TABLE_SIZE])
+                       -> ([[u8; 16]; FIELD_SIZE],
+                           [[u8; 16]; FIELD_SIZE])
+{
+    let mut low  : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
+    let mut high : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
+
+    for a in 0..low.len() {
+        for b in 0..high.len() {
+            let mut result = 0;
+            if !(a == 0 || b == 0) {
+                let log_a = log_table[a];
+                let log_b = log_table[b];
+                result = exp_table[log_a as usize + log_b as usize];
+            }
+            if (b & 0x0F) == b {
+                low[a][b] = result;
+            }
+            if (b & 0xF0) == b {
+                high[a][b>>4] = result;
+            }
+        }
+    }
+    (low, high)
+}
+
 macro_rules! write_table {
     (1D => $file:ident, $table:ident, $name:expr, $type:expr) => {{
         let len = $table.len();
