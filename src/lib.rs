@@ -636,8 +636,8 @@ impl ReedSolomon {
                 number_present += 1;
             }
         }
-        if number_present == self.data_shard_count {
-            // Cool.  All of the shards data data.  We don't
+        if number_present == self.total_shard_count {
+            // Cool.  All of the shards are there.  We don't
             // need to do anything.
             return Ok(())
         }
