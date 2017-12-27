@@ -424,6 +424,9 @@ impl ReedSolomon {
         Ok(())
     }
 
+    /// Generates the parity shards.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
     pub fn encode_shards(&self,
                          shards : &mut [Shard]) -> Result<(), Error> {
         let mut slices = mut_shards_to_mut_slices(shards);
@@ -431,6 +434,12 @@ impl ReedSolomon {
         self.encode(&mut slices)
     }
 
+    /// Generates the parity shards.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// This shares the same code base with `encode_shards`, but
+    /// this interface provides more flexibility.
     pub fn encode(&self,
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
         check_piece_count!(self, slices);
