@@ -134,7 +134,7 @@ macro_rules! write_table {
     }}
 }
 
-fn main() {
+fn write_tables() {
     let log_table = gen_log_table(GENERATING_POLYNOMIAL);
     let exp_table = gen_exp_table(&log_table);
     let mul_table = gen_mul_table(&log_table, &exp_table);
@@ -150,4 +150,8 @@ fn main() {
     write_table!(2D => f, mul_table,      "MUL_TABLE",      "u8");
     write_table!(2D => f, mul_table_low,  "MUL_TABLE_LOW",  "u8");
     write_table!(2D => f, mul_table_high, "MUL_TABLE_HIGH", "u8");
+}
+
+fn main() {
+    write_tables();
 }
