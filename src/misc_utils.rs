@@ -116,14 +116,14 @@ pub fn slice_to_vec_of_refs<'a, T>(slice : &'a [T]) -> Vec<&'a T> {
     result
 }
 
-pub fn mut_slice_to_vec_of_mut_refs<'a, T>(slice : &'a mut [T])
+/*pub fn mut_slice_to_vec_of_mut_refs<'a, T>(slice : &'a mut [T])
                                            -> Vec<&'a mut T> {
     let mut result = Vec::with_capacity(slice.len());
     for v in slice.iter_mut() {
         result.push(v);
     }
     result
-}
+}*/
 
 pub fn slices_are_equal<T>(slice1 : &[T],
                            slice2 : &[T]) -> bool
