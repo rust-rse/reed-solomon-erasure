@@ -299,7 +299,7 @@ fn test_encoding() {
 }
 
 #[test]
-fn test_reconstruct() {
+fn test_reconstruct_shards() {
     let per_shard = 100_000;
 
     let r = ReedSolomon::new(8, 5);
@@ -351,6 +351,47 @@ fn test_reconstruct() {
     shards[12] = None;
     assert_eq!(r.reconstruct_shards(&mut shards).unwrap_err(),
                Error::TooFewShards);
+}
+
+#[test]
+fn test_reconstruct() {
+    let r = ReedSolomon::new(2, 1);
+
+    let mut shards : [[u8; 3]; 3] = [[0, 1, 2],
+                                     [3, 4, 5],
+                                     [0, 0, 0]];
+
+    {
+        let mut shard_refs : Vec<&mut [u8]> =
+            Vec::with_capacity(3);
+
+        for shard in shards.iter_mut() {
+            shard_refs.push(shard);
+        }
+
+        r.encode(&mut shard_refs).unwrap();
+    }
+
+    let expect = shards.clone();
+
+    {
+        let mut shard_refs : Vec<&mut [u8]> =
+            Vec::with_capacity(3);
+
+        for shard in shards.iter_mut() {
+            shard_refs.push(shard);
+        }
+
+        shard_refs[0][0] = 0;
+        shard_refs[0][1] = 0;
+        shard_refs[0][2] = 0;
+
+        let shards_present = [false, true, true];
+
+        r.reconstruct(&mut shard_refs, &shards_present).unwrap();
+    }
+
+    assert_eq!(expect, shards);
 }
 
 /*
@@ -433,4 +474,13 @@ fn test_one_encode() {
 
     shards[8][0] += 1;
     assert!(!r.verify_shards(&shards).unwrap());
+}
+
+#[test]
+fn test_verify_too_few_shards() {
+    let r = ReedSolomon::new(3, 2);
+
+    let shards = make_random_shards!(10, 4);
+
+    assert_eq!(Error::TooFewShards, r.verify_shards(&shards).unwrap_err());
 }
