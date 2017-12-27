@@ -90,13 +90,14 @@ macro_rules! shards {
 
 /// Makes it easier to work with 2D slices, arrays, etc.
 ///
-/// # Example
+/// # Examples
 /// ## Byte arrays on stack to Vec<&[u8]>
 /// ```rust
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # fn main () {
 /// let array : [[u8; 3]; 2] = [[1, 2, 3],
 ///                             [4, 5, 6]];
+///
 /// let refs : Vec<&[u8]> =
 ///     convert_2D_slices!(array =to_vec=> &[u8]);
 /// # }
@@ -107,11 +108,12 @@ macro_rules! shards {
 /// # fn main () {
 /// let mut array : [[u8; 3]; 2] = [[1, 2, 3],
 ///                                [4, 5, 6]];
+///
 /// let refs : Vec<&mut [u8]> =
 ///     convert_2D_slices!(array =to_mut_vec=> &mut [u8]);
 /// # }
 /// ```
-/// ## Byte arrays on stack to SmallVec<&mut [u8]> (borrow mutably)
+/// ## Byte arrays on stack to SmallVec<[&mut [u8]; 32]> (borrow mutably)
 /// ```rust
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # extern crate smallvec;
@@ -119,8 +121,23 @@ macro_rules! shards {
 /// # fn main () {
 /// let mut array : [[u8; 3]; 2] = [[1, 2, 3],
 ///                                [4, 5, 6]];
+///
 /// let refs : SmallVec<[&mut [u8]; 32]> =
 ///     convert_2D_slices!(array =to_mut=> SmallVec<[&mut [u8]; 32]>,
+///                        SmallVec::with_capacity);
+/// # }
+/// ```
+/// ## Shard array to SmallVec<[&mut [u8]; 32]> (borrow mutably)
+/// ```rust
+/// # #[macro_use] extern crate reed_solomon_erasure;
+/// # extern crate smallvec;
+/// # use smallvec::SmallVec;
+/// # fn main () {
+/// let mut shards = shards!([1, 2, 3],
+///                          [4, 5, 6]);
+///
+/// let refs : SmallVec<[&mut [u8]; 32]> =
+///     convert_2D_slices!(shards =to_mut=> SmallVec<[&mut [u8]; 32]>,
 ///                        SmallVec::with_capacity);
 /// # }
 /// ```
