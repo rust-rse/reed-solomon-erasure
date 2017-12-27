@@ -11,7 +11,7 @@ This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze
 
 Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
 
-Version `2.X.X` copies Klaus Post's implementation, and uses C source files from NicolasT's Haskell implementation.
+Version `2.X.X` copies Klaus Post's implementation, and will (hopefully) be using C source files from NicolasT's Haskell implementation.
 
 See [Notes](#notes) and [License](#license) section for details.
 
@@ -65,9 +65,11 @@ fn main () {
 ```
 
 ## Performance
-Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
+Version `1.X.X`, `2.X.X` do not utilise SIMD, as stable Rust still does not support SIMD yet. For the time being, the library is written in pure Rust.
 
-Version `1.X.X`, `2.X.X` do not utilise SIMD, as stable Rust still does not support SIMD yet. And also I am clueless on writing assembly code in general or linking to assembly code in Rust code(any help on the assembly code side of things would be really nice - shoot me an email/open issue/open PR/etc if you'd like to help). So for the time being, the library is written in pure Rust.
+I am looking into using the assembly code from Klaus's project and/or the SIMD C files from Nicolas's project, but this will not be done very soon. Contact me if you'd like to help.
+
+Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
 
 Version `2.X.X` is roughly 4-5x faster than version `1.X.X` for encoding, depending on threading etc, but is always faster than version `1.X.X`.
 
