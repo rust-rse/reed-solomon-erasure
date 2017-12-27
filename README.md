@@ -7,7 +7,7 @@
 
 Rust implementation of Reed-Solomon erasure coding
 
-This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and [NicolasT's Haskell implementation](https://github.com/NicolasT/reedsolomon).
+This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
 
 Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
 
@@ -88,7 +88,7 @@ Contributions are welcome. Note that by submitting contributions, you agree that
 ## Notes
 The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon).
 
-The `2.X.X` implementation mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
+The `2.X.X` implementation mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and copies C files from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
 
 The test suite for both versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
@@ -104,9 +104,9 @@ The tables and main functions of ```src/*``` are translated from [Klaus Post's G
 The source code copied directly from Klaus Post's project repo are under the MIT License as used by the project, the files are in `KlausPost_reedsolomon`
 
 #### NicolasT's Haskell Reed-Solomon implementation
-The C files for SIMD operations are copied(with none/minor modifications) from [NicolasT's Haskell implementation](https://github.com/NicolasT/reedsolomon), and are under the same MIT License as used by NicolasT's project
+The C files for SIMD operations are copied(with none/minor modifications) from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon), and are under the same MIT License as used by NicolasT's project
 
-The source code copied directly from NicolasT's project repo are under the MIT License as used by the project, the files are in `NicolasT_reedsolomon`
+The source code copied directly from Nicolas Trangez's project repo are under the MIT License as used by the project, the files are in `NicolasT_reedsolomon`
 
 #### TL;DR
 All files are released under MIT License
