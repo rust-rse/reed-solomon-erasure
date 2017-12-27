@@ -41,6 +41,7 @@ pub enum Error {
     TooFewShards,
     TooManyShards,
     IncorrectShardSize,
+    TooFewShardsPresent,
     EmptyShard,
     InvalidShardsIndicator,
     InversionTreeError(inversion_tree::Error)
@@ -420,8 +421,11 @@ impl ReedSolomon {
             }
         }
         match size {
-            None    => return Err(Error::EmptyShard),
+            None    => return Err(Error::TooFewShardsPresent),
             Some(size) => {
+                if size == 0 {
+                    return Err(Error::EmptyShard);
+                }
                 for slice in slices.iter() {
                     match *slice {
                         None => {},
@@ -541,7 +545,7 @@ impl ReedSolomon {
                              shard_present.push(true); }
             }
         }
-        if number_present == self.data_shard_count {
+        if number_present == self.total_shard_count {
             // Cool.  All of the shards data data.  We don't
             // need to do anything.
             return Ok(())
@@ -549,7 +553,7 @@ impl ReedSolomon {
 
 	      // More complete sanity check
 	      if number_present < self.data_shard_count {
-		        return Err(Error::TooFewShards)
+		        return Err(Error::TooFewShardsPresent)
 	      }
 
         // Fill in new shards
@@ -645,7 +649,7 @@ impl ReedSolomon {
 
 	      // More complete sanity check
 	      if number_present < self.data_shard_count {
-		        return Err(Error::TooFewShards)
+		        return Err(Error::TooFewShardsPresent)
 	      }
 
 	      // Pull out an array holding just the shards that
