@@ -35,6 +35,16 @@ macro_rules! convert_2D_slices {
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
+        for i in $slice.iter() {
+            result.push(i);
+        }
+        result
+    }};
+    (
+        $slice:ident =to_mut=> $dst_type:ty; $with_capacity:path
+    ) => {{
+        let mut result : $dst_type =
+            $with_capacity($slice.len());
         for i in $slice.iter_mut() {
             result.push(i);
         }
