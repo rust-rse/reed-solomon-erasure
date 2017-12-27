@@ -43,8 +43,8 @@ fn main () {
                                   [0, 0,  0,  0]);
 
     // Construct the parity shards
-    r.encode_parity(&mut master_copy, None, None);
-    
+    r.encode_shards(&mut master_copy);
+
     // Make a copy and transform it into option shards arrangement
     // for feeding into decode_missing
     let mut shards = shards_into_option_shards(master_copy.clone());
@@ -52,14 +52,14 @@ fn main () {
     // We can remove up to 2 shards, which may be data or parity shards
     shards[0] = None;
     shards[4] = None;
-    
+
     // Try to reconstruct missing shards
-    r.decode_missing(&mut shards, None, None).unwrap();
-    
+    r.reconstruct_shards(&mut shards).unwrap();
+
     // Convert back to normal shard arrangement
     let result = option_shards_into_shards(shards);
-    
-    assert!(r.is_parity_correct(&result, None, None));
+
+    assert!(r.verify_shards(&result).unwrap());
     assert_eq!(master_copy, result);
 }
 ```
