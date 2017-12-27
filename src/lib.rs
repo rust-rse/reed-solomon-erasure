@@ -192,6 +192,19 @@ impl PartialEq for ReedSolomon {
     }
 }
 
+macro_rules! check_piece_count {
+    (
+        $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.total_shard_count {
+            return Err(Error::TooFewShards);
+        }
+        if $pieces.len() > $self.total_shard_count {
+            return Err(Error::TooManyShards);
+        }
+    }}
+}
+
 impl ReedSolomon {
     fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
         let mut parity_rows  = SmallVec::with_capacity(self.parity_shard_count);
@@ -433,9 +446,7 @@ impl ReedSolomon {
 
     pub fn encode(&self,
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
-        if slices.len() < self.total_shard_count {
-            return Err(Error::TooFewShards);
-        }
+        check_piece_count!(self, slices);
 
         Self::check_mut_slices(slices)?;
 
@@ -469,9 +480,7 @@ impl ReedSolomon {
 
     pub fn verify(&self,
                   slices : &[&[u8]]) -> Result<bool, Error> {
-        if slices.len() < self.total_shard_count {
-            return Err(Error::TooFewShards)
-        }
+        check_piece_count!(self, slices);
 
         Self::check_slices(slices)?;
 
@@ -514,9 +523,7 @@ impl ReedSolomon {
                                    shards    : &mut [Option<Shard>],
                                    data_only : bool)
                                    -> Result<(), Error> {
-        if shards.len() < self.total_shard_count {
-            return Err(Error::TooFewShards)
-        }
+        check_piece_count!(self, shards);
 
         Self::check_option_shards(shards)?;
 
@@ -614,13 +621,7 @@ impl ReedSolomon {
                             slices        : &mut [&mut [u8]],
                             slice_present : &[bool],
                             data_only     : bool) -> Result<(), Error> {
-        if slices.len() < self.total_shard_count {
-            return Err(Error::TooFewShards);
-        }
-
-        if slices.len() > self.total_shard_count {
-            return Err(Error::TooManyShards);
-        }
+        check_piece_count!(self, slices);
 
         Self::check_mut_slices(slices)?;
 
