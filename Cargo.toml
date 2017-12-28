@@ -4,8 +4,9 @@ version = "2.0.0"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 build   = "build.rs"
 exclude = [
-    "Backblaze_JavaReedSolomon/*",
+    "BackBlaze_JavaReedSolomon/*",
     "KlausPost_reedsolomon/*",
+    "NicolasT_reedsolomon/*"
 ]
 
 description = "Rust implementation of Reed-Solomon erasure coding"
