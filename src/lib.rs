@@ -263,7 +263,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// does not match the codec's one.
 ///
 /// Return `Error::EmptyShard` when the first shard provided is
-/// of zero length
+/// of zero length.
 ///
 /// Return `Error::IncorrectShardSize` when the provided shards
 /// are of different length.
