@@ -112,7 +112,7 @@ The tables and main functions of ```src/*``` are translated from [Klaus Post's G
 
 The source code copied directly from Klaus Post's project repo are under the MIT License as used by the project, the files are in `KlausPost_reedsolomon`
 
-#### NicolasT's Haskell Reed-Solomon implementation
+#### Nicolas Trangez's Haskell Reed-Solomon implementation
 The C files for SIMD operations are copied(with none/minor modifications) from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon), and are under the same MIT License as used by NicolasT's project
 
 The source code copied directly from Nicolas Trangez's project repo are under the MIT License as used by the project, the files are in `NicolasT_reedsolomon`
