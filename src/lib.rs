@@ -218,7 +218,7 @@ fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
     result
 }
 
-fn mut_shards_to_mut_slices(shards : &mut [Shard])
+/*fn mut_shards_to_mut_slices(shards : &mut [Shard])
                             -> Vec<&mut [u8]> {
     let mut result : Vec<&mut [u8]> =
         Vec::with_capacity(shards.len());
@@ -226,7 +226,7 @@ fn mut_shards_to_mut_slices(shards : &mut [Shard])
         result.push(shard);
     }
     result
-}
+}*/
 
 fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
                                        -> Vec<&'a mut [u8]> {
@@ -571,7 +571,9 @@ impl ReedSolomon {
     /// This is a wrapper of `encode`.
     pub fn encode_shards(&self,
                          shards : &mut [Shard]) -> Result<(), Error> {
-        let mut slices = mut_shards_to_mut_slices(shards);
+        let mut slices : SmallVec<[&mut [u8]; 32]> =
+            convert_2D_slices!(shards =into=> SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
 
         self.encode(&mut slices)
     }
