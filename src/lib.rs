@@ -56,14 +56,14 @@ pub type Shard = Box<[u8]>;
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # use reed_solomon_erasure::*;
 /// # fn main () {
-/// let shard = shard!(1, 2, 3);
+/// let shard = shard![1, 2, 3];
 /// # }
 /// ```
 #[macro_export]
 macro_rules! shard {
-    (
+    [
         $( $x:expr ),*
-    ) => {{
+    ] => {{
         vec![ $( $x as u8 ),* ].into_boxed_slice()
     }}
 }
