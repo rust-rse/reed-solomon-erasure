@@ -43,7 +43,7 @@ fn main () {
                                   [0, 0,  0,  0]);
 
     // Construct the parity shards
-    r.encode_shards(&mut master_copy);
+    r.encode_shards(&mut master_copy).unwrap();
 
     // Make a copy and transform it into option shards arrangement
     // for feeding into decode_missing
