@@ -564,7 +564,7 @@ impl ReedSolomon {
         Ok(())
     }
 
-    /// Generates the parity shards.
+    /// Constructs the parity shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
@@ -578,7 +578,7 @@ impl ReedSolomon {
         self.encode(&mut slices)
     }
 
-    /// Generates the parity shards.
+    /// Constructs the parity shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
