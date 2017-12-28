@@ -141,7 +141,7 @@ macro_rules! shards {
 ///                        SmallVec::with_capacity);
 /// # }
 /// ```
-/// ## Shard array to `Vec<&mut [u8]>` (borrow mutably) to `SmallVec<[&mut [u8]; 32]>` (move)
+/// ## Shard array to `Vec<&mut [u8]>` (borrow mutably) into `SmallVec<[&mut [u8]; 32]>` (move)
 /// ```rust
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # extern crate smallvec;
