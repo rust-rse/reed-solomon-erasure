@@ -46,7 +46,7 @@ pub enum Error {
     InversionTreeError(inversion_tree::Error)
 }
 
-/// Convenience data type provided by this library
+/// Convenience data type provided by this library.
 pub type Shard = Box<[u8]>;
 
 /// Constructs a shard.
