@@ -440,7 +440,7 @@ fn test_reconstruct() {
 
     {
         let mut shard_refs =
-            convert_2D_slices!(shards =to_vec=> &mut [u8]);
+            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 
         shard_refs[0][0] = 101;
         shard_refs[0][1] = 102;
@@ -459,7 +459,7 @@ fn test_reconstruct() {
 
     {
         let mut shard_refs =
-            convert_2D_slices!(shards =to_vec=> &mut [u8]);
+            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 
         shard_refs[0][0] = 201;
         shard_refs[0][1] = 202;
@@ -483,7 +483,7 @@ fn test_reconstruct() {
 
     {
         let mut shard_refs =
-            convert_2D_slices!(shards =to_vec=> &mut [u8]);
+            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 
         shard_refs[2][0] = 101;
         shard_refs[2][1] = 102;
