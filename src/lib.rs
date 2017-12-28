@@ -1,4 +1,4 @@
-//! This crate providers an encoder/decoder for Reed-Solomon erasure code.
+//! This crate provides an encoder/decoder for Reed-Solomon erasure code.
 //!
 //! Please note that erasure coding means errors are not directly detected or corrected,
 //! but missing data pieces(shards) can be reconstructed given that
