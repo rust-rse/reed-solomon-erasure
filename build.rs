@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+extern crate cc;
+
 const FIELD_SIZE : usize = 256;
 
 const GENERATING_POLYNOMIAL : usize = 29;
