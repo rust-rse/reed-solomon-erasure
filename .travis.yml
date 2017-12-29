@@ -22,6 +22,10 @@ env:
   global:
   - RUSTFLAGS="-C link-dead-code"
 
+compiler:
+  - clang
+  - gcc
+
 addons:
   apt:
     packages:
