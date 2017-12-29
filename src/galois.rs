@@ -153,7 +153,7 @@ pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     }*/
 }
 
-/*pub fn slice_xor(input : &[u8], out : &mut [u8]) {
+pub fn slice_xor(input : &[u8], out : &mut [u8]) {
     assert_eq!(input.len(), out.len());
 
     let len   : isize = input.len() as isize;
@@ -189,7 +189,7 @@ pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     /*for n in 0..input.len() {
         out[n] ^= input[n]
     }*/
-}*/
+}
 
 #[cfg(not(feature = "pure-rust"))]
 extern {
