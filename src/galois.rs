@@ -501,7 +501,7 @@ mod tests {
 
     #[test]
     fn test_pure_rust_same_as_maybe_ffi() {
-        let len = 1003;
+        let len = 10_003;
         for _ in 0..100 {
             let c   = rand::random::<u8>();
             let mut input = vec![0; len];
