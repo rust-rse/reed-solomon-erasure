@@ -63,17 +63,27 @@ pub fn exp(a : u8, n : usize) -> u8 {
 
 const PURE_RUST_UNROLL : isize = 4;
 
+macro_rules! return_if_empty {
+    (
+        $len:expr
+    ) => {
+        if $len == 0 { return; }
+    }
+}
+
 fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     let mt                 = &MUL_TABLE[c as usize];
     let mt_ptr : *const u8 = &mt[0];
 
     assert_eq!(input.len(), out.len());
 
+    let len : isize = input.len() as isize;
+    return_if_empty!(len);
+
     let mut input_ptr : *const u8 = &input[0];
     let mut out_ptr   : *mut   u8 = &mut out[0];
 
     let mut n : isize = 0;
-    let len   : isize = input.len() as isize;
     unsafe {
         assert_eq!(4, PURE_RUST_UNROLL);
         if len > PURE_RUST_UNROLL {
@@ -108,11 +118,13 @@ pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
 
     assert_eq!(input.len(), out.len());
 
+    let len : isize = input.len() as isize;
+    return_if_empty!(len);
+
     let mut input_ptr : *const u8 = &input[0];
     let mut out_ptr   : *mut   u8 = &mut out[0];
 
     let mut n : isize = 0;
-    let len   : isize = input.len() as isize;
     unsafe {
         assert_eq!(4, PURE_RUST_UNROLL);
         if len > PURE_RUST_UNROLL {
@@ -141,14 +153,16 @@ pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     }*/
 }
 
-pub fn slice_xor(input : &[u8], out : &mut [u8]) {
+/*pub fn slice_xor(input : &[u8], out : &mut [u8]) {
     assert_eq!(input.len(), out.len());
+
+    let len   : isize = input.len() as isize;
+    return_if_empty!(len);
 
     let mut input_ptr : *const u8 = &input[0];
     let mut out_ptr   : *mut   u8 = &mut out[0];
 
     let mut n : isize = 0;
-    let len   : isize = input.len() as isize;
     unsafe {
         assert_eq!(4, PURE_RUST_UNROLL);
         if len > PURE_RUST_UNROLL {
@@ -175,7 +189,7 @@ pub fn slice_xor(input : &[u8], out : &mut [u8]) {
     /*for n in 0..input.len() {
         out[n] ^= input[n]
     }*/
-}
+}*/
 
 #[cfg(not(feature = "pure-rust"))]
 extern {
