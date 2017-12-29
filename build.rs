@@ -154,7 +154,9 @@ fn write_tables() {
     write_table!(2D => f, mul_table_high, "MUL_TABLE_HIGH", "u8");
 }
 
-#[cfg(not(features = "pure-rust"))]
+#[cfg(
+    all(not(feature = "pure-rust"),
+        any(target_arch = "x86_64", target_arch = "aarch64")))]
 fn compile_simd_c() {
     cc::Build::new()
         .opt_level(3)
@@ -163,7 +165,9 @@ fn compile_simd_c() {
         .compile("reedsolomon");
 }
 
-#[cfg(features = "pure-rust")]
+#[cfg(
+    any(feature = "pure-rust",
+        not(any(target_arch = "x86_64", target_arch = "aarch64"))))]
 fn compile_simd_c() {}
 
 fn main() {
