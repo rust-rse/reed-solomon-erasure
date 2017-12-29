@@ -159,12 +159,7 @@ fn main() {
 
     cc::Build::new()
         .opt_level(3)
-        .flag("-msse")
-        .flag("-msse2")
-        .flag("-msse3")
-        .flag("-mssse3")
-        .flag("-mavx")
-        .flag("-mavx2")
+        .flag("-march=native")
         .file("simd_c/reedsolomon.c")
         .compile("reedsolomon");
 }
