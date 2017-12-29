@@ -125,8 +125,8 @@
 #define CONCAT_HELPER(a, b)     a ## b
 #define CONCAT(a, b)            CONCAT_HELPER(a, b)
 
-typedef uint8_t v16u8v __attribute__((vector_size(16)));
-typedef uint64_t v2u64v __attribute__((vector_size(16)));
+typedef uint8_t v16u8v __attribute__((vector_size(16), aligned(1)));
+typedef uint64_t v2u64v __attribute__((vector_size(16), aligned(1)));
 
 #define T(t, n) t n[VSIZE / 8 / sizeof(t)]
 #define T1(t, n) t n
