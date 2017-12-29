@@ -30,7 +30,8 @@
 #include <string.h>
 
 //#if defined(__SSE2__) && __SSE2__ && defined(HAVE_EMMINTRIN_H) && HAVE_EMMINTRIN_H
-#ifdef __SSE2__
+//#ifdef __SSE2__
+#if defined(__SSE2__) && __SSE2__
 # define USE_SSE2 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
@@ -40,7 +41,8 @@
 #endif
 
 //#if defined(__SSSE3__) && __SSSE3__ && defined(HAVE_TMMINTRIN_H) && HAVE_TMMINTRIN_H
-#ifdef __SSSE3__
+//#ifdef __SSSE3__
+#if defined(__SSSE3__) && __SSSE3__
 # define USE_SSSE3 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
@@ -50,7 +52,8 @@
 #endif
 
 //#if defined(__AVX2__) && __AVX2__ && defined(HAVE_IMMINTRIN_H) && HAVE_IMMINTRIN_H
-#ifdef __AVX2__
+//#ifdef __AVX2__
+#if defined(__AVX2__) && __AVX2__
 # define USE_AVX2 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 32
@@ -62,23 +65,27 @@
 /*#if ((defined(__ARM_NEON__) && __ARM_NEON__) \
         || (defined(__ARM_NEON) && __ARM_NEON) \
         || (defined(__aarch64__) && __aarch64__)) \
-    && defined(HAVE_ARM_NEON_H) && HAVE_ARM_NEON_H
+        && defined(HAVE_ARM_NEON_H) && HAVE_ARM_NEON_H*/
+#if ((defined(__ARM_NEON__) && __ARM_NEON__)      \
+     || (defined(__ARM_NEON) && __ARM_NEON)       \
+     || (defined(__aarch64__) && __aarch64__))
 # define USE_ARM_NEON 1
 #undef VECTOR_SIZE
 # define VECTOR_SIZE 16
 # include <arm_neon.h>
 #else
 # define USE_ARM_NEON 0
-#endif*/
+#endif
 
-/*#if defined(__ALTIVEC__) && __ALTIVEC__ && defined(HAVE_ALTIVEC_H) && HAVE_ALTIVEC_H
+//#if defined(__ALTIVEC__) && __ALTIVEC__ && defined(HAVE_ALTIVEC_H) && HAVE_ALTIVEC_H
+#if defined(__ALTIVEC__) && __ALTIVEC__
 # define USE_ALTIVEC 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
 # include <altivec.h>
 #else
 # define USE_ALTIVEC 0
-#endif*/
+#endif
 
 #ifndef VECTOR_SIZE
 /* 'Generic' code */
