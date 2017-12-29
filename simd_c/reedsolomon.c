@@ -40,14 +40,14 @@
 #endif
 
 //#if defined(__SSSE3__) && __SSSE3__ && defined(HAVE_TMMINTRIN_H) && HAVE_TMMINTRIN_H
-/*#ifdef __SSSE3__
+#ifdef __SSSE3__
 # define USE_SSSE3 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
 # include <tmmintrin.h>
 #else
 # define USE_SSSE3 0
-#endif*/
+#endif
 
 //#if defined(__AVX2__) && __AVX2__ && defined(HAVE_IMMINTRIN_H) && HAVE_IMMINTRIN_H
 /*#ifdef __AVX2__
@@ -141,7 +141,7 @@ typedef union {
 #endif
         T1(v16u8v, v16u8);
         T1(v2u64v, v2u64);
-} v128 __attribute__((aligned(16)));
+} v128 __attribute__((aligned(1)));
 #undef VSIZE
 
 #define VSIZE 256
@@ -150,7 +150,7 @@ typedef union {
 #if USE_AVX2
         __m256i m256i;
 #endif
-} v256 __attribute__((aligned(32)));
+} v256 __attribute__((aligned(1)));
 #undef VSIZE
 
 #undef T
