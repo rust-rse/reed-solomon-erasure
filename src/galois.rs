@@ -4,16 +4,6 @@ extern crate libc;
 
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
-#[cfg(feature = "pure-rust")]
-pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
-    mul_slice_pure_rust(c, input, out);
-}
-
-#[cfg(feature = "pure-rust")]
-pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
-    mul_slice_xor_pure_rust(c, input, out);
-}
-
 pub fn add(a : u8, b : u8) -> u8 {
     a ^ b
 }
@@ -69,6 +59,16 @@ macro_rules! return_if_empty {
     ) => {
         if $len == 0 { return; }
     }
+}
+
+#[cfg(feature = "pure-rust")]
+pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
+    mul_slice_pure_rust(c, input, out);
+}
+
+#[cfg(feature = "pure-rust")]
+pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
+    mul_slice_xor_pure_rust(c, input, out);
 }
 
 fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
