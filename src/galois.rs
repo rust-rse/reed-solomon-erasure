@@ -237,7 +237,9 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
                         &mut out[bytes_done..]);
 }
 
-#[cfg(not(feature = "pure-rust"))]
+#[cfg(
+    all(not(feature = "pure-rust"),
+        any(target_arch = "x86_64", target_arch = "aarch64")))]
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     let low  : *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
     let high : *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
