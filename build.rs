@@ -158,9 +158,13 @@ fn main() {
     write_tables();
 
     cc::Build::new()
-        .file("simd_c/reedsolomon.c")
+        .opt_level(3)
+        .flag("-msse")
         .flag("-msse2")
+        .flag("-msse3")
         .flag("-mssse3")
+        .flag("-mavx")
         .flag("-mavx2")
+        .file("simd_c/reedsolomon.c")
         .compile("reedsolomon");
 }

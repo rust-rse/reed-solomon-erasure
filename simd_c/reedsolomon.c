@@ -29,7 +29,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#if defined(__SSE2__) && __SSE2__ && defined(HAVE_EMMINTRIN_H) && HAVE_EMMINTRIN_H
+//#if defined(__SSE2__) && __SSE2__ && defined(HAVE_EMMINTRIN_H) && HAVE_EMMINTRIN_H
+#ifdef __SSE2__
 # define USE_SSE2 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
@@ -37,24 +38,28 @@
 #else
 # define USE_SSE2 0
 #endif
-#if defined(__SSSE3__) && __SSSE3__ && defined(HAVE_TMMINTRIN_H) && HAVE_TMMINTRIN_H
+
+//#if defined(__SSSE3__) && __SSSE3__ && defined(HAVE_TMMINTRIN_H) && HAVE_TMMINTRIN_H
+/*#ifdef __SSSE3__
 # define USE_SSSE3 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
 # include <tmmintrin.h>
 #else
 # define USE_SSSE3 0
-#endif
-#if defined(__AVX2__) && __AVX2__ && defined(HAVE_IMMINTRIN_H) && HAVE_IMMINTRIN_H
+#endif*/
+
+//#if defined(__AVX2__) && __AVX2__ && defined(HAVE_IMMINTRIN_H) && HAVE_IMMINTRIN_H
+/*#ifdef __AVX2__
 # define USE_AVX2 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 32
 # include <immintrin.h>
 #else
 # define USE_AVX2 0
-#endif
+#endif*/
 
-#if ((defined(__ARM_NEON__) && __ARM_NEON__) \
+/*#if ((defined(__ARM_NEON__) && __ARM_NEON__) \
         || (defined(__ARM_NEON) && __ARM_NEON) \
         || (defined(__aarch64__) && __aarch64__)) \
     && defined(HAVE_ARM_NEON_H) && HAVE_ARM_NEON_H
@@ -64,34 +69,25 @@
 # include <arm_neon.h>
 #else
 # define USE_ARM_NEON 0
-#endif
+#endif*/
 
-#if defined(__ALTIVEC__) && __ALTIVEC__ && defined(HAVE_ALTIVEC_H) && HAVE_ALTIVEC_H
+/*#if defined(__ALTIVEC__) && __ALTIVEC__ && defined(HAVE_ALTIVEC_H) && HAVE_ALTIVEC_H
 # define USE_ALTIVEC 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 16
 # include <altivec.h>
 #else
 # define USE_ALTIVEC 0
-#endif
+#endif*/
 
 #ifndef VECTOR_SIZE
 /* 'Generic' code */
 # define VECTOR_SIZE 16
 #endif
 
-#if VECTOR_SIZE <= RS_ASSUMED_ALIGNMENT
-/* Assert RS_ASSUMED_ALIGNMENT is a multiple of VECTOR_SIZE, as expected */
-static __attribute__((unused)) int _rs_assert_assumed_alignment_is_multiple_of_vector_size[
-        RS_ASSUMED_ALIGNMENT % VECTOR_SIZE == 0 ? 1 : -1];
-# define USE_ALIGNED_ACCESS 1
-# define ALIGNED_ACCESS
-# define UNALIGNED_ACCESS __attribute__((unused))
-#else
 # define USE_ALIGNED_ACCESS 0
 # define ALIGNED_ACCESS __attribute__((unused))
 # define UNALIGNED_ACCESS
-#endif
 
 #include "reedsolomon.h"
 
