@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+extern crate libc;
+
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
 #[cfg(feature = "pure-rust")]
@@ -12,13 +14,28 @@ pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     mul_slice_xor_pure_rust(c, input, out);
 }
 
+#[cfg(not(feature = "pure-rust"))]
 extern {
-
+    fn reedsolomon_gal_mul(low   : *const libc::uint8_t,
+                           high  : *const libc::uint8_t,
+                           input : *const libc::uint8_t,
+                           out   : *mut   libc::uint8_t,
+                           len   : libc::size_t);
 }
 
 #[cfg(not(feature = "pure-rust"))]
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
-    mul_slice_pure_rust(c, input, out);
+    let low  : *const libc::uint8_t = &MUL_TABLE_LOW[0][0];
+    let high : *const libc::uint8_t = &MUL_TABLE_HIGH[0];
+
+    assert_eq!(input.len(), out.len());
+
+    let input_ptr : *const libc::uint8_t = &input[0];
+    let out_ptr   : *const libc::uint8_t = &out[0];
+    let size      : libc::size_t         = input.len();
+    unsafe {
+        reedsolomon_gal_mul(low, high, input_ptr, out_ptr, size);
+    }
 }
 
 #[cfg(not(feature = "pure-rust"))]
@@ -73,6 +90,8 @@ pub fn exp(a : u8, n : usize) -> u8 {
     }
 }
 
+const PURE_RUST_UNROLL : usize = 4;
+
 fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     let mt                 = &MUL_TABLE[c as usize];
     let mt_ptr : *const u8 = &mt[0];
@@ -85,17 +104,18 @@ fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     let mut n = 0;
     let len = input.len();
     unsafe {
-        if len > 4 {
-            let len_minus_4 = len - 4;
-            while n < len_minus_4 {
+        assert_eq!(4, PURE_RUST_UNROLL);
+        if len > PURE_RUST_UNROLL {
+            let len_minus_unroll = len - PURE_RUST_UNROLL;
+            while n < len_minus_unroll {
                 *out_ptr           = *mt_ptr.offset(*input_ptr           as isize);
                 *out_ptr.offset(1) = *mt_ptr.offset(*input_ptr.offset(1) as isize);
                 *out_ptr.offset(2) = *mt_ptr.offset(*input_ptr.offset(2) as isize);
                 *out_ptr.offset(3) = *mt_ptr.offset(*input_ptr.offset(3) as isize);
 
-                input_ptr = input_ptr.offset(4);
-                out_ptr   =   out_ptr.offset(4);
-                n += 4;
+                input_ptr = input_ptr.offset(PURE_RUST_UNROLL);
+                out_ptr   =   out_ptr.offset(PURE_RUST_UNROLL);
+                n        += PURE_RUST_UNROLL;
             }
         }
         while n < len {
@@ -123,21 +143,22 @@ pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     let mut n = 0;
     let len = input.len();
     unsafe {
-        if len > 4 {
-            let len_minus_4 = len - 4;
-            while n < len_minus_4 {
+        assert_eq!(4, PURE_RUST_UNROLL);
+        if len > PURE_RUST_UNROLL {
+            let len_minus_unroll = len - PURE_RUST_UNROLL;
+            while n < len_minus_unroll {
                 *out_ptr           ^= *mt_ptr.offset(*input_ptr           as isize);
                 *out_ptr.offset(1) ^= *mt_ptr.offset(*input_ptr.offset(1) as isize);
                 *out_ptr.offset(2) ^= *mt_ptr.offset(*input_ptr.offset(2) as isize);
                 *out_ptr.offset(3) ^= *mt_ptr.offset(*input_ptr.offset(3) as isize);
 
-                input_ptr = input_ptr.offset(4);
-                out_ptr   =   out_ptr.offset(4);
-                n += 4;
+                input_ptr = input_ptr.offset(PURE_RUST_UNROLL);
+                out_ptr   =   out_ptr.offset(PURE_RUST_UNROLL);
+                n        += PURE_RUST_UNROLL;
             }
         }
         while n < len {
-            *out_ptr  ^= *mt_ptr.offset(*input_ptr as isize);
+            *out_ptr ^= *mt_ptr.offset(*input_ptr as isize);
 
             input_ptr = input_ptr.offset(1);
             out_ptr   =   out_ptr.offset(1);
