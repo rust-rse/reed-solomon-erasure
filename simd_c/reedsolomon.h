@@ -32,8 +32,8 @@
 #define PROTO_ARGS                              \
         const uint8_t low[16],                  \
         const uint8_t high[16],                 \
-        const uint8_t *restrict in,       \
-        uint8_t *restrict out,            \
+        const uint8_t * const in,       \
+        uint8_t * const out,            \
         const size_t len
 #define PROTO(name)                     \
         PROTO_RETURN                    \
