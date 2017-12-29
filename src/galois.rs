@@ -199,6 +199,13 @@ extern {
                            out   : *mut   libc::uint8_t,
                            len   : libc::size_t)
                            -> libc::size_t;
+
+    fn reedsolomon_gal_mul_xor(low   : *const libc::uint8_t,
+                               high  : *const libc::uint8_t,
+                               input : *const libc::uint8_t,
+                               out   : *mut   libc::uint8_t,
+                               len   : libc::size_t)
+                               -> libc::size_t;
 }
 
 #[cfg(not(feature = "pure-rust"))]
@@ -223,7 +230,22 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
 
 #[cfg(not(feature = "pure-rust"))]
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
-    mul_slice_xor_pure_rust(c, input, out);
+    let low  : *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
+    let high : *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
+
+    assert_eq!(input.len(), out.len());
+
+    let input_ptr : *const libc::uint8_t = &input[0];
+    let out_ptr   : *mut   libc::uint8_t = &mut out[0];
+    let size      : libc::size_t         = input.len();
+
+    let bytes_done : usize = unsafe {
+        reedsolomon_gal_mul_xor(low, high, input_ptr, out_ptr, size) as usize
+    };
+
+    mul_slice_xor_pure_rust(c,
+                            &input[bytes_done..],
+                            &mut out[bytes_done..]);
 }
 
 #[cfg(test)]

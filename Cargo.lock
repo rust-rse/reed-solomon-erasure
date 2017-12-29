@@ -116,7 +116,7 @@ dependencies = [
 
 [[package]]
 name = "reed-solomon-erasure"
-version = "2.0.0"
+version = "2.1.0-beta"
 dependencies = [
  "cc 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)",
