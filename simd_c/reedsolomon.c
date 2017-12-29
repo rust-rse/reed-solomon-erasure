@@ -511,13 +511,13 @@ static ALWAYS_INLINE CONST_FUNCTION v noop(const v new, const v old __attribute_
 #ifdef HOT
 HOT_FUNCTION
 #endif
-FORCE_ALIGN_ARG_POINTER PROTO(CONCAT(reedsolomon_gal_mul_, TARGET)) {
+FORCE_ALIGN_ARG_POINTER PROTO(reedsolomon_gal_mul) {
         return reedsolomon_gal_mul_impl(low, high, in, out, len, noop);
 }
 
 #ifdef HOT
 HOT_FUNCTION
 #endif
-FORCE_ALIGN_ARG_POINTER PROTO(CONCAT(reedsolomon_gal_mul_xor_, TARGET)) {
+FORCE_ALIGN_ARG_POINTER PROTO(reedsolomon_gal_mul_xor) {
         return reedsolomon_gal_mul_impl(low, high, in, out, len, xor_v);
 }

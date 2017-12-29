@@ -40,35 +40,6 @@
         __attribute__((nonnull))        \
         name (PROTO_ARGS)
 
-#if RS_HAVE_AVX2
-PROTO(reedsolomon_gal_mul_avx2);
-PROTO(reedsolomon_gal_mul_xor_avx2);
-#endif
-#if RS_HAVE_AVX
-PROTO(reedsolomon_gal_mul_avx);
-PROTO(reedsolomon_gal_mul_xor_avx);
-#endif
-#if RS_HAVE_SSSE3
-PROTO(reedsolomon_gal_mul_ssse3);
-PROTO(reedsolomon_gal_mul_xor_ssse3);
-#endif
-#if RS_HAVE_SSE2
-PROTO(reedsolomon_gal_mul_sse2);
-PROTO(reedsolomon_gal_mul_xor_sse2);
-#endif
-#if RS_HAVE_GENERIC
-PROTO(reedsolomon_gal_mul_generic);
-PROTO(reedsolomon_gal_mul_xor_generic);
-#endif
-#if RS_HAVE_NEON
-PROTO(reedsolomon_gal_mul_neon);
-PROTO(reedsolomon_gal_mul_xor_neon);
-#endif
-#if RS_HAVE_ALTIVEC
-PROTO(reedsolomon_gal_mul_altivec);
-PROTO(reedsolomon_gal_mul_xor_altivec);
-#endif
-
 PROTO(reedsolomon_gal_mul);
 PROTO(reedsolomon_gal_mul_xor);
 
