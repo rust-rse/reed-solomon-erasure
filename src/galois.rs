@@ -2,6 +2,30 @@
 
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
+#[cfg(feature = "pure-rust")]
+pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
+    mul_slice_pure_rust(c, input, out);
+}
+
+#[cfg(feature = "pure-rust")]
+pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
+    mul_slice_xor_pure_rust(c, input, out);
+}
+
+extern {
+
+}
+
+#[cfg(not(feature = "pure-rust"))]
+pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
+    mul_slice_pure_rust(c, input, out);
+}
+
+#[cfg(not(feature = "pure-rust"))]
+pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
+    mul_slice_xor_pure_rust(c, input, out);
+}
+
 pub fn add(a : u8, b : u8) -> u8 {
     a ^ b
 }
@@ -49,7 +73,7 @@ pub fn exp(a : u8, n : usize) -> u8 {
     }
 }
 
-pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
+fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     let mt                 = &MUL_TABLE[c as usize];
     let mt_ptr : *const u8 = &mt[0];
 
@@ -87,7 +111,7 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     }*/
 }
 
-pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
+pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
     let mt                 = &MUL_TABLE[c as usize];
     let mt_ptr : *const u8 = &mt[0];
 
