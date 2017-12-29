@@ -154,4 +154,11 @@ fn write_tables() {
 
 fn main() {
     write_tables();
+
+    cc::Build::new()
+        .file("simd_c/reedsolomon.c")
+        .flag("-msse2")
+        .flag("-mssse3")
+        .flag("-mavx2")
+        .compile("reedsolomon");
 }
