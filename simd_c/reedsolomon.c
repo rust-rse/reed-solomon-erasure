@@ -50,14 +50,14 @@
 #endif
 
 //#if defined(__AVX2__) && __AVX2__ && defined(HAVE_IMMINTRIN_H) && HAVE_IMMINTRIN_H
-/*#ifdef __AVX2__
+#ifdef __AVX2__
 # define USE_AVX2 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 32
 # include <immintrin.h>
 #else
 # define USE_AVX2 0
-#endif*/
+#endif
 
 /*#if ((defined(__ARM_NEON__) && __ARM_NEON__) \
         || (defined(__ARM_NEON) && __ARM_NEON) \
