@@ -161,6 +161,7 @@ fn compile_simd_c() {
     cc::Build::new()
         .opt_level(3)
         .flag("-march=native")
+        .flag("-std=c11")
         .file("simd_c/reedsolomon.c")
         .compile("reedsolomon");
 }
