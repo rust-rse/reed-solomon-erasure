@@ -11,7 +11,7 @@ This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze
 
 Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
 
-Version `2.X.X` copies Klaus Post's implementation, and will (hopefully) be using C source files from NicolasT's Haskell implementation.
+Version `2.X.X` copies Klaus Post's implementation. The SIMD C code is copied from Nicolas Trangez's implementation with minor modifications.
 
 See [Notes](#notes) and [License](#license) section for details.
 
