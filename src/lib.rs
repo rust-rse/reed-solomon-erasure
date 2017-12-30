@@ -377,6 +377,35 @@ impl ParallelParam {
     }
 }
 
+macro_rules! sbs_encode_checks {
+    (
+        nosep => $self:ident, $pieces:ident
+    ) => {{
+        if $self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+    }};
+    (
+        sep => $self:ident, $data:ident, $parity:ident
+    ) => {{
+        if $self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+        if $data.len() < $self.codec.data_shard_count() {
+            return Err(SBSError::RSError(Error::TooFewDataShards));
+        }
+        if $data.len() > $self.codec.data_shard_count() {
+            return Err(SBSError::RSError(Error::TooManyDataShards));
+        }
+        if $parity.len() < $self.codec.parity_shard_count() {
+            return Err(SBSError::RSError(Error::TooFewParityShards));
+        }
+        if $parity.len() > $self.codec.parity_shard_count() {
+            return Err(SBSError::RSError(Error::TooManyParityShards));
+        }
+    }}
+}
+
 impl<'a> ShardByShard<'a> {
     /// Creates a new instance of the bookkeeping struct.
     pub fn new(codec : &'a ReedSolomon) -> ShardByShard<'a> {
@@ -417,14 +446,6 @@ impl<'a> ShardByShard<'a> {
         self.cur_input
     }
 
-    fn encode_checks(&self) -> Result<(), SBSError> {
-        if self.parity_ready() {
-            return Err(SBSError::TooManyCalls);
-        } else {
-            return Ok(())
-        }
-    }
-
     fn return_and_incre_cur_input(&mut self,
                                   res : Result<(), Error>)
                                   -> Result<(), SBSError> {
@@ -442,9 +463,10 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
-    pub fn encode(&mut self, slices : &mut [&mut [u8]])
+    pub fn encode(&mut self,
+                  slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
-        self.encode_checks()?;
+        sbs_encode_checks!(nosep => self, slices);
 
         let res = self.codec.encode_single(self.cur_input,
                                            slices);
@@ -460,7 +482,7 @@ impl<'a> ShardByShard<'a> {
                       data   : &[&[u8]],
                       parity : &mut [&mut[u8]])
                       -> Result<(), SBSError> {
-        self.encode_checks()?;
+        sbs_encode_checks!(sep => self, data, parity);
 
         let res = self.codec.encode_single_sep(self.cur_input,
                                                &data[self.cur_input],
@@ -475,7 +497,7 @@ impl<'a> ShardByShard<'a> {
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_shard(&mut self, shards : &mut [Shard])
                         -> Result<(), SBSError> {
-        self.encode_checks()?;
+        sbs_encode_checks!(nosep => self, slices);
 
         let res = self.codec.encode_single_shard(self.cur_input,
                                                  shards);
