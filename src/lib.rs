@@ -895,6 +895,25 @@ impl ReedSolomon {
         self.encode(&mut slices)
     }
 
+    /// Constructs the parity shards.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// This is a wrapper of `encode_sep`.
+    pub fn encode_shards_sep(&self,
+                         data   : &[Shard],
+                         parity : &mut [Shard]) -> Result<(), Error> {
+        let     data   : SmallVec<[&[u8]; 32]> =
+            convert_2D_slices!(data   =into=> SmallVec<[&[u8]; 32]>,
+                               SmallVec::with_capacity);
+
+        let mut parity : SmallVec<[&mut [u8]; 32]> =
+            convert_2D_slices!(parity =into=> SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
+
+        self.encode_sep(&data, &mut parity)
+    }
+
     /// Constructs the parity shards partially using only the data shard
     /// indicated by index `i_data`.
     ///
