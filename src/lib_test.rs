@@ -505,6 +505,51 @@ fn test_reconstruct() {
     assert_eq!(expect, shards);
 }
 
+#[test]
+fn test_reconstruct_error_handling() {
+    let r = ReedSolomon::new(2, 2);
+
+    let mut shards : [[u8; 3]; 4] = [[0, 1, 2],
+                                     [3, 4, 5],
+                                     [200, 201, 203],
+                                     [100, 101, 102]];
+
+    {
+        let mut shard_refs : Vec<&mut [u8]> =
+            Vec::with_capacity(3);
+
+        for shard in shards.iter_mut() {
+            shard_refs.push(shard);
+        }
+
+        r.encode(&mut shard_refs).unwrap();
+    }
+
+    {
+        let mut shard_refs =
+            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+
+        shard_refs[0][0] = 101;
+        shard_refs[0][1] = 102;
+        shard_refs[0][2] = 103;
+
+        let shards_present = [false, true, true, true, true];
+        assert_eq!(Error::InvalidShardsIndicator,
+                   r.reconstruct(&mut shard_refs, &shards_present).unwrap_err());
+
+        let shards_present = [false, true, true];
+        assert_eq!(Error::InvalidShardsIndicator,
+                   r.reconstruct(&mut shard_refs, &shards_present).unwrap_err());
+
+        let shards_present = [true, false, false, false];
+        assert_eq!(Error::TooFewShardsPresent,
+                   r.reconstruct(&mut shard_refs, &shards_present).unwrap_err());
+
+        let shards_present = [true, false, false, true];
+        r.reconstruct(&mut shard_refs, &shards_present).unwrap();
+    }
+}
+
 /*
 #[test]
 fn test_is_parity_correct() {
