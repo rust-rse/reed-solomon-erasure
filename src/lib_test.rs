@@ -777,7 +777,7 @@ fn shardbyshard_encode_correctly() {
 }
 
 #[test]
-fn shardbyshard_encode_correctly_more_rigirous() {
+fn shardbyshard_encode_correctly_more_rigorous() {
     {
         let r       = ReedSolomon::new(10, 3);
         let mut sbs = ShardByShard::new(&r);
