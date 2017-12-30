@@ -373,7 +373,7 @@ impl ParallelParam {
 }
 
 impl<'a> ShardByShard<'a> {
-    /// Create a new instance of the bookkeeping struct.
+    /// Creates a new instance of the bookkeeping struct.
     pub fn new(codec : &'a ReedSolomon) -> ShardByShard<'a> {
         ShardByShard {
             codec,
@@ -381,7 +381,7 @@ impl<'a> ShardByShard<'a> {
         }
     }
 
-    /// Check if the parity shards are ready to use.
+    /// Checks if the parity shards are ready to use.
     pub fn parity_ready(&self) -> bool {
         self.cur_input == self.codec.data_shard_count
     }
