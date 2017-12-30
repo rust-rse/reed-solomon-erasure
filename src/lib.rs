@@ -797,6 +797,17 @@ impl ReedSolomon {
         self.encode_single(i_data, &mut slices)
     }
 
+    pub fn encode_single_shard_sep(&self,
+                                   i_data      : usize,
+                                   single_data : &Shard,
+                                   parity      : &mut[Shard]) -> Result<(), Error> {
+        let mut parity : SmallVec<[&mut [u8]; 32]> =
+            convert_2D_slices!(parity =into=> SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
+
+        self.encode_single_sep(i_data, single_data, &mut parity)
+    }
+
     /// Constructs the parity shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
