@@ -426,25 +426,25 @@ impl ReedSolomon {
                         inputs       : &[&[u8]],
                         outputs      : &mut [&mut [u8]]) {
         for c in 0..self.data_shard_count {
-            self.code_single_slice(c,
-                                   matrix_rows,
+            self.code_single_slice(matrix_rows,
+                                   c,
                                    inputs[c],
                                    outputs);
         }
     }
 
     fn code_single_slice(&self,
-                         c           : usize,
                          matrix_rows : &[&[u8]],
+                         i_input     : usize,
                          input       : &[u8],
                          outputs     : &mut [&mut [u8]]) {
         misc_utils::breakdown_slice_mut_with_index
             (outputs)
             .into_par_iter()
             .for_each(|(i_row, output)| {
-                if c == 0 {
+                if i_input == 0 {
                     if output.len() <= self.pparam.bytes_per_encode {
-                        galois::mul_slice(matrix_rows[i_row][c],
+                        galois::mul_slice(matrix_rows[i_row][i_input],
                                           input,
                                           output);
                     } else {
@@ -454,14 +454,14 @@ impl ReedSolomon {
                             .for_each(|(i, output)| {
                                 let start =
                                     i * self.pparam.bytes_per_encode;
-                                galois::mul_slice(matrix_rows[i_row][c],
+                                galois::mul_slice(matrix_rows[i_row][i_input],
                                                   &input[start..start + output.len()],
                                                   output);
                             })
                     }
                 } else {
                     if output.len() <= self.pparam.bytes_per_encode {
-                        galois::mul_slice_xor(matrix_rows[i_row][c],
+                        galois::mul_slice_xor(matrix_rows[i_row][i_input],
                                               input,
                                               output);
                     } else {
@@ -471,7 +471,7 @@ impl ReedSolomon {
                             .for_each(|(i, output)| {
                                 let start =
                                     i * self.pparam.bytes_per_encode;
-                                galois::mul_slice_xor(matrix_rows[i_row][c],
+                                galois::mul_slice_xor(matrix_rows[i_row][i_input],
                                                       &input[start..start + output.len()],
                                                       output);
                             })
