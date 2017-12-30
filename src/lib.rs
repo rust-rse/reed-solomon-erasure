@@ -345,6 +345,14 @@ impl<'a> ShardByShard<'a> {
         Ok(())
     }
 
+    pub fn reset_force(&mut self) {
+        self.cur_input = 0;
+    }
+
+    pub fn cur_input_index(&self) -> usize {
+        self.cur_input
+    }
+
     pub fn encode(&mut self, slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
         if self.parity_ready() {

@@ -722,13 +722,19 @@ fn shardbyshard_encode_correctly() {
 
         r.encode_shards(&mut shards).unwrap();
 
-        for _ in 0..10 {
+        for i in 0..10 {
+            assert_eq!(i, sbs.cur_input_index());
+
             sbs.encode_shard(&mut shards_copy).unwrap();
         }
 
         assert!(sbs.parity_ready());
 
         assert_eq!(shards, shards_copy);
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
     }
     {
         let r       = ReedSolomon::new(10, 3);
@@ -749,7 +755,9 @@ fn shardbyshard_encode_correctly() {
 
             r.encode(&mut slice_refs).unwrap();
 
-            for _ in 0..10 {
+            for i in 0..10 {
+                assert_eq!(i, sbs.cur_input_index());
+
                 sbs.encode(&mut slice_copy_refs).unwrap();
             }
         }
@@ -761,6 +769,10 @@ fn shardbyshard_encode_correctly() {
                 assert_eq!(slices[a][b], slices_copy[a][b]);
             }
         }
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
     }
 }
 
@@ -772,7 +784,9 @@ fn shardbyshard_error_handling() {
 
         let mut shards = make_random_shards!(10_000, 13);
 
-        for _ in 0..10 {
+        for i in 0..10 {
+            assert_eq!(i, sbs.cur_input_index());
+
             sbs.encode_shard(&mut shards).unwrap();
         }
 
@@ -782,11 +796,17 @@ fn shardbyshard_error_handling() {
 
         sbs.reset().unwrap();
 
-        for _ in 0..1 {
+        for i in 0..1 {
+            assert_eq!(i, sbs.cur_input_index());
+
             sbs.encode_shard(&mut shards).unwrap();
         }
 
         assert_eq!(SBSError::LeftoverShards, sbs.reset().unwrap_err());
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
     }
     {
         let r       = ReedSolomon::new(10, 3);
@@ -801,7 +821,9 @@ fn shardbyshard_error_handling() {
         let mut slice_refs =
             convert_2D_slices!(slices      =to_mut_vec=> &mut [u8]);
 
-        for _ in 0..10 {
+        for i in 0..10 {
+            assert_eq!(i, sbs.cur_input_index());
+
             sbs.encode(&mut slice_refs).unwrap();
         }
 
@@ -811,10 +833,16 @@ fn shardbyshard_error_handling() {
 
         sbs.reset().unwrap();
 
-        for _ in 0..1 {
+        for i in 0..1 {
+            assert_eq!(i, sbs.cur_input_index());
+
             sbs.encode(&mut slice_refs).unwrap();
         }
 
         assert_eq!(SBSError::LeftoverShards, sbs.reset().unwrap_err());
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
     }
 }
