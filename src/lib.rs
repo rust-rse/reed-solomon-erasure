@@ -417,19 +417,55 @@ impl<'a> ShardByShard<'a> {
         self.cur_input
     }
 
+    fn encode_checks(&self) -> Result<(), SBSError> {
+        if self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        } else {
+            return Ok(())
+        }
+    }
+
+    fn return_and_incre_cur_input(&mut self,
+                                  res : Result<(), Error>)
+                                  -> Result<(), SBSError> {
+        let result = match res {
+            Ok(()) => Ok(()),
+            Err(x) => Err(SBSError::RSError(x))
+        };
+
+        self.cur_input += 1;
+
+        result
+    }
+
     /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode(&mut self, slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
-        if self.parity_ready() {
-            return Err(SBSError::TooManyCalls);
-        }
+        self.encode_checks()?;
+
+        let res = self.codec.encode_single(self.cur_input,
+                                           slices);
+
+        self.return_and_incre_cur_input(res)
+    }
+
+    /// Constructs the parity shards partially using the current input data shard.
+    ///
+    /// Returns `TooManyCalls` when all input data shards
+    /// have already been filled in via `encode` or `encode_shard`.
+    pub fn encode_sep(&mut self,
+                      data   : &[&[u8]],
+                      parity : &mut [&mut[u8]])
+                      -> Result<(), SBSError> {
+        self.encode_checks()?;
 
         let result =
-            match self.codec.encode_single(self.cur_input,
-                                           slices)
+            match self.codec.encode_single_sep(self.cur_input,
+                                               &data[self.cur_input],
+                                               parity)
         {
             Ok(()) => Ok(()),
             Err(x) => Err(SBSError::RSError(x))
@@ -446,9 +482,7 @@ impl<'a> ShardByShard<'a> {
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_shard(&mut self, shards : &mut [Shard])
                         -> Result<(), SBSError> {
-        if self.parity_ready() {
-            return Err(SBSError::TooManyCalls);
-        }
+        self.encode_checks()?;
 
         let result =
             match self.codec.encode_single_shard(self.cur_input,
