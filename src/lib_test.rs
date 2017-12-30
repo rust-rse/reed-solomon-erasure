@@ -985,15 +985,15 @@ fn test_encode_single_error_handling() {
             r.encode_single_shard(i, &mut shards).unwrap();
         }
 
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single_shard(10, &mut shards).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single_shard(11, &mut shards).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single_shard(12, &mut shards).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single_shard(13, &mut shards).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single_shard(14, &mut shards).unwrap_err());
     }
     {
@@ -1010,15 +1010,15 @@ fn test_encode_single_error_handling() {
             r.encode_single(i, &mut slice_refs).unwrap();
         }
 
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single(10, &mut slice_refs).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single(11, &mut slice_refs).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single(12, &mut slice_refs).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single(13, &mut slice_refs).unwrap_err());
-        assert_eq!(Error::InvalidInputIndex,
+        assert_eq!(Error::InvalidIndex,
                    r.encode_single(14, &mut slice_refs).unwrap_err());
     }
 }
