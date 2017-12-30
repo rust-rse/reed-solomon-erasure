@@ -945,8 +945,8 @@ impl ReedSolomon {
             return Err(Error::InvalidShardsIndicator);
         }
 
-	      // Quick check: are all of the shards present?  If so, there's
-	      // nothing to do.
+        // Quick check: are all of the shards present?  If so, there's
+        // nothing to do.
         let mut number_present = 0;
         for i in 0..slices.len() {
             if slice_present[i] {
@@ -959,18 +959,18 @@ impl ReedSolomon {
             return Ok(())
         }
 
-	      // More complete sanity check
-	      if number_present < self.data_shard_count {
-		        return Err(Error::TooFewShardsPresent)
-	      }
+        // More complete sanity check
+        if number_present < self.data_shard_count {
+            return Err(Error::TooFewShardsPresent)
+        }
 
-	      // Pull out an array holding just the shards that
-	      // correspond to the rows of the submatrix.  These shards
-	      // will be the input to the decoding process that re-creates
-	      // the missing data shards.
-	      //
-	      // Also, create an array of indices of the valid rows we do have
-	      // and the invalid rows we don't have up until we have enough valid rows.
+        // Pull out an array holding just the shards that
+        // correspond to the rows of the submatrix.  These shards
+        // will be the input to the decoding process that re-creates
+        // the missing data shards.
+        //
+        // Also, create an array of indices of the valid rows we do have
+        // and the invalid rows we don't have up until we have enough valid rows.
         let mut sub_shards             : SmallVec<[&[u8];     32]> =
             SmallVec::with_capacity(self.data_shard_count);
         let mut leftover_parity_shards : SmallVec<[&[u8];     32]> =
@@ -1029,12 +1029,12 @@ impl ReedSolomon {
         if data_only {
             Ok(())
         } else {
-	          // Now that we have all of the data shards intact, we can
-	          // compute any of the parity that is missing.
-	          //
-	          // The input to the coding is ALL of the data shards, including
-	          // any that we just calculated.  The output is whichever of the
-	          // parity shards were missing.
+            // Now that we have all of the data shards intact, we can
+            // compute any of the parity that is missing.
+            //
+            // The input to the coding is ALL of the data shards, including
+            // any that we just calculated.  The output is whichever of the
+            // parity shards were missing.
             let mut matrix_rows : SmallVec<[&[u8]; 32]> =
                 SmallVec::with_capacity(self.parity_shard_count);
             let parity_rows = self.get_parity_rows();
