@@ -777,6 +777,88 @@ fn shardbyshard_encode_correctly() {
 }
 
 #[test]
+fn shardbyshard_encode_correctly_more_rigirous() {
+    {
+        let r       = ReedSolomon::new(10, 3);
+        let mut sbs = ShardByShard::new(&r);
+
+        let mut shards = make_random_shards!(10_000, 13);
+        let mut shards_copy = make_random_shards!(10_000, 13);
+
+        r.encode_shards(&mut shards).unwrap();
+
+        for i in 0..10 {
+            assert_eq!(i, sbs.cur_input_index());
+
+            shards_copy[i].clone_from_slice(&shards[i]);
+            sbs.encode_shard(&mut shards_copy).unwrap();
+            fill_random(&mut shards_copy[i]);
+        }
+
+        assert!(sbs.parity_ready());
+
+        for i in 0..10 {
+            shards_copy[i].clone_from_slice(&shards[i]);
+        }
+
+        assert_eq!(shards, shards_copy);
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
+    }
+    {
+        let r       = ReedSolomon::new(10, 3);
+        let mut sbs = ShardByShard::new(&r);
+
+        let mut slices : [[u8; 100]; 13] =
+            [[0; 100]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+
+        let mut slices_copy : [[u8; 100]; 13] =
+            [[0; 100]; 13];
+        for slice in slices_copy.iter_mut() {
+            fill_random(slice);
+        }
+
+        {
+            let mut slice_refs =
+                convert_2D_slices!(slices      =to_mut_vec=> &mut [u8]);
+            let mut slice_copy_refs =
+                convert_2D_slices!(slices_copy =to_mut_vec=> &mut [u8]);
+
+            r.encode(&mut slice_refs).unwrap();
+
+            for i in 0..10 {
+                assert_eq!(i, sbs.cur_input_index());
+
+                slice_copy_refs[i].clone_from_slice(&slice_refs[i]);
+                sbs.encode(&mut slice_copy_refs).unwrap();
+                fill_random(&mut slice_copy_refs[i]);
+            }
+        }
+
+        for i in 0..10 {
+            slices_copy[i].clone_from_slice(&slices[i]);
+        }
+
+        assert!(sbs.parity_ready());
+
+        for a in 0..13 {
+            for b in 0..100 {
+                assert_eq!(slices[a][b], slices_copy[a][b]);
+            }
+        }
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
+    }
+}
+
+#[test]
 fn shardbyshard_error_handling() {
     {
         let r       = ReedSolomon::new(10, 3);
