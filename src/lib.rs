@@ -599,6 +599,28 @@ impl ReedSolomon {
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
+    /// This is a wrapper of `encode_single`.
+    ///
+    /// # Warning
+    ///
+    /// You must apply this function on the data shards in strictly sequential order(0..data shard count),
+    /// otherwise the parity shards will be incorrect.
+    ///
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
+    pub fn encode_single_shard(&self,
+                               i_input : usize,
+                               shards  : &mut [Shard]) -> Result<(), Error> {
+        let mut slices : SmallVec<[&mut [u8]; 32]> =
+            convert_2D_slices!(shards =into=> SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
+
+        self.encode_single(i_input, &mut slices)
+    }
+
+    /// Constructs the parity shards.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
     /// This is a wrapper of `encode`.
     pub fn encode_shards(&self,
                          shards : &mut [Shard]) -> Result<(), Error> {
@@ -615,7 +637,7 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this function on the data shards in strictly sequential order(0..data shard count)
+    /// You must apply this function on the data shards in strictly sequential order(0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
