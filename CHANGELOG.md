@@ -1,3 +1,7 @@
+## 2.1.0
+  - Added Nicolas's SIMD C code files, gaining major speedup on supported CPUs
+  - Added support for "shard by shard" encoding, allowing easier streamed encoding
+
 ## 2.0.0
   - Complete rewrite of most code following Klaus Post's design
   - Added optimsations(parallelism, loop unrolling)
