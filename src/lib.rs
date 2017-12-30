@@ -368,7 +368,7 @@ impl<'a> ShardByShard<'a> {
     /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
-    /// have already been filled in via `encode`.
+    /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode(&mut self, slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
         if self.parity_ready() {
@@ -391,7 +391,7 @@ impl<'a> ShardByShard<'a> {
     /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
-    /// have already been filled in via `encode`.
+    /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_shard(&mut self, shards : &mut [Shard])
                         -> Result<(), SBSError> {
         if self.parity_ready() {
