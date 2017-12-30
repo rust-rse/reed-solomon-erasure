@@ -3,7 +3,6 @@
 extern crate rand;
 
 use super::*;
-use super::Error;
 use super::shard_utils;
 use self::rand::{thread_rng, Rng};
 
@@ -710,4 +709,21 @@ fn test_check_slices_or_shards_size() {
                    r.reconstruct_shards(&mut option_shards)
                    .unwrap_err());
     }
+}
+
+#[test]
+fn shardbyshard_encode_okay() {
+    let r       = ReedSolomon::new(10, 3);
+    let mut sbs = ShardByShard::new(&r);
+
+    let mut shards = make_random_shards!(10_000, 13);
+    let mut shards_copy = shards.clone();
+
+    r.encode_shards(&mut shards);
+
+    for _ in 0..10 {
+        sbs.encode_shard(&mut shards_copy);
+    }
+
+    assert_eq!(shards, shards_copy);
 }
