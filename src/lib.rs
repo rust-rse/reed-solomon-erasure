@@ -491,7 +491,7 @@ macro_rules! check_piece_count {
         if $pieces.len() > $self.total_shard_count {
             return Err(Error::TooManyShards);
         }
-    }},
+    }};
     (
         data => $self:ident, $pieces:ident
     ) => {{
@@ -501,7 +501,7 @@ macro_rules! check_piece_count {
         if $pieces.len() > $self.data_shard_count {
             return Err(Error::TooManyDataShards);
         }
-    }},
+    }};
     (
         parity => $self:ident, $pieces:ident
     ) => {{
@@ -805,7 +805,7 @@ impl ReedSolomon {
             return Err(Error::InvalidInputIndex);
         }
 
-        check_piece_count!(self, slices);
+        check_piece_count!(all => self, slices);
 
         check_slices!(slices);
 
@@ -836,8 +836,6 @@ impl ReedSolomon {
 
         check_slices!(slices);
 
-        let parity_rows = self.get_parity_rows();
-
 	      // Get the slice of output buffers.
         let (mut_input, output) =
             slices.split_at_mut(self.data_shard_count);
@@ -846,10 +844,24 @@ impl ReedSolomon {
             convert_2D_slices!(mut_input =into=> SmallVec<[&[u8]; 32]>,
                                SmallVec::with_capacity);
 
+        self.encode_sep(&input, output)
+    }
+    /// Constructs the parity shards with separated sets.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
+    pub fn encode_sep(&self,
+                      data_slices   : &[&[u8]],
+                      parity_slices : &mut [&mut[u8]]) -> Result<(), Error> {
+        check_piece_count!(data   => self, data_slices);
+        check_piece_count!(parity => self, parity_slices);
+
+        let parity_rows = self.get_parity_rows();
+
 	      // Do the coding.
         self.code_some_slices(&parity_rows,
-                              &input,
-                              output);
+                              data_slices,
+                              parity_slices);
 
         Ok(())
     }
@@ -868,7 +880,7 @@ impl ReedSolomon {
     /// Checks if the parity shards are correct.
     pub fn verify(&self,
                   slices : &[&[u8]]) -> Result<bool, Error> {
-        check_piece_count!(self, slices);
+        check_piece_count!(all => self, slices);
 
         check_slices!(slices);
 
@@ -936,7 +948,7 @@ impl ReedSolomon {
                                    shards    : &mut [Option<Shard>],
                                    data_only : bool)
                                    -> Result<(), Error> {
-        check_piece_count!(self, shards);
+        check_piece_count!(all => self, shards);
 
         Self::check_option_shards(shards)?;
 
@@ -1034,7 +1046,7 @@ impl ReedSolomon {
                             slices        : &mut [&mut [u8]],
                             slice_present : &[bool],
                             data_only     : bool) -> Result<(), Error> {
-        check_piece_count!(self, slices);
+        check_piece_count!(all => self, slices);
 
         check_slices!(slices);
 
