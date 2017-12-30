@@ -43,6 +43,7 @@ pub enum Error {
     TooFewShardsPresent,
     EmptyShard,
     InvalidShardsIndicator,
+    InvalidInputIndex,
     InversionTreeError(inversion_tree::Error)
 }
 
@@ -301,7 +302,10 @@ pub struct ParallelParam {
     //pub shards_per_encode : usize,
 }
 
-/// Bookkeeper for shard by shard encoding
+/// Bookkeeper for shard by shard encoding.
+///
+/// This is useful for avoiding incorrect use of
+/// `encode_single` and `encode_single_shard`.
 #[derive(PartialEq, Debug)]
 pub struct ShardByShard<'a> {
     codec     : &'a ReedSolomon,
@@ -322,6 +326,7 @@ impl ParallelParam {
 }
 
 impl<'a> ShardByShard<'a> {
+    /// Create a new instance of the bookkeeping struct.
     pub fn new(codec : &'a ReedSolomon) -> ShardByShard<'a> {
         ShardByShard {
             codec,
@@ -329,10 +334,15 @@ impl<'a> ShardByShard<'a> {
         }
     }
 
+    /// Check if the parity shards are ready to use.
     pub fn parity_ready(&self) -> bool {
         self.cur_input == self.codec.data_shard_count
     }
 
+    /// Resets the bookkeeping data.
+    ///
+    /// Returns `LeftoverShards` when there are shards encoded
+    /// but parity shards are not ready to use.
     pub fn reset(&mut self) -> Result<(), SBSError>{
         if self.cur_input > 0
             && !self.parity_ready()
@@ -345,14 +355,20 @@ impl<'a> ShardByShard<'a> {
         Ok(())
     }
 
+    /// Resets the bookkeeping data without checking.
     pub fn reset_force(&mut self) {
         self.cur_input = 0;
     }
 
+    /// Returns the current input shard index.
     pub fn cur_input_index(&self) -> usize {
         self.cur_input
     }
 
+    /// Encodes a single slice as indicated by the index `i_input`.
+    ///
+    /// Returns `TooManyCalls` when all input data shards
+    /// have already been filled in via `encode`.
     pub fn encode(&mut self, slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
         if self.parity_ready() {
@@ -372,6 +388,10 @@ impl<'a> ShardByShard<'a> {
         result
     }
 
+    /// Encodes a single shard as indicated by the index `i_input`.
+    ///
+    /// Returns `TooManyCalls` when all input data shards
+    /// have already been filled in via `encode`.
     pub fn encode_shard(&mut self, shards : &mut [Shard])
                         -> Result<(), SBSError> {
         if self.parity_ready() {
@@ -708,6 +728,10 @@ impl ReedSolomon {
     pub fn encode_single(&self,
                          i_input : usize,
                          slices  : &mut [&mut [u8]]) -> Result<(), Error> {
+        if i_input >= self.data_shard_count {
+            return Err(Error::InvalidInputIndex);
+        }
+
         check_piece_count!(self, slices);
 
         check_slices!(slices);
