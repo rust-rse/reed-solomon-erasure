@@ -48,7 +48,7 @@ pub enum Error {
 
 #[derive(PartialEq, Debug)]
 pub enum SBSError {
-    TooManyShards,
+    TooManyCalls,
     LeftoverShards,
     RSError(Error)
 }
@@ -348,7 +348,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode(&mut self, slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
         if self.parity_ready() {
-            return Err(SBSError::TooManyShards);
+            return Err(SBSError::TooManyCalls);
         }
 
         let result =
@@ -367,7 +367,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode_shard(&mut self, shards : &mut [Shard])
                         -> Result<(), SBSError> {
         if self.parity_ready() {
-            return Err(SBSError::TooManyShards);
+            return Err(SBSError::TooManyCalls);
         }
 
         let result =
