@@ -426,48 +426,58 @@ impl ReedSolomon {
                         inputs       : &[&[u8]],
                         outputs      : &mut [&mut [u8]]) {
         for c in 0..self.data_shard_count {
-            let input = inputs[c];
-            misc_utils::breakdown_slice_mut_with_index
-                (outputs)
-                .into_par_iter()
-                .for_each(|(i_row, output)| {
-                    if c == 0 {
-                        if output.len() <= self.pparam.bytes_per_encode {
-                            galois::mul_slice(matrix_rows[i_row][c],
+            self.code_single_slice(c,
+                                   matrix_rows,
+                                   inputs[c],
+                                   outputs);
+        }
+    }
+
+    fn code_single_slice(&self,
+                         c           : usize,
+                         matrix_rows : &[&[u8]],
+                         input       : &[u8],
+                         outputs     : &mut [&mut [u8]]) {
+        misc_utils::breakdown_slice_mut_with_index
+            (outputs)
+            .into_par_iter()
+            .for_each(|(i_row, output)| {
+                if c == 0 {
+                    if output.len() <= self.pparam.bytes_per_encode {
+                        galois::mul_slice(matrix_rows[i_row][c],
+                                          input,
+                                          output);
+                    } else {
+                        misc_utils::split_slice_mut_with_index
+                            (output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|(i, output)| {
+                                let start =
+                                    i * self.pparam.bytes_per_encode;
+                                galois::mul_slice(matrix_rows[i_row][c],
+                                                  &input[start..start + output.len()],
+                                                  output);
+                            })
+                    }
+                } else {
+                    if output.len() <= self.pparam.bytes_per_encode {
+                        galois::mul_slice_xor(matrix_rows[i_row][c],
                                               input,
                                               output);
-                        } else {
-                            misc_utils::split_slice_mut_with_index
-                                (output, self.pparam.bytes_per_encode)
-                                .into_par_iter()
-                                .for_each(|(i, output)| {
-                                    let start =
-                                        i * self.pparam.bytes_per_encode;
-                                    galois::mul_slice(matrix_rows[i_row][c],
+                    } else {
+                        misc_utils::split_slice_mut_with_index
+                            (output, self.pparam.bytes_per_encode)
+                            .into_par_iter()
+                            .for_each(|(i, output)| {
+                                let start =
+                                    i * self.pparam.bytes_per_encode;
+                                galois::mul_slice_xor(matrix_rows[i_row][c],
                                                       &input[start..start + output.len()],
                                                       output);
-                                })
-                        }
-                    } else {
-                        if output.len() <= self.pparam.bytes_per_encode {
-                            galois::mul_slice_xor(matrix_rows[i_row][c],
-                                                  input,
-                                                  output);
-                        } else {
-                            misc_utils::split_slice_mut_with_index
-                                (output, self.pparam.bytes_per_encode)
-                                .into_par_iter()
-                                .for_each(|(i, output)| {
-                                    let start =
-                                        i * self.pparam.bytes_per_encode;
-                                    galois::mul_slice_xor(matrix_rows[i_row][c],
-                                                          &input[start..start + output.len()],
-                                                          output);
-                                })
-                        }
+                            })
                     }
-                })
-        }
+                }
+            })
     }
 
     fn check_some_slices(&self,
