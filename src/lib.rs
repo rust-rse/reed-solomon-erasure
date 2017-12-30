@@ -306,6 +306,54 @@ pub struct ParallelParam {
 ///
 /// This is useful for avoiding incorrect use of
 /// `encode_single` and `encode_single_shard`.
+///
+/// # Use cases
+///
+/// Shard by shard encoding is useful for streamed data encoding
+/// when you do not have all the needed data shards immediately,
+///
+/// but you still want to spread out the encoding workload rather than
+/// doing the encoding after everything is ready.
+///
+/// A concrete example would be network packets encoding,
+/// where encoding packet by packet as you receive them may be more efficient
+/// than waiting for N packets then encode them all at once.
+///
+/// # Example
+///
+/// ```
+/// # #[macro_use] extern crate reed_solomon_erasure;
+/// # use reed_solomon_erasure::*;
+/// # fn main () {
+/// let r = ReedSolomon::new(3, 2);
+///
+/// let mut sbs = ShardByShard::new(&r);
+///
+/// let mut shards = shards!([0,  1,  2,  3,  4],
+///                          [5,  6,  7,  8,  9],
+///                          // say we don't have the 3rd data shard yet
+///                          // and we want to fill it in later
+///                          [0,  0,  0,  0,  0],
+///                          [0,  0,  0,  0,  0],
+///                          [0,  0,  0,  0,  0]);
+///
+/// // encode 1st and 2nd data shard
+/// sbs.encode_shard(&mut shards);
+/// sbs.encode_shard(&mut shards);
+///
+/// // fill in 3rd data shard
+/// shards[2][0] = 10;
+/// shards[2][1] = 11;
+/// shards[2][2] = 12;
+/// shards[2][3] = 13;
+/// shards[2][4] = 14;
+///
+/// // now do the encoding
+/// sbs.encode_shard(&mut shards);
+///
+/// // above is equivalent to doing r.encode_shards(&mut shards)
+/// # }
+/// ```
 #[derive(PartialEq, Debug)]
 pub struct ShardByShard<'a> {
     codec     : &'a ReedSolomon,
