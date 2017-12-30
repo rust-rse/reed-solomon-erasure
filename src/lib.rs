@@ -797,6 +797,18 @@ impl ReedSolomon {
         self.encode_single(i_data, &mut slices)
     }
 
+    /// Constructs the parity shards partially using only the data shard provided.
+    ///
+    /// The data shard must match the index `i_data`.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// # Warning
+    ///
+    /// You must apply this function on the data shards in strict sequential order(0..data shard count),
+    /// otherwise the parity shards will be incorrect.
+    ///
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
     pub fn encode_single_shard_sep(&self,
                                    i_data      : usize,
                                    single_data : &Shard,
@@ -851,6 +863,18 @@ impl ReedSolomon {
         self.encode_single_sep(i_data, input, output)
     }
 
+    /// Constructs the parity shards partially using only the data shard provided.
+    ///
+    /// The data shard must match the index `i_data`.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// # Warning
+    ///
+    /// You must apply this function on the data shards in strict sequential order(0..data shard count),
+    /// otherwise the parity shards will be incorrect.
+    ///
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
     pub fn encode_single_sep(&self,
                              i_data      : usize,
                              single_data : &[u8],
@@ -897,7 +921,7 @@ impl ReedSolomon {
         self.encode_sep(&input, output)
     }
 
-    /// Constructs the parity shards with separated sets.
+    /// Constructs the parity shards with two separate sets.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
