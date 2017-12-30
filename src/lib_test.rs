@@ -978,20 +978,47 @@ fn shardbyshard_error_handling() {
 fn test_encode_single_error_handling() {
     let r = ReedSolomon::new(10, 3);
 
-    let mut shards = make_random_shards!(1000, 13);
+    {
+        let mut shards = make_random_shards!(1000, 13);
 
-    for i in 0..10 {
-        r.encode_single_shard(i, &mut shards).unwrap();
+        for i in 0..10 {
+            r.encode_single_shard(i, &mut shards).unwrap();
+        }
+
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single_shard(10, &mut shards).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single_shard(11, &mut shards).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single_shard(12, &mut shards).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single_shard(13, &mut shards).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single_shard(14, &mut shards).unwrap_err());
     }
+    {
+        let mut slices : [[u8; 1000]; 13] =
+            [[0; 1000]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
 
-    assert_eq!(Error::InvalidInputIndex,
-               r.encode_single_shard(10, &mut shards).unwrap_err());
-    assert_eq!(Error::InvalidInputIndex,
-               r.encode_single_shard(11, &mut shards).unwrap_err());
-    assert_eq!(Error::InvalidInputIndex,
-               r.encode_single_shard(12, &mut shards).unwrap_err());
-    assert_eq!(Error::InvalidInputIndex,
-               r.encode_single_shard(13, &mut shards).unwrap_err());
-    assert_eq!(Error::InvalidInputIndex,
-               r.encode_single_shard(14, &mut shards).unwrap_err());
+        let mut slice_refs =
+            convert_2D_slices!(slices      =to_mut_vec=> &mut [u8]);
+
+        for i in 0..10 {
+            r.encode_single(i, &mut slice_refs).unwrap();
+        }
+
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single(10, &mut slice_refs).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single(11, &mut slice_refs).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single(12, &mut slice_refs).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single(13, &mut slice_refs).unwrap_err());
+        assert_eq!(Error::InvalidInputIndex,
+                   r.encode_single(14, &mut slice_refs).unwrap_err());
+    }
 }
