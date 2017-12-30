@@ -72,21 +72,17 @@ by cloning this repo : https://github.com/darrenldl/rse-benchmark
 then do `cargo run --release` to start the benchmark.
 
 ## Performance
-Version `1.X.X`, `2.X.X` do not utilise SIMD, as stable Rust still does not support SIMD yet. For the time being, the library is written in pure Rust.
+Version `1.X.X`, `2.0.0` do not utilise SIMD.
 
-I am looking into using the assembly code from Klaus's project and/or the SIMD C files from Nicolas's project, but this will not be done very soon. Contact me if you'd like to help.
+Version `2.1.0` onwards use Nicolas's C files for SIMD operations.
 
 Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
 
-Version `2.X.X` is roughly 4-5x faster than version `1.X.X` for encoding, depending on threading etc, but is always faster than version `1.X.X`.
+Below shows the result of one of the test configurations, other configurations show similar results in terms of ratio.
 
-Klaus Post's Go implementation is roughly 7-8x faster for encoding compared to version `2.X.X`, depending on threading etc, but is always faster as it supports SIMD operations.
-
-Below shows the result of one of the test configurations, other configurations show similar results(Klaus Post's is at least 7-8x faster for all operations).
-
-|Configuration| Klaus Post's | 2.X.X | 1.X.X |
-|---|---|---|---|
-|10x2x1M|~7800MB/s|~1100MB/s|~250MB/s|
+|Configuration| Klaus Post's | 2.1.X | 2.0.X | 1.X.X |
+|---|---|---|---|---|
+| 10x2x1M | ~7800MB/s |~4800MB/s | ~1100MB/s | ~250MB/s |
 
 ## Changelog
 [Changelog](CHANGELOG.md)
