@@ -365,7 +365,7 @@ impl<'a> ShardByShard<'a> {
         self.cur_input
     }
 
-    /// Encodes a single slice as indicated by the index `i_input`.
+    /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
     /// have already been filled in via `encode`.
@@ -388,7 +388,7 @@ impl<'a> ShardByShard<'a> {
         result
     }
 
-    /// Encodes a single shard as indicated by the index `i_input`.
+    /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
     /// have already been filled in via `encode`.
@@ -679,7 +679,8 @@ impl ReedSolomon {
         Ok(())
     }
 
-    /// Constructs the parity shards.
+    /// Constructs the parity shards partially using only the data shard
+    /// indicated by index `i_input`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
@@ -715,7 +716,8 @@ impl ReedSolomon {
         self.encode(&mut slices)
     }
 
-    /// Constructs the parity shards partially using only one data shard.
+    /// Constructs the parity shards partially using only the data shard
+    /// indicated by index `i_input`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
