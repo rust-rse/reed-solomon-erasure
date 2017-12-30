@@ -152,7 +152,7 @@ fn find_singular_sub_matrix(m : Matrix) -> Option<Matrix> {
     None
 }*/
 
-fn fill_random(arr : &mut Shard) {
+fn fill_random(arr : &mut [u8]) {
     for a in arr.iter_mut() {
         *a = rand::random::<u8>();
     }
@@ -719,11 +719,12 @@ fn shardbyshard_encode_okay() {
     let mut shards = make_random_shards!(10_000, 13);
     let mut shards_copy = shards.clone();
 
-    r.encode_shards(&mut shards);
+    r.encode_shards(&mut shards).unwrap();
 
     for _ in 0..10 {
-        sbs.encode_shard(&mut shards_copy);
+        sbs.encode_shard(&mut shards_copy).unwrap();
     }
 
     assert_eq!(shards, shards_copy);
+
 }
