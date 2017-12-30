@@ -495,12 +495,30 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
-    pub fn encode_shard(&mut self, shards : &mut [Shard])
+    pub fn encode_shard(&mut self,
+                        shards : &mut [Shard])
                         -> Result<(), SBSError> {
         sbs_encode_checks!(nosep => self, slices);
 
         let res = self.codec.encode_single_shard(self.cur_input,
                                                  shards);
+
+        self.return_and_incre_cur_input(res)
+    }
+
+    /// Constructs the parity shards partially using the current input data shard.
+    ///
+    /// Returns `TooManyCalls` when all input data shards
+    /// have already been filled in via `encode` or `encode_shard`.
+    pub fn encode_shard_sep(&mut self,
+                            data   : &[Shard],
+                            parity : &mut [Shard])
+                            -> Result<(), SBSError> {
+        sbs_encode_checks!(nosep => self, slices);
+
+        let res = self.codec.encode_single_shard_sep(self.cur_input,
+                                                     &data[self.cur_input],
+                                                     parity);
 
         self.return_and_incre_cur_input(res)
     }
