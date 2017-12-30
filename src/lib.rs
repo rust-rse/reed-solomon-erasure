@@ -39,6 +39,10 @@ use inversion_tree::InversionTree;
 pub enum Error {
     TooFewShards,
     TooManyShards,
+    TooFewDataShards,
+    TooManyDataShards,
+    TooFewParityShards,
+    TooManyParityShards,
     IncorrectShardSize,
     TooFewShardsPresent,
     EmptyShard,
@@ -479,13 +483,33 @@ impl PartialEq for ReedSolomon {
 
 macro_rules! check_piece_count {
     (
-        $self:ident, $pieces:ident
+        all => $self:ident, $pieces:ident
     ) => {{
         if $pieces.len() < $self.total_shard_count {
             return Err(Error::TooFewShards);
         }
         if $pieces.len() > $self.total_shard_count {
             return Err(Error::TooManyShards);
+        }
+    }},
+    (
+        data => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.data_shard_count {
+            return Err(Error::TooFewDataShards);
+        }
+        if $pieces.len() > $self.data_shard_count {
+            return Err(Error::TooManyDataShards);
+        }
+    }},
+    (
+        parity => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.parity_shard_count {
+            return Err(Error::TooFewParityShards);
+        }
+        if $pieces.len() > $self.parity_shard_count {
+            return Err(Error::TooManyParityShards);
         }
     }}
 }
@@ -808,7 +832,7 @@ impl ReedSolomon {
     ///
     pub fn encode(&self,
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
-        check_piece_count!(self, slices);
+        check_piece_count!(all => self, slices);
 
         check_slices!(slices);
 
