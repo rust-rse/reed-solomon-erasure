@@ -462,18 +462,11 @@ impl<'a> ShardByShard<'a> {
                       -> Result<(), SBSError> {
         self.encode_checks()?;
 
-        let result =
-            match self.codec.encode_single_sep(self.cur_input,
+        let res = self.codec.encode_single_sep(self.cur_input,
                                                &data[self.cur_input],
-                                               parity)
-        {
-            Ok(()) => Ok(()),
-            Err(x) => Err(SBSError::RSError(x))
-        };
+                                               parity);
 
-        self.cur_input += 1;
-
-        result
+        self.return_and_incre_cur_input(res)
     }
 
     /// Constructs the parity shards partially using the current input data shard.
@@ -484,17 +477,10 @@ impl<'a> ShardByShard<'a> {
                         -> Result<(), SBSError> {
         self.encode_checks()?;
 
-        let result =
-            match self.codec.encode_single_shard(self.cur_input,
-                                                 shards)
-        {
-            Ok(()) => Ok(()),
-            Err(x) => Err(SBSError::RSError(x))
-        };
+        let res = self.codec.encode_single_shard(self.cur_input,
+                                                 shards);
 
-        self.cur_input += 1;
-
-        result
+        self.return_and_incre_cur_input(res)
     }
 }
 
