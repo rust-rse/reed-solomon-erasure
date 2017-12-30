@@ -48,7 +48,9 @@ pub enum Error {
 
 #[derive(PartialEq, Debug)]
 pub enum SBSError {
-    TooFewDataShards,
+    TooManyShards,
+    LeftoverShards,
+    RSError(Error)
 }
 
 /// Convenience data type provided by this library.
@@ -325,6 +327,60 @@ impl<'a> ShardByShard<'a> {
             codec,
             cur_input : 0
         }
+    }
+
+    pub fn parity_ready(&self) -> bool {
+        self.cur_input == self.codec.data_shard_count
+    }
+
+    pub fn reset(&mut self) -> Result<(), SBSError>{
+        if self.cur_input > 0
+            && !self.parity_ready()
+        {
+            return Err(SBSError::LeftoverShards);
+        }
+
+        self.cur_input = 0;
+
+        Ok(())
+    }
+
+    pub fn encode(&mut self, slices : &mut [&mut [u8]])
+                  -> Result<(), SBSError> {
+        if self.parity_ready() {
+            return Err(SBSError::TooManyShards);
+        }
+
+        let result =
+            match self.codec.encode_single(self.cur_input,
+                                           slices)
+        {
+            Ok(()) => Ok(()),
+            Err(x) => Err(SBSError::RSError(x))
+        };
+
+        self.cur_input += 1;
+
+        result
+    }
+
+    pub fn encode_shard(&mut self, shards : &mut [Shard])
+                        -> Result<(), SBSError> {
+        if self.parity_ready() {
+            return Err(SBSError::TooManyShards);
+        }
+
+        let result =
+            match self.codec.encode_single_shard(self.cur_input,
+                                                 shards)
+        {
+            Ok(()) => Ok(()),
+            Err(x) => Err(SBSError::RSError(x))
+        };
+
+        self.cur_input += 1;
+
+        result
     }
 }
 
