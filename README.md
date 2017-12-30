@@ -74,7 +74,7 @@ then do `cargo run --release` to start the benchmark.
 ## Performance
 Version `1.X.X`, `2.0.0` do not utilise SIMD.
 
-Version `2.1.0` onwards use Nicolas's C files for SIMD operations.
+Version `2.1.0` onwards uses Nicolas's C files for SIMD operations.
 
 Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
 
