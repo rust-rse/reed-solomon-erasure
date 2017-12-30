@@ -830,17 +830,17 @@ fn shardbyshard_encode_sep_correctly() {
         let mut shards = make_random_shards!(10_000, 13);
         let mut shards_copy = shards.clone();
 
-        let (data, mut parity) =
+        let (data, parity) =
             shards.split_at_mut(10);
-        let (data_copy, mut parity_copy) =
+        let (data_copy, parity_copy) =
             shards_copy.split_at_mut(10);
 
-        r.encode_shards_sep(data, &mut parity).unwrap();
+        r.encode_shards_sep(data, parity).unwrap();
 
         for i in 0..10 {
             assert_eq!(i, sbs.cur_input_index());
 
-            sbs.encode_shard_sep(data_copy, &mut parity_copy).unwrap();
+            sbs.encode_shard_sep(data_copy, parity_copy).unwrap();
         }
 
         assert!(sbs.parity_ready());
@@ -1043,6 +1043,88 @@ fn shardbyshard_error_handling() {
             assert_eq!(i, sbs.cur_input_index());
 
             sbs.encode(&mut slice_refs).unwrap();
+        }
+
+        assert_eq!(SBSError::LeftoverShards, sbs.reset().unwrap_err());
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
+    }
+}
+
+#[test]
+fn shardbyshard_sep_error_handling() {
+    {
+        let r       = ReedSolomon::new(10, 3);
+        let mut sbs = ShardByShard::new(&r);
+
+        let mut shards = make_random_shards!(10_000, 13);
+
+        let (data, parity) =
+            shards.split_at_mut(10);
+
+        for i in 0..10 {
+            assert_eq!(i, sbs.cur_input_index());
+
+            sbs.encode_shard_sep(data, parity).unwrap();
+        }
+
+        assert!(sbs.parity_ready());
+
+        assert_eq!(SBSError::TooManyCalls,
+                   sbs.encode_shard_sep(data, parity).unwrap_err());
+
+        sbs.reset().unwrap();
+
+        for i in 0..1 {
+            assert_eq!(i, sbs.cur_input_index());
+
+            sbs.encode_shard_sep(data, parity).unwrap();
+        }
+
+        assert_eq!(SBSError::LeftoverShards, sbs.reset().unwrap_err());
+
+        sbs.reset_force();
+
+        assert_eq!(0, sbs.cur_input_index());
+    }
+    {
+        let r       = ReedSolomon::new(10, 3);
+        let mut sbs = ShardByShard::new(&r);
+
+        let mut slices : [[u8; 100]; 13] =
+            [[0; 100]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+        {
+            let (data, parity) =
+                slices.split_at_mut(10);
+
+            let data_refs =
+                convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+            let mut parity_refs =
+                convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+            for i in 0..10 {
+                assert_eq!(i, sbs.cur_input_index());
+
+                sbs.encode_sep(&data_refs, &mut parity_refs).unwrap();
+            }
+
+            assert!(sbs.parity_ready());
+
+            assert_eq!(SBSError::TooManyCalls,
+                       sbs.encode_sep(&data_refs, &mut parity_refs).unwrap_err());
+
+            sbs.reset().unwrap();
+
+            for i in 0..1 {
+                assert_eq!(i, sbs.cur_input_index());
+
+                sbs.encode_sep(&data_refs, &mut parity_refs).unwrap();
+            }
         }
 
         assert_eq!(SBSError::LeftoverShards, sbs.reset().unwrap_err());
