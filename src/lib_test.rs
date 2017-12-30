@@ -973,3 +973,25 @@ fn shardbyshard_error_handling() {
         assert_eq!(0, sbs.cur_input_index());
     }
 }
+
+#[test]
+fn test_encode_single_error_handling() {
+    let r = ReedSolomon::new(10, 3);
+
+    let mut shards = make_random_shards!(1000, 13);
+
+    for i in 0..10 {
+        r.encode_single_shard(i, &mut shards).unwrap();
+    }
+
+    assert_eq!(Error::InvalidInputIndex,
+               r.encode_single_shard(10, &mut shards).unwrap_err());
+    assert_eq!(Error::InvalidInputIndex,
+               r.encode_single_shard(11, &mut shards).unwrap_err());
+    assert_eq!(Error::InvalidInputIndex,
+               r.encode_single_shard(12, &mut shards).unwrap_err());
+    assert_eq!(Error::InvalidInputIndex,
+               r.encode_single_shard(13, &mut shards).unwrap_err());
+    assert_eq!(Error::InvalidInputIndex,
+               r.encode_single_shard(14, &mut shards).unwrap_err());
+}
