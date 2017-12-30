@@ -309,7 +309,8 @@ pub struct ParallelParam {
 /// Bookkeeper for shard by shard encoding.
 ///
 /// This is useful for avoiding incorrect use of
-/// `encode_single` and `encode_single_shard`.
+/// `encode_single`, `encode_single_sep`, `encode_single_shard`
+/// and `encode_single_shard_sep`.
 ///
 /// # Use cases
 ///
