@@ -24,7 +24,7 @@ pub struct InversionNode {
 impl InversionTree {
     pub fn new(data_shards : usize,
                parity_shards : usize)
-           -> InversionTree {
+               -> InversionTree {
         InversionTree {
             root   : Mutex::new(
                 InversionNode::new(
@@ -54,8 +54,8 @@ impl InversionTree {
                                   matrix          : &Arc<Matrix>,
                                   shards          : usize)
                                   -> Result<(), Error> {
-	      // If no invalid indices were given then we are done because the
-	      // root node is already set with the identity matrix.
+        // If no invalid indices were given then we are done because the
+        // root node is already set with the identity matrix.
         if invalid_indices.len() == 0 {
             return Err(Error::AlreadySet);
         }
@@ -64,14 +64,14 @@ impl InversionTree {
             return Err(Error::NotSquare);
         }
 
-	      // Lock the tree for writing and reading before accessing the tree.
-	      // Recursively create nodes for the inverted matrix in the tree until
-	      // we reach the node to insert the matrix to.  We start by passing in
-	      // 0 as the parent index as we start at the root of the tree.
+        // Lock the tree for writing and reading before accessing the tree.
+        // Recursively create nodes for the inverted matrix in the tree until
+        // we reach the node to insert the matrix to.  We start by passing in
+        // 0 as the parent index as we start at the root of the tree.
         self.root.lock().unwrap().insert_inverted_matrix(matrix,
-                                                          invalid_indices,
-                                                          shards,
-                                                          0);
+                                                         invalid_indices,
+                                                         shards,
+                                                         0);
 
         Ok(())
     }
