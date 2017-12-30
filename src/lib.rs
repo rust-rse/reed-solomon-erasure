@@ -46,6 +46,11 @@ pub enum Error {
     InversionTreeError(inversion_tree::Error)
 }
 
+#[derive(PartialEq, Debug)]
+pub enum SBSError {
+    TooFewDataShards,
+}
+
 /// Convenience data type provided by this library.
 pub type Shard = Box<[u8]>;
 
@@ -294,6 +299,13 @@ pub struct ParallelParam {
     //pub shards_per_encode : usize,
 }
 
+/// Bookkeeper for shard by shard encoding
+#[derive(PartialEq, Debug)]
+pub struct ShardByShard<'a> {
+    codec     : &'a ReedSolomon,
+    cur_input : usize,
+}
+
 impl ParallelParam {
     pub fn new(bytes_per_encode  : usize,
                /*shards_per_encode : usize*/) -> ParallelParam {
@@ -304,6 +316,15 @@ impl ParallelParam {
     pub fn with_default() -> ParallelParam {
         Self::new(8192,
                   /*4*/)
+    }
+}
+
+impl<'a> ShardByShard<'a> {
+    pub fn new(codec : &'a ReedSolomon) -> ShardByShard<'a> {
+        ShardByShard {
+            codec,
+            cur_input : 0
+        }
     }
 }
 
@@ -586,6 +607,40 @@ impl ReedSolomon {
                                SmallVec::with_capacity);
 
         self.encode(&mut slices)
+    }
+
+    /// Constructs the parity shards partially using only one data shard.
+    ///
+    /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// # Warning
+    ///
+    /// You must apply this function on the data shards in strictly sequential order(0..data shard count)
+    /// otherwise the parity shards will be incorrect.
+    ///
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
+    pub fn encode_single(&self,
+                         i_input : usize,
+                         slices  : &mut [&mut [u8]]) -> Result<(), Error> {
+        check_piece_count!(self, slices);
+
+        check_slices!(slices);
+
+        let parity_rows = self.get_parity_rows();
+
+	      // Get the slice of output buffers.
+        let (mut_input, output) =
+            slices.split_at_mut(self.data_shard_count);
+
+        let input = &mut_input[i_input];
+
+	      // Do the coding.
+        self.code_single_slice(&parity_rows,
+                               i_input,
+                               input,
+                               output);
+
+        Ok(())
     }
 
     /// Constructs the parity shards.
