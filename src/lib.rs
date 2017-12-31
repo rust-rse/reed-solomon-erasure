@@ -268,7 +268,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// # Common error handling
 ///
-/// ### For `encode`, `encode_shards`, `verify`, `verify_shards`, `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
+/// ## For `encode`, `encode_shards`, `verify`, `verify_shards`, `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
 ///
 /// Return `Error::TooFewShards` or `Error::TooManyShards`
 /// when the number of provided shards
@@ -280,15 +280,21 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// Return `Error::IncorrectShardSize` when the provided shards
 /// are of different length.
 ///
-/// ### For `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
+/// ## For `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
 ///
 /// Return `Error::TooFewShardsPresent` when there are not
 /// enough shards for reconstruction.
 ///
 /// # Variants of encoding methods
 ///
-/// Methods ending in `_sep` takes an immutable reference of data shard(s), and mutable
+/// ## `sep`
+///
+/// Methods ending in `_sep` takes an immutable reference of data shard(s), and a mutable
 /// reference of parity shards.
+///
+/// They are useful as they do not need to borrow the data shard(s) mutably,
+/// and other work that only needs read-only access to data shards can be done
+/// in parallel/concurrently during the encoding.
 ///
 /// Following is a table of all the `sep` variants
 ///
@@ -299,12 +305,22 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `encode_single` | `encode_single_sep` |
 /// | `encode`        | `encode_sep` |
 ///
-/// Methods containing `single` facilitates shard by shard encoding, where
-/// the parity shards are partially constructed one shard at a time.
-/// See `ShardByShard` struct for more details.
+/// The `sep` variants do similar checks on the provided data shards and parity shards.
 ///
-/// These are error prone to use, and it is recommended to use the `ShardByShard`
+/// Return `Error::TooFewDataShards`, `Error::TooManyDataShards`, `Error::TooFewParityShards`, or `Error::TooManyParityShards` when applicable.
+///
+/// ## `single`
+///
+/// Methods containing `single` facilitate shard by shard encoding, where
+/// the parity shards are partially constructed using one data shard at a time.
+/// See `ShardByShard` struct for more details on how shard by shard encoding
+/// can be useful.
+///
+/// They are prone to **misuse**, and it is recommended to use the `ShardByShard`
 /// bookkeeping struct instead for shard by shard encoding.
+///
+/// The ones that are also `sep` are **ESPECIALLY** prone to **misuse**.
+/// Only use them when you actually need the flexibility.
 ///
 /// Following is a table of all the shard by shard variants
 ///
@@ -1036,8 +1052,7 @@ impl ReedSolomon {
         self.encode_sep(&input, output)
     }
 
-    /// Constructs the parity shards with data and parity being
-    /// in two separate sets.
+    /// Constructs the parity shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
