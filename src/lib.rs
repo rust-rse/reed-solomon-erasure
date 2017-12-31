@@ -735,10 +735,10 @@ impl ReedSolomon {
                         matrix_rows  : &[&[u8]],
                         inputs       : &[&[u8]],
                         outputs      : &mut [&mut [u8]]) {
-        for c in 0..self.data_shard_count {
+        for i_input in 0..self.data_shard_count {
             self.code_single_slice(matrix_rows,
-                                   c,
-                                   inputs[c],
+                                   i_input,
+                                   inputs[i_input],
                                    outputs);
         }
     }
@@ -952,8 +952,8 @@ impl ReedSolomon {
     ///
     /// This is a wrapper of `encode_sep`.
     pub fn encode_shards_sep(&self,
-                         data   : &[Shard],
-                         parity : &mut [Shard]) -> Result<(), Error> {
+                             data   : &[Shard],
+                             parity : &mut [Shard]) -> Result<(), Error> {
         let     data   : SmallVec<[&[u8]; 32]> =
             convert_2D_slices!(data   =into=> SmallVec<[&[u8]; 32]>,
                                SmallVec::with_capacity);
