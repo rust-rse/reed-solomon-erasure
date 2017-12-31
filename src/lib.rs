@@ -422,6 +422,9 @@ impl<'a> ShardByShard<'a> {
 
     /// Resets the bookkeeping data.
     ///
+    /// You should call this when you have added and encoded
+    /// all data shards, and have finished using the parity shards.
+    ///
     /// Returns `LeftoverShards` when there are shards encoded
     /// but parity shards are not ready to use.
     pub fn reset(&mut self) -> Result<(), SBSError>{
@@ -836,7 +839,7 @@ impl ReedSolomon {
     }
 
     /// Constructs the parity shards partially using only the data shard
-    /// indicated by index `i_input`.
+    /// indexed by `i_data`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
@@ -915,7 +918,7 @@ impl ReedSolomon {
     }
 
     /// Constructs the parity shards partially using only the data shard
-    /// indicated by index `i_data`.
+    /// indexed by `i_data`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
@@ -1001,7 +1004,8 @@ impl ReedSolomon {
         self.encode_sep(&input, output)
     }
 
-    /// Constructs the parity shards with two separate sets.
+    /// Constructs the parity shards with data and parity being
+    /// in two separate sets.
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
