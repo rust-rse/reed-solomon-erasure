@@ -1011,6 +1011,13 @@ impl ReedSolomon {
         check_piece_count!(data   => self, data);
         check_piece_count!(parity => self, parity);
 
+        check_slices!(data);
+        check_slices!(parity);
+
+        if data[0].len() != parity[0].len() {
+            return Err(Error::IncorrectShardSize);
+        }
+
         let parity_rows = self.get_parity_rows();
 
 	      // Do the coding.
