@@ -1136,6 +1136,123 @@ fn shardbyshard_sep_error_handling() {
 }
 
 #[test]
+fn test_encode_single_sep() {
+    let r = ReedSolomon::new(10, 3);
+
+    {
+        let mut shards = make_random_shards!(10_000, 13);
+        let mut shards_copy = shards.clone();
+
+        r.encode_shards(&mut shards).unwrap();
+
+        {
+            let (data, parity) =
+                shards_copy.split_at_mut(10);
+
+            for i in 0..10 {
+                r.encode_single_shard_sep(i, &data[i], parity);
+            }
+        }
+
+        assert_eq_shards(&shards, &shards_copy);
+    }
+    {
+        let mut slices : [[u8; 100]; 13] =
+            [[0; 100]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+        let mut slices_copy = slices.clone();
+
+        {
+            let mut slice_refs =
+                convert_2D_slices!(slices      =to_mut_vec=> &mut [u8]);
+
+            let (data_copy, parity_copy) =
+                slices_copy.split_at_mut(10);
+
+            let data_copy_refs =
+                convert_2D_slices!(data_copy =to_mut_vec=> &[u8]);
+            let mut parity_copy_refs =
+                convert_2D_slices!(parity_copy =to_mut_vec=> &mut [u8]);
+
+            r.encode(&mut slice_refs).unwrap();
+
+            for i in 0..10 {
+                r.encode_single_sep(i, &data_copy_refs[i], &mut parity_copy_refs);
+            }
+        }
+
+        for a in 0..13 {
+            for b in 0..100 {
+                assert_eq!(slices[a][b], slices_copy[a][b]);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_encode_sep() {
+    let r = ReedSolomon::new(10, 3);
+
+    {
+        let mut shards = make_random_shards!(10_000, 13);
+        let mut shards_copy = shards.clone();
+
+        r.encode_shards(&mut shards).unwrap();
+
+        {
+            let (data, parity) =
+                shards_copy.split_at_mut(10);
+
+            r.encode_shards_sep(data, parity);
+        }
+
+        assert_eq_shards(&shards, &shards_copy);
+    }
+    {
+        let mut slices : [[u8; 100]; 13] =
+            [[0; 100]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+        let mut slices_copy = slices.clone();
+
+        {
+            let (data_copy, parity_copy) =
+                slices_copy.split_at_mut(10);
+
+            let mut slice_refs =
+                convert_2D_slices!(slices =to_mut_vec=> &mut [u8]);
+            let data_copy_refs =
+                convert_2D_slices!(data_copy =to_mut_vec=> &[u8]);
+            let mut parity_copy_refs =
+                convert_2D_slices!(parity_copy =to_mut_vec=> &mut [u8]);
+
+            r.encode(&mut slice_refs).unwrap();
+
+            r.encode_sep(&data_copy_refs, &mut parity_copy_refs);
+        }
+
+        for a in 0..13 {
+            for b in 0..100 {
+                assert_eq!(slices[a][b], slices_copy[a][b]);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_encode_single_sep_error_handling() {
+    
+}
+
+#[test]
+fn test_encode_sep_error_handling() {
+    
+}
+
+#[test]
 fn test_encode_single_error_handling() {
     let r = ReedSolomon::new(10, 3);
 
