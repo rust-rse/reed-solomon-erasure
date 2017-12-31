@@ -90,6 +90,15 @@ Below shows the result of one of the test configurations, other configurations s
 ## Contributions
 Contributions are welcome. Note that by submitting contributions, you agree that your work will be under the same license used by this project(MIT).
 
+## Credits
+Many thanks to the following people for testing and benchmarking on various platforms
+
+  - [lnicola](https://github.com/lnicola/) (platforms : (Linux, Intel))
+
+  - [hexjelly](https://github.com/hexjelly) (platforms : (Windows, AMD))
+
+Polished version of the results will be published later.
+
 ## Notes
 The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon).
 
