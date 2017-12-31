@@ -752,9 +752,11 @@ impl ReedSolomon {
             (outputs)
             .into_par_iter()
             .for_each(|(i_row, output)| {
+                let matrix_row_to_use = matrix_rows[i_row][i_input];
+
                 if i_input == 0 {
                     if output.len() <= self.pparam.bytes_per_encode {
-                        galois::mul_slice(matrix_rows[i_row][i_input],
+                        galois::mul_slice(matrix_row_to_use,
                                           input,
                                           output);
                     } else {
@@ -764,14 +766,14 @@ impl ReedSolomon {
                             .for_each(|(i, output)| {
                                 let start =
                                     i * self.pparam.bytes_per_encode;
-                                galois::mul_slice(matrix_rows[i_row][i_input],
+                                galois::mul_slice(matrix_row_to_use,
                                                   &input[start..start + output.len()],
                                                   output);
                             })
                     }
                 } else {
                     if output.len() <= self.pparam.bytes_per_encode {
-                        galois::mul_slice_xor(matrix_rows[i_row][i_input],
+                        galois::mul_slice_xor(matrix_row_to_use,
                                               input,
                                               output);
                     } else {
@@ -781,7 +783,7 @@ impl ReedSolomon {
                             .for_each(|(i, output)| {
                                 let start =
                                     i * self.pparam.bytes_per_encode;
-                                galois::mul_slice_xor(matrix_rows[i_row][i_input],
+                                galois::mul_slice_xor(matrix_row_to_use,
                                                       &input[start..start + output.len()],
                                                       output);
                             })
