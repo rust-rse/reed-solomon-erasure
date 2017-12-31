@@ -16,10 +16,16 @@ Version `2.X.X` copies Klaus Post's implementation. The SIMD C code is copied fr
 See [Notes](#notes) and [License](#license) section for details.
 
 ## Usage
-Add the following to your `Cargo.toml`
+Add the following to your `Cargo.toml` for the normal version(tries to compile with SIMD operations when applicable)
 ```toml
 [dependencies]
-reed-solomon-erasure = "2.0"
+reed-solomon-erasure = "2.1"
+```
+or the following for the pure rust version
+```toml
+[dependencies.reed-solomon-erasure]
+version = "2.1"
+features = ["pure-rust"]
 ```
 and the following to your crate root
 ```rust
