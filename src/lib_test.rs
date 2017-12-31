@@ -1150,7 +1150,7 @@ fn test_encode_single_sep() {
                 shards_copy.split_at_mut(10);
 
             for i in 0..10 {
-                r.encode_single_shard_sep(i, &data[i], parity);
+                r.encode_single_shard_sep(i, &data[i], parity).unwrap();
             }
         }
 
@@ -1179,7 +1179,7 @@ fn test_encode_single_sep() {
             r.encode(&mut slice_refs).unwrap();
 
             for i in 0..10 {
-                r.encode_single_sep(i, &data_copy_refs[i], &mut parity_copy_refs);
+                r.encode_single_sep(i, &data_copy_refs[i], &mut parity_copy_refs).unwrap();
             }
         }
 
@@ -1205,7 +1205,7 @@ fn test_encode_sep() {
             let (data, parity) =
                 shards_copy.split_at_mut(10);
 
-            r.encode_shards_sep(data, parity);
+            r.encode_shards_sep(data, parity).unwrap();
         }
 
         assert_eq_shards(&shards, &shards_copy);
@@ -1231,7 +1231,7 @@ fn test_encode_sep() {
 
             r.encode(&mut slice_refs).unwrap();
 
-            r.encode_sep(&data_copy_refs, &mut parity_copy_refs);
+            r.encode_sep(&data_copy_refs, &mut parity_copy_refs).unwrap();
         }
 
         for a in 0..13 {
@@ -1244,7 +1244,59 @@ fn test_encode_sep() {
 
 #[test]
 fn test_encode_single_sep_error_handling() {
-    
+    let r = ReedSolomon::new(10, 3);
+
+    {
+        let mut shards = make_random_shards!(1000, 13);
+
+        let (data, parity) =
+            shards.split_at_mut(10);
+
+        for i in 0..10 {
+            r.encode_single_shard_sep(i, &data[i], parity).unwrap();
+        }
+
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_shard_sep(10, &data[0], parity).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_shard_sep(11, &data[0], parity).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_shard_sep(12, &data[0], parity).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_shard_sep(13, &data[0], parity).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_shard_sep(14, &data[0], parity).unwrap_err());
+    }
+    {
+        let mut slices : [[u8; 1000]; 13] =
+            [[0; 1000]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+
+        let (data, parity) =
+            slices.split_at_mut(10);
+
+        let data_refs =
+            convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+        let mut parity_refs =
+            convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+        for i in 0..10 {
+            r.encode_single_sep(i, &data_refs[i], &mut parity_refs).unwrap();
+        }
+
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_sep(10, &data_refs[0], &mut parity_refs).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_sep(11, &data_refs[0], &mut parity_refs).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_sep(12, &data_refs[0], &mut parity_refs).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_sep(13, &data_refs[0], &mut parity_refs).unwrap_err());
+        assert_eq!(Error::InvalidIndex,
+                   r.encode_single_sep(14, &data_refs[0], &mut parity_refs).unwrap_err());
+    }
 }
 
 #[test]
