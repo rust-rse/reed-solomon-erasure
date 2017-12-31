@@ -1387,6 +1387,96 @@ fn test_encode_sep_error_handling() {
                        r.encode_shards_sep(data, parity).unwrap_err());
         }
     }
+    {
+        let mut slices : [[u8; 1000]; 13] =
+            [[0; 1000]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+
+        let (data, parity) =
+            slices.split_at_mut(10);
+
+        let data_refs =
+            convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+        let mut parity_refs =
+            convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+        r.encode_sep(&data_refs, &mut parity_refs).unwrap();
+
+        {
+            let mut slices : [[u8; 1000]; 12] =
+                [[0; 1000]; 12];
+            for slice in slices.iter_mut() {
+                fill_random(slice);
+            }
+
+            let (data, parity) =
+                slices.split_at_mut(9);
+
+            let data_refs =
+                convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+            let mut parity_refs =
+                convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+            assert_eq!(Error::TooFewDataShards,
+                       r.encode_sep(&data_refs, &mut parity_refs).unwrap_err());
+        }
+        {
+            let mut slices : [[u8; 1000]; 14] =
+                [[0; 1000]; 14];
+            for slice in slices.iter_mut() {
+                fill_random(slice);
+            }
+
+            let (data, parity) =
+                slices.split_at_mut(11);
+
+            let data_refs =
+                convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+            let mut parity_refs =
+                convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+            assert_eq!(Error::TooManyDataShards,
+                       r.encode_sep(&data_refs, &mut parity_refs).unwrap_err());
+        }
+        {
+            let mut slices : [[u8; 1000]; 12] =
+                [[0; 1000]; 12];
+            for slice in slices.iter_mut() {
+                fill_random(slice);
+            }
+
+            let (data, parity) =
+                slices.split_at_mut(10);
+
+            let data_refs =
+                convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+            let mut parity_refs =
+                convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+            assert_eq!(Error::TooFewParityShards,
+                       r.encode_sep(&data_refs, &mut parity_refs).unwrap_err());
+        }
+        {
+            let mut slices : [[u8; 1000]; 14] =
+                [[0; 1000]; 14];
+            for slice in slices.iter_mut() {
+                fill_random(slice);
+            }
+
+            let (data, parity) =
+                slices.split_at_mut(10);
+
+            let data_refs =
+                convert_2D_slices!(data      =to_mut_vec=> &[u8]);
+            let mut parity_refs =
+                convert_2D_slices!(parity      =to_mut_vec=> &mut [u8]);
+
+            assert_eq!(Error::TooManyParityShards,
+                       r.encode_sep(&data_refs, &mut parity_refs).unwrap_err());
+        }
+    }
 }
 
 #[test]
