@@ -284,6 +284,36 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// Return `Error::TooFewShardsPresent` when there are not
 /// enough shards for reconstruction.
+///
+/// # Variants of encoding methods
+///
+/// Methods ending in `_sep` takes an immutable reference of data shard(s), and mutable
+/// reference of parity shards.
+///
+/// Following is a table of all the `sep` variants
+///
+/// | not `sep` | `sep` |
+/// | --- | --- |
+/// | `encode_single_shard` | `encode_single_shard_sep` |
+/// | `encode_shards` | `encode_shards_sep` |
+/// | `encode_single` | `encode_single_sep` |
+/// | `encode`        | `encode_sep` |
+///
+/// Methods containing `single` facilitates shard by shard encoding, where
+/// the parity shards are partially constructed one shard at a time.
+/// See `ShardByShard` struct for more details.
+///
+/// These are error prone to use, and it is recommended to use the `ShardByShard`
+/// bookkeeping struct instead for shard by shard encoding.
+///
+/// Following is a table of all the shard by shard variants
+///
+/// | all shards at once | shard by shard |
+/// | --- | --- |
+/// | `encode_shards` | `encode_single_shard` |
+/// | `encode_shards_sep` | `encode_single_shard_sep` |
+/// | `encode` | `encode_single` |
+/// | `encode_sep` | `encode_single_sep` |
 #[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
@@ -866,6 +896,8 @@ impl ReedSolomon {
     /// The data shard must match the index `i_data`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// This is a wrapper of `encode_single_sep`.
     ///
     /// # Warning
     ///
