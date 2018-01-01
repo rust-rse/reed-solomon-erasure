@@ -2,7 +2,6 @@ environment:
   global:
     # This will be used as part of the zipfile name
     PROJECT_NAME: reed-solomon-erasure
-  # TODO feel free to delete targets/channels you don't need
   matrix:
     # Stable channel
     - TARGET: i686-pc-windows-gnu
@@ -31,6 +30,11 @@ environment:
       CHANNEL: nightly
     # - TARGET: x86_64-pc-windows-msvc
     #   CHANNEL: nightly
+
+addons:
+  apt:
+    packages:
+      - gcc
 
 # Install Rust and Cargo
 # (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
