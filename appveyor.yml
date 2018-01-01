@@ -41,6 +41,7 @@ install:
   # - cargo -V
   - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1
   - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64
+  - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin
   - set PATH=%PATH%;C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin
 
 # 'cargo test' takes care of building for us, so disable Appveyor's build stage. This prevents
