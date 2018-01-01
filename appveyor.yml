@@ -40,8 +40,7 @@ install:
   # - rustc -Vv
   # - cargo -V
   - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1
-  - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin
-  - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw
+  - dir C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64
   - set PATH=%PATH%;C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin
 
 # 'cargo test' takes care of building for us, so disable Appveyor's build stage. This prevents
