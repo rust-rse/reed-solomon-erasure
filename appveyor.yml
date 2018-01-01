@@ -31,9 +31,6 @@ environment:
     # - TARGET: x86_64-pc-windows-msvc
     #   CHANNEL: nightly
 
-install:
-  - cinst mingw
-
 # Install Rust and Cargo
 # (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
 install:
@@ -42,6 +39,7 @@ install:
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - rustc -Vv
   - cargo -V
+  - cinst mingw
 
 # 'cargo test' takes care of building for us, so disable Appveyor's build stage. This prevents
 # the "directory does not contain a project or solution file" error.
