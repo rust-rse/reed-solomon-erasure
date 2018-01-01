@@ -6,7 +6,6 @@ rust:
 
 branches:
   except:
-    - beta
     - test
     - test2
     - rewrite-using-klauspost-go
