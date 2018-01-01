@@ -361,7 +361,7 @@ pub struct ParallelParam {
 /// # Use cases
 ///
 /// Shard by shard encoding is useful for streamed data encoding
-/// when you do not have all the needed data shards immediately,
+/// where you do not have all the needed data shards immediately,
 /// but you want to spread out the encoding workload rather than
 /// doing the encoding after everything is ready.
 ///
