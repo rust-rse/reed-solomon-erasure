@@ -28,6 +28,7 @@ pure-rust = []
 
 [badges]
 travis-ci = { repository = "darrenldl/reed-solomon-erasure" }
+appveyor  = { repository = "darrenldl/reed-solomon-erasure" }
 codecov   = { repository = "darrenldl/reed-solomon-erasure" }
 coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
