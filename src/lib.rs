@@ -388,8 +388,8 @@ pub struct ParallelParam {
 ///                          [0,  0,  0,  0,  0]);
 ///
 /// // encode 1st and 2nd data shard
-/// sbs.encode_shard(&mut shards);
-/// sbs.encode_shard(&mut shards);
+/// sbs.encode_shard(&mut shards).unwrap();
+/// sbs.encode_shard(&mut shards).unwrap();
 ///
 /// // fill in 3rd data shard
 /// shards[2][0] = 10;
@@ -399,9 +399,10 @@ pub struct ParallelParam {
 /// shards[2][4] = 14;
 ///
 /// // now do the encoding
-/// sbs.encode_shard(&mut shards);
+/// sbs.encode_shard(&mut shards).unwrap();
 ///
 /// // above is equivalent to doing r.encode_shards(&mut shards)
+/// assert!(r.verify_shards(&shards).unwrap());
 /// # }
 /// ```
 #[derive(PartialEq, Debug)]
