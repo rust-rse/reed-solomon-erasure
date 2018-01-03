@@ -430,10 +430,10 @@ macro_rules! sbs_encode_checks {
         if $self.parity_ready() {
             return Err(SBSError::TooManyCalls);
         }
-        if $slices.len() < $self.codec.total_shard_count() {
+        if $pieces.len() < $self.codec.total_shard_count() {
             return Err(SBSError::RSError(Error::TooFewShards));
         }
-        if $slices.len() > $self.codec.total_shard_count() {
+        if $pieces.len() > $self.codec.total_shard_count() {
             return Err(SBSError::RSError(Error::TooManyShards));
         }
     }};
@@ -553,7 +553,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode_shard(&mut self,
                         shards : &mut [Shard])
                         -> Result<(), SBSError> {
-        sbs_encode_checks!(nosep => self, slices);
+        sbs_encode_checks!(nosep => self, shards);
 
         let res = self.codec.encode_single_shard(self.cur_input,
                                                  shards);
