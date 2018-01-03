@@ -430,6 +430,12 @@ macro_rules! sbs_encode_checks {
         if $self.parity_ready() {
             return Err(SBSError::TooManyCalls);
         }
+        if $slices.len() < $self.codec.total_shard_count() {
+            return Err(SBSError::RSError(Error::TooFewShards));
+        }
+        if $slices.len() > $self.codec.total_shard_count() {
+            return Err(SBSError::RSError(Error::TooManyShards));
+        }
     }};
     (
         sep => $self:ident, $data:ident, $parity:ident
