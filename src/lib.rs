@@ -988,9 +988,7 @@ impl ReedSolomon {
                          i_data  : usize,
                          slices  : &mut [&mut [u8]]) -> Result<(), Error> {
         check_slice_index!(data => self, i_data);
-
-        check_piece_count!(all => self, slices);
-
+        check_piece_count!(all  => self, slices);
         check_slices!(slices);
 
 	      // Get the slice of output buffers.
@@ -1018,10 +1016,8 @@ impl ReedSolomon {
                              i_data      : usize,
                              single_data : &[u8],
                              parity      : &mut[&mut[u8]]) -> Result<(), Error> {
-        check_slice_index!(data => self, i_data);
-
+        check_slice_index!(data   => self, i_data);
         check_piece_count!(parity => self, parity);
-
         check_slices!(parity);
 
         if single_data.len() != parity[0].len() {
@@ -1069,7 +1065,6 @@ impl ReedSolomon {
                       parity : &mut [&mut[u8]]) -> Result<(), Error> {
         check_piece_count!(data   => self, data);
         check_piece_count!(parity => self, parity);
-
         check_slices!(data);
         check_slices!(parity);
 
@@ -1102,7 +1097,6 @@ impl ReedSolomon {
     pub fn verify(&self,
                   slices : &[&[u8]]) -> Result<bool, Error> {
         check_piece_count!(all => self, slices);
-
         check_slices!(slices);
 
         let to_check = &slices[self.data_shard_count..];
