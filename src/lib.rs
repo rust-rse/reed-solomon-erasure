@@ -1262,7 +1262,6 @@ impl ReedSolomon {
                             slice_present : &[bool],
                             data_only     : bool) -> Result<(), Error> {
         check_piece_count!(all => self, slices);
-
         check_slices!(slices);
 
         if slices.len() != slice_present.len() {
