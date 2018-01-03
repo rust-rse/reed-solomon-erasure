@@ -563,7 +563,7 @@ impl<'a> ShardByShard<'a> {
                             data   : &[Shard],
                             parity : &mut [Shard])
                             -> Result<(), SBSError> {
-        sbs_encode_checks!(nosep => self, slices);
+        sbs_encode_checks!(sep => self, data, parity);
 
         let res = self.codec.encode_single_shard_sep(self.cur_input,
                                                      &data[self.cur_input],
