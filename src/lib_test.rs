@@ -1140,7 +1140,7 @@ fn test_encode_single_sep() {
     let r = ReedSolomon::new(10, 3);
 
     {
-        let mut shards = make_random_shards!(10_000, 13);
+        let mut shards = make_random_shards!(10, 13);
         let mut shards_copy = shards.clone();
 
         r.encode_shards(&mut shards).unwrap();
@@ -1152,7 +1152,10 @@ fn test_encode_single_sep() {
             for i in 0..10 {
                 r.encode_single_shard_sep(i, &data[i], parity).unwrap();
             }
+
         }
+        assert!(r.verify_shards(&shards).unwrap());
+        assert!(r.verify_shards(&shards_copy).unwrap());
 
         assert_eq_shards(&shards, &shards_copy);
     }
