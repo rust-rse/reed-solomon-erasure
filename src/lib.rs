@@ -35,7 +35,7 @@ use smallvec::SmallVec;
 use matrix::Matrix;
 use inversion_tree::InversionTree;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Error {
     TooFewShards,
     TooManyShards,
@@ -51,7 +51,7 @@ pub enum Error {
     InversionTreeError(inversion_tree::Error)
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum SBSError {
     TooManyCalls,
     LeftoverShards,
