@@ -1,3 +1,7 @@
+## 2.1.1
+  - Fixed SBS error checking code
+  - Documentation fixes and polishing
+
 ## 2.1.0
   - Added Nicolas's SIMD C code files, gaining major speedup on supported CPUs
   - Added support for "shard by shard" encoding, allowing easier streamed encoding
