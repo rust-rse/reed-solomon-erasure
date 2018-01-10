@@ -902,10 +902,10 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this function on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
-    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
     pub fn encode_single_shard(&self,
                                i_data : usize,
                                shards : &mut [Shard]) -> Result<(), Error> {
@@ -926,10 +926,10 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this function on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
-    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
     pub fn encode_single_shard_sep(&self,
                                    i_data      : usize,
                                    single_data : &Shard,
@@ -981,10 +981,10 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this function on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
-    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
     pub fn encode_single(&self,
                          i_data  : usize,
                          slices  : &mut [&mut [u8]]) -> Result<(), Error> {
@@ -1009,10 +1009,10 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this function on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
-    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this function directly.
+    /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
     pub fn encode_single_sep(&self,
                              i_data      : usize,
                              single_data : &[u8],
