@@ -1378,7 +1378,7 @@ impl ReedSolomon {
                 }
             }
             {
-                // Gather up the references to all data slices
+                // Gather up the references of all data slices
                 let mut i_old_data_slice = 0;
                 let mut i_new_data_slice = 0;
                 let mut all_data_slices : SmallVec<[&[u8]; 32]> =
