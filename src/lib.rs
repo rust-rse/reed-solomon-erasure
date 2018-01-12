@@ -1170,8 +1170,8 @@ impl ReedSolomon {
 
         let shard_size = Self::option_shards_size(shards).unwrap();
 
-	      // Quick check: are all of the shards present?  If so, there's
-	      // nothing to do.
+        // Quick check: are all of the shards present?  If so, there's
+        // nothing to do.
         let mut number_present = 0;
         let mut shard_present : SmallVec<[bool; 32]> =
             SmallVec::with_capacity(shards.len());
@@ -1188,10 +1188,10 @@ impl ReedSolomon {
             return Ok(())
         }
 
-	      // More complete sanity check
-	      if number_present < self.data_shard_count {
-		        return Err(Error::TooFewShardsPresent)
-	      }
+        // More complete sanity check
+        if number_present < self.data_shard_count {
+            return Err(Error::TooFewShardsPresent)
+        }
 
         // Fill in new shards
         for i in 0..shards.len() {
