@@ -48,7 +48,6 @@ pub enum Error {
     EmptyShard,
     InvalidShardFlags,
     InvalidIndex,
-    InversionTreeError(inversion_tree::Error)
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -1228,7 +1227,7 @@ impl ReedSolomon {
     fn get_data_decode_matrix(&self,
                               valid_indices : &[usize],
                               invalid_indices : &[usize])
-                              -> Result<Arc<Matrix>, Error> {
+                              -> Arc<Matrix> {
         // Attempt to get the cached inverted matrix out of the tree
         // based on the indices of the invalid rows.
         match self.tree.get_inverted_matrix(&invalid_indices) {
@@ -1259,18 +1258,14 @@ impl ReedSolomon {
 
                 // Cache the inverted matrix in the tree for future use keyed on the
                 // indices of the invalid rows.
-                let insert_result =
-                    self.tree.insert_inverted_matrix(&invalid_indices,
-                                                     &data_decode_matrix,
-                                                     self.total_shard_count);
-                match insert_result {
-                    Ok(()) => {},
-                    Err(x) => return Err(Error::InversionTreeError(x))
-                }
-                Ok(data_decode_matrix)
+                self.tree.insert_inverted_matrix(&invalid_indices,
+                                                 &data_decode_matrix,
+                                                 self.total_shard_count).unwrap();
+
+                data_decode_matrix
             },
             Some(m) => {
-                Ok(m)
+                m
             }
         }
     }
@@ -1350,7 +1345,7 @@ impl ReedSolomon {
 
         let data_decode_matrix =
             self.get_data_decode_matrix(&valid_indices,
-                                        &invalid_indices)?;
+                                        &invalid_indices);
 
         // Re-create any data shards that were missing.
         //
