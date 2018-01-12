@@ -229,16 +229,6 @@ fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
     result
 }
 
-/*fn mut_shards_to_mut_slices(shards : &mut [Shard])
-                            -> Vec<&mut [u8]> {
-    let mut result : Vec<&mut [u8]> =
-        Vec::with_capacity(shards.len());
-    for shard in shards.into_iter() {
-        result.push(shard);
-    }
-    result
-}*/
-
 fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
                                        -> Vec<&'a mut [u8]> {
     let mut result : Vec<&mut [u8]> =
@@ -253,15 +243,6 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
     }
     result
 }
-
-/*mod helper {
-    pub fn calc_slice_start_end(i : usize, chunk_size : usize)
-                                -> (usize, usize) {
-        let s = i * chunk_size;
-        let e = s + chunk_size - 1;
-        (s, e)
-    }
-}*/
 
 /// Reed-Solomon erasure code encoder/decoder.
 ///
@@ -994,7 +975,7 @@ impl ReedSolomon {
         check_piece_count!(all  => self, slices);
         check_slices!(slices);
 
-	      // Get the slice of output buffers.
+        // Get the slice of output buffers.
         let (mut_input, output) =
             slices.split_at_mut(self.data_shard_count);
 
@@ -1029,7 +1010,7 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
-	      // Do the coding.
+        // Do the coding.
         self.code_single_slice(&parity_rows,
                                i_data,
                                single_data,
@@ -1048,7 +1029,7 @@ impl ReedSolomon {
 
         check_slices!(slices);
 
-	      // Get the slice of output buffers.
+        // Get the slice of output buffers.
         let (mut_input, output) =
             slices.split_at_mut(self.data_shard_count);
 
@@ -1077,7 +1058,7 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
-	      // Do the coding.
+        // Do the coding.
         self.code_some_slices(&parity_rows,
                               data,
                               parity);
