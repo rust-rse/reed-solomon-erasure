@@ -116,15 +116,6 @@ pub fn slice_to_vec_of_refs<'a, T>(slice : &'a [T]) -> Vec<&'a T> {
     result
 }
 
-/*pub fn mut_slice_to_vec_of_mut_refs<'a, T>(slice : &'a mut [T])
-                                           -> Vec<&'a mut T> {
-    let mut result = Vec::with_capacity(slice.len());
-    for v in slice.iter_mut() {
-        result.push(v);
-    }
-    result
-}*/
-
 pub fn slices_are_equal<T>(slice1 : &[T],
                            slice2 : &[T]) -> bool
     where T : PartialEq
@@ -139,14 +130,3 @@ pub fn slices_are_equal<T>(slice1 : &[T],
     }
     true
 }
-
-/*
-pub fn mut_slices_to_slices<'a>(slices : &'a [&mut [u8]])
-                                -> Vec<&'a [u8]> {
-    let mut result : Vec<&[u8]> =
-        Vec::with_capacity(slices.len());
-    for slice in slices.into_iter() {
-        result.push(slice);
-    }
-    result
-}*/
