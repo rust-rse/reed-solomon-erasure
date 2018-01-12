@@ -285,8 +285,8 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// Return `Error::TooFewShardsPresent` when there are not
 /// enough shards for reconstruction.
 ///
-/// Return `Error::InvalidShardFlags` when the slice of flags is of
-/// different length to the shards provided.
+/// Return `Error::InvalidShardFlags` when the number of flags does not match
+/// the number of shards provided.
 ///
 /// # Variants of encoding methods
 ///
