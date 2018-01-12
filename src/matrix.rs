@@ -33,7 +33,7 @@ pub struct Matrix {
     row_count : usize,
     col_count : usize,
     data      : SmallVec<[u8; 1024]> // store in flattened structure
-        // the smallvec can hold a matrix of size up to 32x32 in stack
+    // the smallvec can hold a matrix of size up to 32x32 in stack
 }
 
 fn calc_matrix_row_start_end(col_count : usize,
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     fn test_matrix_inverse_pass_cases() {
         {
-		        // Test case validating inverse of the input Matrix.
+            // Test case validating inverse of the input Matrix.
             let m = matrix!([56, 23, 98],
                             [3, 100, 200],
                             [45, 201, 123]).invert().unwrap();
@@ -384,7 +384,7 @@ mod tests {
             assert_eq!(m, expect);
         }
         {
-		        // Test case validating inverse of the input Matrix.
+            // Test case validating inverse of the input Matrix.
             let m = matrix!([1, 0, 0, 0, 0],
                             [0, 1, 0, 0 ,0],
                             [0, 0, 0, 1, 0],
