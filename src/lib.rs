@@ -46,7 +46,7 @@ pub enum Error {
     IncorrectShardSize,
     TooFewShardsPresent,
     EmptyShard,
-    InvalidShardsIndicator,
+    InvalidShardFlags,
     InvalidIndex,
     InversionTreeError(inversion_tree::Error)
 }
@@ -1266,7 +1266,7 @@ impl ReedSolomon {
         check_slices!(slices);
 
         if slices.len() != slice_present.len() {
-            return Err(Error::InvalidShardsIndicator);
+            return Err(Error::InvalidShardFlags);
         }
 
         // Quick check: are all of the shards present?  If so, there's

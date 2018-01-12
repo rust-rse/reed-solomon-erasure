@@ -534,11 +534,11 @@ fn test_reconstruct_error_handling() {
         shard_refs[0][2] = 103;
 
         let shards_present = [false, true, true, true, true];
-        assert_eq!(Error::InvalidShardsIndicator,
+        assert_eq!(Error::InvalidShardFlags,
                    r.reconstruct(&mut shard_refs, &shards_present).unwrap_err());
 
         let shards_present = [false, true, true];
-        assert_eq!(Error::InvalidShardsIndicator,
+        assert_eq!(Error::InvalidShardFlags,
                    r.reconstruct(&mut shard_refs, &shards_present).unwrap_err());
 
         let shards_present = [true, false, false, false];
