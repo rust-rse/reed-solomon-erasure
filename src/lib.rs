@@ -1114,6 +1114,13 @@ impl ReedSolomon {
 
     /// Reconstructs all shards.
     ///
+    /// The shards marked not present are only overwritten when no error
+    /// is detected.
+    ///
+    /// This means if the method returns an `Error`, then nothing is touched.
+    ///
+    /// ## Notes
+    ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct(&self,
@@ -1125,6 +1132,13 @@ impl ReedSolomon {
     }
 
     /// Reconstructs only the data shards.
+    ///
+    /// The shards marked not present are only overwritten when no error
+    /// is detected.
+    ///
+    /// This means if the method returns an `Error`, then nothing is touched.
+    ///
+    /// ## Notes
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
