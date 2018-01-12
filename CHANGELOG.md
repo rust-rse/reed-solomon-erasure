@@ -1,3 +1,6 @@
+## 2.2.0
+  - Renamed Error::InvalidShardsIndicator to Error::InvalidShardFlags
+
 ## 2.1.1
   - Fixed SBS error checking code
   - Documentation fixes and polishing
