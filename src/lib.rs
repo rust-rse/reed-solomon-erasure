@@ -320,7 +320,6 @@ pub struct ReedSolomon {
     total_shard_count  : usize,
     matrix             : Matrix,
     tree               : InversionTree,
-    //parity_rows        : Vec<Vec<[u8]>>,
     pparam             : ParallelParam
 }
 
