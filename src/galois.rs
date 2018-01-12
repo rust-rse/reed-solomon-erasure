@@ -112,9 +112,10 @@ fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
             n += 1;
         }
     }
-    /*for n in 0..input.len() {
-        out[n] = mt[input[n] as usize]
-    }*/
+    /* for n in 0..input.len() {
+     *   out[n] = mt[input[n] as usize]
+     * }
+     */
 }
 
 pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
@@ -153,9 +154,10 @@ pub fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
             n        += 1;
         }
     }
-    /*for n in 0..input.len() {
-        out[n] ^= mt[input[n] as usize];
-    }*/
+    /* for n in 0..input.len() {
+     *   out[n] ^= mt[input[n] as usize];
+     * }
+     */
 }
 
 pub fn slice_xor(input : &[u8], out : &mut [u8]) {
@@ -191,9 +193,10 @@ pub fn slice_xor(input : &[u8], out : &mut [u8]) {
             n        += 1;
         }
     }
-    /*for n in 0..input.len() {
-        out[n] ^= input[n]
-    }*/
+    /* for n in 0..input.len() {
+     *   out[n] ^= input[n]
+     * }
+     */
 }
 
 #[cfg(
