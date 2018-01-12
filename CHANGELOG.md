@@ -2,6 +2,7 @@
   - Renamed Error::InvalidShardsIndicator to Error::InvalidShardFlags
   - Added more details to documentation on error handling
   - Error handling code overhaul and checks for all method variants
+  - Dead commented out code cleanup
 
 ## 2.1.1
   - Fixed SBS error checking code
