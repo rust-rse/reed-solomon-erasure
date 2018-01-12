@@ -1118,8 +1118,6 @@ impl ReedSolomon {
     ///
     /// This means if the method returns an `Error`, then nothing is touched.
     ///
-    /// ## Notes
-    ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct(&self,
@@ -1136,8 +1134,6 @@ impl ReedSolomon {
     /// is detected.
     ///
     /// This means if the method returns an `Error`, then nothing is touched.
-    ///
-    /// ## Notes
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
