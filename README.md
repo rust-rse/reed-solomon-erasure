@@ -106,6 +106,12 @@ Many thanks to the following people for testing and benchmarking on various plat
 Polished version of the results will be published later.
 
 ## Notes
+#### Code quality review
+If you'd like to evaluate the quality of this library, you may find audit comments helpful.
+
+Simply search for "AUDIT" to see the dev notes that are aimed at facilitating code reviews.
+
+#### Implementation notes
 The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon).
 
 The `2.X.X` implementation mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and copies C files from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
