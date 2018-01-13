@@ -20,7 +20,7 @@ See [Notes](#notes) and [License](#license) section for details.
 Add the following to your `Cargo.toml` for the normal version(tries to compile with SIMD operations when applicable)
 ```toml
 [dependencies]
-reed-solomon-erasure = "2.1"
+reed-solomon-erasure = "2.2"
 ```
 or the following for the pure rust version
 ```toml
