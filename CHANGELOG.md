@@ -1,12 +1,10 @@
 ## 2.2.0
-  - Renamed Error::InvalidShardsIndicator to Error::InvalidShardFlags
+  - Fixed SBS error checking code
+  - Documentation fixes and polishing
+  - Renamed `Error::InvalidShardsIndicator` to `Error::InvalidShardFlags`
   - Added more details to documentation on error handling
   - Error handling code overhaul and checks for all method variants
   - Dead commented out code cleanup and indent fix
-
-## 2.1.1
-  - Fixed SBS error checking code
-  - Documentation fixes and polishing
 
 ## 2.1.0
   - Added Nicolas's SIMD C code files, gaining major speedup on supported CPUs
