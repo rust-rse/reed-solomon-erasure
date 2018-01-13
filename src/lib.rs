@@ -668,6 +668,8 @@ impl ReedSolomon {
     //   X =A, B, C=> Y : X relegate error checking responsibilities A, B, C to Y
     //   x := A, B, C   : X needs to handle responsibilities A, B, C
     //
+    // Encode methods
+    //
     // `encode_single_shard`     =ALL=> `encode_single`
     // `encode_single_shard_sep` =ALL=> `encode_single_sep`
     // `encode_shards`           =ALL=> `encode`
@@ -681,6 +683,36 @@ impl ReedSolomon {
     //   - check length of `parity` matches parity shard count exactly
     //   - check consistency of length of individual parity slices
     //   - check consistency of length of `single_data` against parity slices
+    // `encode` :=
+    //   - check length of `slices` matches total shard count exactly
+    //   - check consistency of length of individual slices
+    // `encode_sep` :=
+    //   - check length of `data` matches data shard count exactly
+    //   - check length of `parity` matches parity shard count exactly
+    //   - check consistency of length of individual data slices
+    //   - check consistency of length of individual parity slices
+    //
+    // Verify methods
+    //
+    // `verify_shards` =ALL=> `verify`
+    // `verify` :=
+    //   - check length of `slices` matches total shard count exactly
+    //   - check consistency of length of individual slices
+    //
+    // Reconstruct methods
+    //
+    // `reconstruct`             =ALL=> `reconstruct_internal`
+    // `reconstruct_data`        =ALL=> `reconstruct_internal`
+    // `reconstruct_shards`      =ALL=> `reconstruct_shards_internal`
+    // `reconstruct_data_shards` =ALL=> `reconstruct_shards_internal`
+    // `reconstruct_shards_internal` :=
+    //   - check length of `shards` matches total shard count exactly
+    //   - check at least one option shard is not `None`
+    //   - check consistency of length of individual option shards if exist
+    // `reconstruct_internal` :=
+    //   - check length of `slices` matches total shard count exactly
+    //   - check consistency of length of individual slices
+    //   - check length of `slice_present` matches length of `slices`
 
     fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
         let mut parity_rows  = SmallVec::with_capacity(self.parity_shard_count);
