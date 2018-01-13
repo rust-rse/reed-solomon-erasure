@@ -626,6 +626,13 @@ macro_rules! check_slices {
                 return Err(Error::IncorrectShardSize);
             }
         }
+    }};
+    (
+        $slices:ident, $single:ident
+    ) => {{
+        if $single.len() != $slices[0].len() {
+            return Err(Error::IncorrectShardSize);
+        }
     }}
 }
 
@@ -654,6 +661,27 @@ macro_rules! check_slice_index {
 }
 
 impl ReedSolomon {
+    // AUDIT
+    //
+    // Error detection responsibilities
+    // Terminology and symbols :
+    //   X =A, B, C=> Y : X relegate error checking responsibilities A, B, C to Y
+    //   x := A, B, C   : X needs to handle responsibilities A, B, C
+    //
+    // `encode_single_shard`     =ALL=> `encode_single`
+    // `encode_single_shard_sep` =ALL=> `encode_single_sep`
+    // `encode_shards`           =ALL=> `encode`
+    // `encode_shards_sep`       =ALL=> `encode_sep`
+    // `encode_single` :=
+    //   - check index `i_data` within range [0, data shard count)
+    //   - check length of `slices` matches total shard count exactly
+    //   - check consistency of length of individual slices
+    // `encode_single_sep` :=
+    //   - check index `i_data` within range [0, data shard count)
+    //   - check length of `parity` matches parity shard count exactly
+    //   - check consistency of length of individual parity slices
+    //   - check consistency of length of `single_data` against parity slices
+
     fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
         let mut parity_rows  = SmallVec::with_capacity(self.parity_shard_count);
         let matrix           = &self.matrix;
@@ -1002,10 +1030,7 @@ impl ReedSolomon {
         check_slice_index!(data   => self, i_data);
         check_piece_count!(parity => self, parity);
         check_slices!(parity);
-
-        if single_data.len() != parity[0].len() {
-            return Err(Error::IncorrectShardSize);
-        }
+        check_slices!(parity, single_data);
 
         let parity_rows = self.get_parity_rows();
 
@@ -1025,7 +1050,6 @@ impl ReedSolomon {
     pub fn encode(&self,
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
         check_piece_count!(all => self, slices);
-
         check_slices!(slices);
 
         // Get the slice of output buffers.
