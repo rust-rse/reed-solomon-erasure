@@ -357,7 +357,7 @@ pub struct ParallelParam {
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # use reed_solomon_erasure::*;
 /// # fn main () {
-/// let r = ReedSolomon::new(3, 2);
+/// let r = ReedSolomon::new(3, 2).unwrap();
 ///
 /// let mut sbs = ShardByShard::new(&r);
 ///

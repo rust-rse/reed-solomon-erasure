@@ -96,14 +96,16 @@ fn fill_random(arr : &mut [u8]) {
 }
 
 #[test]
-#[should_panic]
 fn test_no_data_shards() {
-    ReedSolomon::new(0, 1); }
+    assert_eq!(Error::TooFewDataShards, ReedSolomon::new(0, 1).unwrap_err()); }
 
 #[test]
-#[should_panic]
 fn test_no_parity_shards() {
-    ReedSolomon::new(1, 0); }
+    assert_eq!(Error::TooFewParityShards, ReedSolomon::new(1, 0).unwrap_err()); }
+
+#[test]
+fn test_too_many_shards() {
+    assert_eq!(Error::TooManyShards, ReedSolomon::new(129, 128).unwrap_err()); }
 
 #[test]
 fn test_shard_count() {
@@ -114,7 +116,7 @@ fn test_shard_count() {
 
         let total_shard_count = data_shard_count + parity_shard_count;
 
-        let r = ReedSolomon::new(data_shard_count, parity_shard_count);
+        let r = ReedSolomon::new(data_shard_count, parity_shard_count).unwrap();
 
         assert_eq!(data_shard_count,   r.data_shard_count());
         assert_eq!(parity_shard_count, r.parity_shard_count());
@@ -197,22 +199,17 @@ fn test_option_shards_to_shards_too_few_shards() {
 
 #[test]
 fn test_reedsolomon_clone() {
-    let r1 = ReedSolomon::new(10, 3);
+    let r1 = ReedSolomon::new(10, 3).unwrap();
     let r2 = r1.clone();
 
     assert_eq!(r1, r2);
 }
 
 #[test]
-#[should_panic]
-fn test_reedsolomon_too_many_shards() {
-    ReedSolomon::new(256, 1); }
-
-#[test]
 fn test_encoding() {
     let per_shard = 50_000;
 
-    let r = ReedSolomon::new(10, 3);
+    let r = ReedSolomon::new(10, 3).unwrap();
 
     let mut shards = make_random_shards!(per_shard, 13);
 
@@ -232,7 +229,7 @@ fn test_encoding() {
 fn test_reconstruct_shards() {
     let per_shard = 100_000;
 
-    let r = ReedSolomon::new(8, 5);
+    let r = ReedSolomon::new(8, 5).unwrap();
 
     let mut shards = make_random_shards!(per_shard, 13);
 
@@ -298,7 +295,7 @@ fn test_reconstruct_shards() {
 
 #[test]
 fn test_reconstruct() {
-    let r = ReedSolomon::new(2, 2);
+    let r = ReedSolomon::new(2, 2).unwrap();
 
     let mut shards : [[u8; 3]; 4] = [[0, 1, 2],
                                      [3, 4, 5],
@@ -386,7 +383,7 @@ fn test_reconstruct() {
 
 #[test]
 fn test_reconstruct_error_handling() {
-    let r = ReedSolomon::new(2, 2);
+    let r = ReedSolomon::new(2, 2).unwrap();
 
     let mut shards : [[u8; 3]; 4] = [[0, 1, 2],
                                      [3, 4, 5],
@@ -431,7 +428,7 @@ fn test_reconstruct_error_handling() {
 
 #[test]
 fn test_one_encode() {
-    let r = ReedSolomon::new(5, 5);
+    let r = ReedSolomon::new(5, 5).unwrap();
 
     let mut shards = shards!([0, 1],
                              [4, 5],
@@ -464,7 +461,7 @@ fn test_one_encode() {
 
 #[test]
 fn test_verify_too_few_shards() {
-    let r = ReedSolomon::new(3, 2);
+    let r = ReedSolomon::new(3, 2).unwrap();
 
     let shards = make_random_shards!(10, 4);
 
@@ -473,7 +470,7 @@ fn test_verify_too_few_shards() {
 
 #[test]
 fn test_slices_or_shards_count_check() {
-    let r = ReedSolomon::new(3, 2);
+    let r = ReedSolomon::new(3, 2).unwrap();
 
     {
         let mut shards = make_random_shards!(10, 4);
@@ -499,7 +496,7 @@ fn test_slices_or_shards_count_check() {
 
 #[test]
 fn test_check_slices_or_shards_size() {
-    let r = ReedSolomon::new(2, 2);
+    let r = ReedSolomon::new(2, 2).unwrap();
 
     {
         let mut shards = shards!([0, 0, 0],
@@ -589,7 +586,7 @@ fn test_check_slices_or_shards_size() {
 #[test]
 fn shardbyshard_encode_correctly() {
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut shards = make_random_shards!(10_000, 13);
@@ -612,7 +609,7 @@ fn shardbyshard_encode_correctly() {
         assert_eq!(0, sbs.cur_input_index());
     }
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut slices : [[u8; 100]; 13] =
@@ -654,7 +651,7 @@ fn shardbyshard_encode_correctly() {
 #[test]
 fn shardbyshard_encode_sep_correctly() {
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut shards = make_random_shards!(10_000, 13);
@@ -682,7 +679,7 @@ fn shardbyshard_encode_sep_correctly() {
         assert_eq!(0, sbs.cur_input_index());
     }
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut slices : [[u8; 100]; 13] =
@@ -733,7 +730,7 @@ fn shardbyshard_encode_sep_correctly() {
 #[test]
 fn shardbyshard_encode_correctly_more_rigorous() {
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut shards = make_random_shards!(10_000, 13);
@@ -762,7 +759,7 @@ fn shardbyshard_encode_correctly_more_rigorous() {
         assert_eq!(0, sbs.cur_input_index());
     }
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut slices : [[u8; 100]; 13] =
@@ -815,7 +812,7 @@ fn shardbyshard_encode_correctly_more_rigorous() {
 #[test]
 fn shardbyshard_error_handling() {
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut shards = make_random_shards!(10_000, 13);
@@ -845,7 +842,7 @@ fn shardbyshard_error_handling() {
         assert_eq!(0, sbs.cur_input_index());
     }
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut slices : [[u8; 100]; 13] =
@@ -886,7 +883,7 @@ fn shardbyshard_error_handling() {
 #[test]
 fn shardbyshard_sep_error_handling() {
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut shards = make_random_shards!(10_000, 13);
@@ -920,7 +917,7 @@ fn shardbyshard_sep_error_handling() {
         assert_eq!(0, sbs.cur_input_index());
     }
     {
-        let r       = ReedSolomon::new(10, 3);
+        let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
 
         let mut slices : [[u8; 100]; 13] =
@@ -967,7 +964,7 @@ fn shardbyshard_sep_error_handling() {
 
 #[test]
 fn test_encode_single_sep() {
-    let r = ReedSolomon::new(10, 3);
+    let r = ReedSolomon::new(10, 3).unwrap();
 
     {
         let mut shards = make_random_shards!(10, 13);
@@ -1026,7 +1023,7 @@ fn test_encode_single_sep() {
 
 #[test]
 fn test_encode_sep() {
-    let r = ReedSolomon::new(10, 3);
+    let r = ReedSolomon::new(10, 3).unwrap();
 
     {
         let mut shards = make_random_shards!(10_000, 13);
@@ -1077,7 +1074,7 @@ fn test_encode_sep() {
 
 #[test]
 fn test_encode_single_sep_error_handling() {
-    let r = ReedSolomon::new(10, 3);
+    let r = ReedSolomon::new(10, 3).unwrap();
 
     {
         let mut shards = make_random_shards!(1000, 13);
@@ -1177,7 +1174,7 @@ fn test_encode_single_sep_error_handling() {
 
 #[test]
 fn test_encode_sep_error_handling() {
-    let r = ReedSolomon::new(10, 3);
+    let r = ReedSolomon::new(10, 3).unwrap();
 
     {
         let mut shards = make_random_shards!(1000, 13);
@@ -1314,7 +1311,7 @@ fn test_encode_sep_error_handling() {
 
 #[test]
 fn test_encode_single_error_handling() {
-    let r = ReedSolomon::new(10, 3);
+    let r = ReedSolomon::new(10, 3).unwrap();
 
     {
         let mut shards = make_random_shards!(1000, 13);
