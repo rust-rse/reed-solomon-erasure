@@ -1,3 +1,6 @@
+## 2.3.0
+  - Made Reed-Solomon codec creation methods return error instead of panic when shard numbers are not correct
+
 ## 2.2.0
   - Fixed SBS error checking code
   - Documentation fixes and polishing
