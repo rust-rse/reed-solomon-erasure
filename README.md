@@ -40,7 +40,7 @@ extern crate reed_solomon_erasure;
 use reed_solomon_erasure::*;
 
 fn main () {
-    let r = ReedSolomon::new(3, 2); // 3 data shards, 2 parity shards
+    let r = ReedSolomon::new(3, 2).unwrap(); // 3 data shards, 2 parity shards
 
     let mut master_copy = shards!([0, 1,  2,  3],
                                   [4, 5,  6,  7],
