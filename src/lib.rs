@@ -566,7 +566,7 @@ impl Clone for ReedSolomon {
     fn clone(&self) -> ReedSolomon {
         ReedSolomon::with_pparam(self.data_shard_count,
                                  self.parity_shard_count,
-                                 self.pparam.clone())
+                                 self.pparam.clone()).unwrap()
     }
 }
 
@@ -734,7 +734,8 @@ impl ReedSolomon {
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
     pub fn new(data_shards : usize,
-               parity_shards : usize) -> ReedSolomon {
+               parity_shards : usize)
+               -> Result<ReedSolomon, Error> {
         Self::with_pparam(data_shards,
                           parity_shards,
                           ParallelParam::with_default())
@@ -743,29 +744,30 @@ impl ReedSolomon {
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with custom `ParallelParam`.
     pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
-                       pparam        : ParallelParam) -> ReedSolomon {
+                       pparam        : ParallelParam)
+                       -> Result<ReedSolomon, Error> {
         if data_shards == 0 {
-            panic!("Too few data shards")
+            return Err(Error::TooFewDataShards);
         }
         if parity_shards == 0 {
-            panic!("Too few pairty shards")
+            return Err(Error::TooFewParityShards);
         }
         if 256 < data_shards + parity_shards {
-            panic!("Too many shards, max is 256")
+            return Err(Error::TooManyShards);
         }
 
         let total_shards    = data_shards + parity_shards;
 
         let matrix = Self::build_matrix(data_shards, total_shards);
 
-        ReedSolomon {
+        Ok(ReedSolomon {
             data_shard_count   : data_shards,
             parity_shard_count : parity_shards,
             total_shard_count  : total_shards,
             matrix,
             tree               : InversionTree::new(data_shards, parity_shards),
             pparam
-        }
+        })
     }
 
     pub fn data_shard_count(&self) -> usize {
