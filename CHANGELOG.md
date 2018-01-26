@@ -1,3 +1,6 @@
+## 2.3.1
+  - Added info on encoding behaviour to doc
+
 ## 2.3.0
   - Made Reed-Solomon codec creation methods return error instead of panic when shard numbers are not correct
 
