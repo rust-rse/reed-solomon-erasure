@@ -733,6 +733,12 @@ impl ReedSolomon {
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
+    ///
+    /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
+    ///
+    /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
+    ///
+    /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
     pub fn new(data_shards : usize,
                parity_shards : usize)
                -> Result<ReedSolomon, Error> {
@@ -742,6 +748,14 @@ impl ReedSolomon {
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with custom `ParallelParam`.
+    ///
+    /// If `pparam.bytes_per_encode == 0`, it will be set to 1.
+    ///
+    /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
+    ///
+    /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
+    ///
+    /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
     pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
                        pparam        : ParallelParam)
@@ -759,6 +773,11 @@ impl ReedSolomon {
         let total_shards    = data_shards + parity_shards;
 
         let matrix = Self::build_matrix(data_shards, total_shards);
+
+        let mut pparam = pparam;
+        if pparam.bytes_per_encode == 0 {
+            pparam.bytes_per_encode = 1;
+        }
 
         Ok(ReedSolomon {
             data_shard_count   : data_shards,
