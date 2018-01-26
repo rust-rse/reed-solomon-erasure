@@ -313,6 +313,16 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `encode_shards_sep` | `encode_single_shard_sep` |
 /// | `encode` | `encode_single` |
 /// | `encode_sep` | `encode_single_sep` |
+///
+/// # Encoding behaviour
+///
+/// ## For `encode`, `encode_shards`
+///
+/// You do not need to clear the parity shards beforehand, as the methods will overwrite them completely.
+///
+/// ## For `encode_single_shard`, `encode_single_shard_sep`, `encode_single`, `encode_`
+///
+/// Calling them with `i_data` being `0` will overwrite the parity shards completely. If you are using the methods correctly, then you do not need to clear the parity shards beforehand.
 #[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
@@ -749,7 +759,7 @@ impl ReedSolomon {
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with custom `ParallelParam`.
     ///
-    /// If `pparam.bytes_per_encode == 0`, it will be set to 1.
+    /// If `pparam.bytes_per_encode == 0`, it will be set to `1`.
     ///
     /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
     ///
