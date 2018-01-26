@@ -770,9 +770,9 @@ impl ReedSolomon {
             return Err(Error::TooManyShards);
         }
 
-        let total_shards    = data_shards + parity_shards;
+        let total_shards = data_shards + parity_shards;
 
-        let matrix = Self::build_matrix(data_shards, total_shards);
+        let matrix       = Self::build_matrix(data_shards, total_shards);
 
         let mut pparam = pparam;
         if pparam.bytes_per_encode == 0 {
