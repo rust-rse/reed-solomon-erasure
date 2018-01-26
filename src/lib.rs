@@ -320,7 +320,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// You do not need to clear the parity shards beforehand, as the methods will overwrite them completely.
 ///
-/// ## For `encode_single_shard`, `encode_single_shard_sep`, `encode_single`, `encode_`
+/// ## For `encode_single_shard`, `encode_single_shard_sep`, `encode_single`, `encode_single_sep`
 ///
 /// Calling them with `i_data` being `0` will overwrite the parity shards completely. If you are using the methods correctly, then you do not need to clear the parity shards beforehand.
 #[derive(Debug)]
