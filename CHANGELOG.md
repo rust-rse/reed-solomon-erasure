@@ -1,3 +1,15 @@
+## 2.3.2
+  - Made `==`(`eq`) for `ReedSolomon` more reasonable
+    - Previously `==` would compare
+      - data shard count
+      - parity shard count
+      - total shard count
+      - internal encoding matrix
+      - internal `ParallelParam`
+    - Now it only compares
+      - data shard count
+      - parity shard count
+
 ## 2.3.1
   - Added info on encoding behaviour to doc
 
