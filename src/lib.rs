@@ -1453,11 +1453,13 @@ impl ReedSolomon {
                 for i_slice in 0..self.data_shard_count {
                     let slice =
                         if slice_present[i_slice] {
-                            let result = sub_shards[i_old_data_slice];
+                            let result : &[u8] =
+                                sub_shards[i_old_data_slice];
                             i_old_data_slice += 1;
                             result
                         } else {
-                            let result = &missing_data_slices[i_new_data_slice];
+                            let result : &[u8] =
+                                missing_data_slices[i_new_data_slice];
                             i_new_data_slice += 1;
                             result
                         };
