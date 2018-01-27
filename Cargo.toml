@@ -1,5 +1,5 @@
 [package]
-name = "reed-solomon-erasure"
+name    = "reed-solomon-erasure"
 version = "2.3.2"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 build   = "build.rs"
@@ -9,19 +9,19 @@ exclude = [
     "NicolasT_reedsolomon/*"
 ]
 
-description = "Rust implementation of Reed-Solomon erasure coding"
+description   = "Rust implementation of Reed-Solomon erasure coding"
 
 documentation = "https://docs.rs/reed-solomon-erasure"
 homepage      = "https://github.com/darrenldl/reed-solomon-erasure"
 repository    = "https://github.com/darrenldl/reed-solomon-erasure"
 
-readme = "README.md"
+readme        = "README.md"
 
-keywords   = ["reed-solomon", "erasure"]
+keywords      = ["reed-solomon", "erasure"]
 
-categories = ["encoding"]
+categories    = ["encoding"]
 
-license = "MIT"
+license       = "MIT"
 
 [features]
 pure-rust = []
@@ -33,12 +33,12 @@ codecov   = { repository = "darrenldl/reed-solomon-erasure" }
 coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
-rayon = "0.9"
+rayon    = "0.9"
 smallvec = "0.6"
-libc = "0.2"
+libc     = "0.2"
 
 [dev-dependencies]
-rand  = "0.4"
+rand = "0.4"
 
 [build-dependencies]
 cc = "1.0"
