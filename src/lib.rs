@@ -584,9 +584,6 @@ impl PartialEq for ReedSolomon {
     fn eq(&self, rhs : &ReedSolomon) -> bool {
         self.data_shard_count == rhs.data_shard_count
             && self.parity_shard_count == rhs.parity_shard_count
-            && self.total_shard_count  == rhs.total_shard_count
-            && self.matrix             == rhs.matrix
-            && self.pparam             == rhs.pparam
     }
 }
 
