@@ -135,4 +135,4 @@ The C files for SIMD operations are copied(with none/minor modifications) from [
 The source code copied directly from Nicolas Trangez's project repo are under the MIT License as used by the project, the files are in `NicolasT_reedsolomon`
 
 #### TL;DR
-All files are released under MIT License
+All files are released under the MIT License
