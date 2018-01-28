@@ -30,6 +30,7 @@ use rayon::prelude::*;
 use std::sync::Arc;
 
 extern crate smallvec;
+use smallvec::SmallVec;
 
 use matrix::Matrix;
 use inversion_tree::InversionTree;
