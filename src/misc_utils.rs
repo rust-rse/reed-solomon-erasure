@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::cell::Cell;
 use super::smallvec::SmallVec;
 
@@ -38,6 +36,31 @@ pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
         }
 
         cur_index += 1;
+        rem_len   -= chunk_size;
+    }
+    result
+}
+
+pub fn split_slice_mut<'a, T>(slice      : &'a mut [T],
+                              chunk_size : usize)
+                              -> Vec<&'a mut [T]> {
+    let mut rem_len   = slice.len();
+    let mut result    = Vec::with_capacity(slice.len() / chunk_size + 1);
+    let rem_slice     = Cell::new(slice);
+
+    loop {
+        if chunk_size < rem_len {
+            let slice = rem_slice.take();
+            let (l, r) = slice.split_at_mut(chunk_size);
+            result.push(l);
+            rem_slice.set(r);
+        } else if rem_len > 0 {
+            result.push(rem_slice.take());
+            break;
+        } else {
+            break;
+        }
+
         rem_len   -= chunk_size;
     }
     result
@@ -91,16 +114,6 @@ pub fn split_slice_with_index<'a, T> (slice      : &'a [T],
 
         cur_index += 1;
         rem_len   -= chunk_size;
-    }
-    result
-}
-
-pub fn split_slice_mut<'a, T> (slice      : &'a mut [T],
-                               chunk_size : usize)
-                               -> Vec<&'a mut [T]> {
-    let mut result = Vec::with_capacity(slice.len());
-    for (_, v) in split_slice_mut_with_index(slice, chunk_size) {
-        result.push(v);
     }
     result
 }

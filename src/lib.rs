@@ -837,9 +837,9 @@ impl ReedSolomon {
                                           input,
                                           output);
                     } else {
-                        misc_utils::split_slice_mut_with_index
-                            (output, self.pparam.bytes_per_encode)
+                        output.par_chunks_mut(self.pparam.bytes_per_encode)
                             .into_par_iter()
+                            .enumerate()
                             .for_each(|(i, output)| {
                                 let start =
                                     i * self.pparam.bytes_per_encode;
@@ -854,9 +854,9 @@ impl ReedSolomon {
                                               input,
                                               output);
                     } else {
-                        misc_utils::split_slice_mut_with_index
-                            (output, self.pparam.bytes_per_encode)
+                        output.par_chunks_mut(self.pparam.bytes_per_encode)
                             .into_par_iter()
+                            .enumerate()
                             .for_each(|(i, output)| {
                                 let start =
                                     i * self.pparam.bytes_per_encode;
