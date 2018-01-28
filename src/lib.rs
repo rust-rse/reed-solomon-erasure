@@ -8,7 +8,6 @@
 //! and simply leave out the corrupted shards when attempting to reconstruct
 //! the missing data.
 
-//#![allow(dead_code)]
 mod misc_utils;
 mod galois;
 mod matrix;
