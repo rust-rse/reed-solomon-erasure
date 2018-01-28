@@ -3,6 +3,19 @@
 use std::cell::Cell;
 use super::smallvec::SmallVec;
 
+pub fn make_splitter<F, T>(chunk_size : usize)
+                           -> Box<Fn(&mut [T]) -> (&mut [T], Option<&mut [T]>)>
+{
+    Box::new(move |slice : &mut [T]| {
+        if chunk_size < slice.len() {
+            let (l, r) = slice.split_at_mut(chunk_size);
+            (l, Some(r))
+        } else {
+            (slice, None)
+        }
+    })
+}
+
 pub fn split_slice_mut_with_index<'a, T> (slice      : &'a mut [T],
                                           chunk_size : usize)
                                           -> Vec<(usize, &'a mut [T])> {
