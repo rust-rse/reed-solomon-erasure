@@ -104,10 +104,21 @@ pub fn split_slice<'a, T> (slice      : &'a [T],
 
 pub fn breakdown_slice_mut_with_index<'a, T>(slice : &'a mut [T]) -> Vec<(usize, &'a mut T)> {
     let mut result = Vec::with_capacity(slice.len());
-    for (i, v) in split_slice_mut_with_index(slice, 1).into_iter() {
-        result.push((i, &mut v[0]));
+    let mut cur_index = 0;
+    for s in slice.into_iter() {
+        result.push((cur_index, s));
+        cur_index += 1;
     }
     result
+}
+
+pub fn breakdown_slice_mut_with_index_push_to_smallvec<'a, T>(slice  : &'a mut [&mut [T]],
+                                                              buffer : &mut SmallVec<[(usize, &'a mut [T]); 2048]>) {
+    let mut cur_index = 0;
+    for s in slice.into_iter() {
+        buffer.push((cur_index, s));
+        cur_index += 1;
+    }
 }
 
 pub fn breakdown_slice_with_index<'a, T>(slice : &'a [T]) -> Vec<(usize, &'a T)> {

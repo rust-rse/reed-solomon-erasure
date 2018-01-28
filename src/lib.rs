@@ -825,9 +825,9 @@ impl ReedSolomon {
                          i_input     : usize,
                          input       : &[u8],
                          outputs     : &mut [&mut [u8]]) {
-        misc_utils::breakdown_slice_mut_with_index
-            (outputs)
+        outputs
             .into_par_iter()
+            .enumerate()
             .for_each(|(i_row, output)| {
                 let matrix_row_to_use = matrix_rows[i_row][i_input];
 
