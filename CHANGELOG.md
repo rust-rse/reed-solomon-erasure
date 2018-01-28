@@ -1,3 +1,7 @@
+## 2.3.3
+  - Replaced all slice splitting functions in `misc_utils` with std lib ones or rayon ones
+    - This means fewer heap allocations in general
+
 ## 2.3.2
   - Made `==`(`eq`) for `ReedSolomon` more reasonable
     - Previously `==` would compare
