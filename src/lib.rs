@@ -878,13 +878,13 @@ impl ReedSolomon {
             make_blank_shards(inputs[0].len(), to_check.len());
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            misc_utils::breakdown_slice_mut_with_index
-                (&mut outputs)
-                .into_par_iter()
+            outputs
+                .par_iter_mut()
+                .enumerate()
                 .for_each(|(i_row, output)| {
-                    misc_utils::split_slice_mut_with_index
-                        (output, self.pparam.bytes_per_encode)
+                    output.par_chunks_mut(self.pparam.bytes_per_encode)
                         .into_par_iter()
+                        .enumerate()
                         .for_each(|(i, output)| {
                             let start =
                                 i * self.pparam.bytes_per_encode;
@@ -894,14 +894,15 @@ impl ReedSolomon {
                         })
                 })
         }
-        let any_shard_mismatch = misc_utils::breakdown_slice_with_index
-            (&outputs)
-            .into_par_iter()
+        let any_shard_mismatch =
+            outputs
+            .par_iter_mut()
+            .enumerate()
             .map(|(i, output)| {
                 let to_check = to_check[i];
-                misc_utils::split_slice_with_index
-                    (output, self.pparam.bytes_per_encode)
+                output.par_chunks(self.pparam.bytes_per_encode)
                     .into_par_iter()
+                    .enumerate()
                     .map(|(i, output)| {
                         let start =
                             i * self.pparam.bytes_per_encode;
