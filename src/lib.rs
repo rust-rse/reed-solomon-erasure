@@ -30,7 +30,6 @@ use rayon::prelude::*;
 use std::sync::Arc;
 
 extern crate smallvec;
-use smallvec::SmallVec;
 
 use matrix::Matrix;
 use inversion_tree::InversionTree;
@@ -339,7 +338,7 @@ pub struct ParallelParam {
     /// Number of bytes to split the slices into for computations
     /// which can be done in parallel.
     ///
-    /// Default is 8192.
+    /// Default is 32768.
     pub bytes_per_encode  : usize,
     //pub shards_per_encode : usize,
 }
@@ -411,7 +410,7 @@ impl ParallelParam {
     }
 
     pub fn with_default() -> ParallelParam {
-        Self::new(8192,
+        Self::new(32768,
                   /*4*/)
     }
 }
