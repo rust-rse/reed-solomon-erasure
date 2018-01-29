@@ -1214,9 +1214,6 @@ impl ReedSolomon {
     /// This fills in the missing shards with blank shards only
     /// if there are enough shards for reconstruction.
     ///
-    /// Note that the missing parity shards are filled in with
-    /// blank shards even though they are not used.
-    ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct_shards(&self,
