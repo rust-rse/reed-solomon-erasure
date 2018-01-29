@@ -109,7 +109,7 @@ macro_rules! shards {
 ///                             [4, 5, 6]];
 ///
 /// let refs : Vec<&[u8]> =
-///     convert_2D_slices!(array =to_vec=> &[u8]);
+///     convert_2D_slices!(array =>to_vec &[u8]);
 /// # }
 /// ```
 /// ## Byte arrays on stack to `Vec<&mut [u8]>` (borrow mutably)
@@ -120,7 +120,7 @@ macro_rules! shards {
 ///                                 [4, 5, 6]];
 ///
 /// let refs : Vec<&mut [u8]> =
-///     convert_2D_slices!(array =to_mut_vec=> &mut [u8]);
+///     convert_2D_slices!(array =>to_mut_vec &mut [u8]);
 /// # }
 /// ```
 /// ## Byte arrays on stack to `SmallVec<[&mut [u8]; 32]>` (borrow mutably)
@@ -133,7 +133,7 @@ macro_rules! shards {
 ///                                 [4, 5, 6]];
 ///
 /// let refs : SmallVec<[&mut [u8]; 32]> =
-///     convert_2D_slices!(array =to_mut=> SmallVec<[&mut [u8]; 32]>,
+///     convert_2D_slices!(array =>to_mut SmallVec<[&mut [u8]; 32]>,
 ///                        SmallVec::with_capacity);
 /// # }
 /// ```
@@ -147,7 +147,7 @@ macro_rules! shards {
 ///                          [4, 5, 6]);
 ///
 /// let refs : SmallVec<[&mut [u8]; 32]> =
-///     convert_2D_slices!(shards =to_mut=> SmallVec<[&mut [u8]; 32]>,
+///     convert_2D_slices!(shards =>to_mut SmallVec<[&mut [u8]; 32]>,
 ///                        SmallVec::with_capacity);
 /// # }
 /// ```
@@ -160,10 +160,10 @@ macro_rules! shards {
 /// let mut shards = shards!([1, 2, 3],
 ///                          [4, 5, 6]);
 ///
-/// let refs1 = convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+/// let refs1 = convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
 ///
 /// let refs2 : SmallVec<[&mut [u8]; 32]> =
-///     convert_2D_slices!(refs1 =into=> SmallVec<[&mut [u8]; 32]>,
+///     convert_2D_slices!(refs1 =>into SmallVec<[&mut [u8]; 32]>,
 ///                        SmallVec::with_capacity);
 /// # }
 /// ```
