@@ -1,3 +1,8 @@
+## 2.4.0
+  - Added more flexibility for `convert_2D_slices` macro
+    - Now accepts expressions rather than just identifiers
+    - The change requires change of syntax
+
 ## 2.3.3
   - Replaced all slice splitting functions in `misc_utils` with std lib ones or rayon ones
     - This means there are fewer heap allocations in general
