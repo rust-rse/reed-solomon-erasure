@@ -170,25 +170,25 @@ macro_rules! shards {
 #[macro_export]
 macro_rules! convert_2D_slices {
     (
-        $slice:ident =into_vec=> $dst_type:ty
+        $slice:expr =>into_vec $dst_type:ty
     ) => {
-        convert_2D_slices!($slice =into=> Vec<$dst_type>,
+        convert_2D_slices!($slice =>into Vec<$dst_type>,
                            Vec::with_capacity)
     };
     (
-        $slice:ident =to_vec=> $dst_type:ty
+        $slice:expr =>to_vec $dst_type:ty
     ) => {
-        convert_2D_slices!($slice =to=> Vec<$dst_type>,
+        convert_2D_slices!($slice =>to Vec<$dst_type>,
                            Vec::with_capacity)
     };
     (
-        $slice:ident =to_mut_vec=> $dst_type:ty
+        $slice:expr =>to_mut_vec $dst_type:ty
     ) => {
-        convert_2D_slices!($slice =to_mut=> Vec<$dst_type>,
+        convert_2D_slices!($slice =>to_mut Vec<$dst_type>,
                            Vec::with_capacity)
     };
     (
-        $slice:ident =into=> $dst_type:ty, $with_capacity:path
+        $slice:expr =>into $dst_type:ty, $with_capacity:path
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
@@ -198,7 +198,7 @@ macro_rules! convert_2D_slices {
         result
     }};
     (
-        $slice:ident =to=> $dst_type:ty, $with_capacity:path
+        $slice:expr =>to $dst_type:ty, $with_capacity:path
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
@@ -208,7 +208,7 @@ macro_rules! convert_2D_slices {
         result
     }};
     (
-        $slice:ident =to_mut=> $dst_type:ty, $with_capacity:path
+        $slice:expr =>to_mut $dst_type:ty, $with_capacity:path
     ) => {{
         let mut result : $dst_type =
             $with_capacity($slice.len());
@@ -980,7 +980,7 @@ impl ReedSolomon {
                                i_data : usize,
                                shards : &mut [Shard]) -> Result<(), Error> {
         let mut slices : SmallVec<[&mut [u8]; 32]> =
-            convert_2D_slices!(shards =into=> SmallVec<[&mut [u8]; 32]>,
+            convert_2D_slices!(shards =>into SmallVec<[&mut [u8]; 32]>,
                                SmallVec::with_capacity);
 
         self.encode_single(i_data, &mut slices)
@@ -1005,7 +1005,7 @@ impl ReedSolomon {
                                    single_data : &Shard,
                                    parity      : &mut[Shard]) -> Result<(), Error> {
         let mut parity : SmallVec<[&mut [u8]; 32]> =
-            convert_2D_slices!(parity =into=> SmallVec<[&mut [u8]; 32]>,
+            convert_2D_slices!(parity =>into SmallVec<[&mut [u8]; 32]>,
                                SmallVec::with_capacity);
 
         self.encode_single_sep(i_data, single_data, &mut parity)
@@ -1019,7 +1019,7 @@ impl ReedSolomon {
     pub fn encode_shards(&self,
                          shards : &mut [Shard]) -> Result<(), Error> {
         let mut slices : SmallVec<[&mut [u8]; 32]> =
-            convert_2D_slices!(shards =into=> SmallVec<[&mut [u8]; 32]>,
+            convert_2D_slices!(shards =>into SmallVec<[&mut [u8]; 32]>,
                                SmallVec::with_capacity);
 
         self.encode(&mut slices)
@@ -1034,11 +1034,11 @@ impl ReedSolomon {
                              data   : &[Shard],
                              parity : &mut [Shard]) -> Result<(), Error> {
         let     data   : SmallVec<[&[u8]; 32]> =
-            convert_2D_slices!(data   =into=> SmallVec<[&[u8]; 32]>,
+            convert_2D_slices!(data   =>into SmallVec<[&[u8]; 32]>,
                                SmallVec::with_capacity);
 
         let mut parity : SmallVec<[&mut [u8]; 32]> =
-            convert_2D_slices!(parity =into=> SmallVec<[&mut [u8]; 32]>,
+            convert_2D_slices!(parity =>into SmallVec<[&mut [u8]; 32]>,
                                SmallVec::with_capacity);
 
         self.encode_sep(&data, &mut parity)
@@ -1117,7 +1117,7 @@ impl ReedSolomon {
             slices.split_at_mut(self.data_shard_count);
 
         let input =
-            convert_2D_slices!(mut_input =into=> SmallVec<[&[u8]; 32]>,
+            convert_2D_slices!(mut_input =>into SmallVec<[&[u8]; 32]>,
                                SmallVec::with_capacity);
 
         self.encode_sep(&input, output)
