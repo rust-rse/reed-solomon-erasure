@@ -20,12 +20,12 @@ See [Notes](#notes) and [License](#license) section for details.
 Add the following to your `Cargo.toml` for the normal version(tries to compile with SIMD operations when applicable)
 ```toml
 [dependencies]
-reed-solomon-erasure = "2.3"
+reed-solomon-erasure = "2.4"
 ```
 or the following for the pure rust version
 ```toml
 [dependencies]
-reed-solomon-erasure = { version = "2.3", features = ["pure-rust"] }
+reed-solomon-erasure = { version = "2.4", features = ["pure-rust"] }
 ```
 and the following to your crate root
 ```rust
