@@ -879,24 +879,12 @@ impl ReedSolomon {
         for _ in 0..to_check.len() {
             expected_parity_shards.push(vec![0; inputs[0].len()])
         }
-        for c in 0..self.data_shard_count {
-            let input = inputs[c];
-            expected_parity_shards
-                .par_iter_mut()
-                .enumerate()
-                .for_each(|(i_row, expected_parity_shard)| {
-                    expected_parity_shard.par_chunks_mut(self.pparam.bytes_per_encode)
-                        .into_par_iter()
-                        .enumerate()
-                        .for_each(|(i, expected)| {
-                            let start =
-                                i * self.pparam.bytes_per_encode;
-                            galois::mul_slice_xor(matrix_rows[i_row][c],
-                                                  &input[start..start + expected.len()],
-                                                  expected);
-                        })
-                })
-        }
+        let mut expected_parity_shards =
+            convert_2D_slices!(expected_parity_shards =>to_mut SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
+        self.code_some_slices(matrix_rows,
+                              inputs,
+                              &mut expected_parity_shards);
 
         // AUDIT
         //
