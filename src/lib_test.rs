@@ -303,27 +303,41 @@ fn test_reconstruct() {
                                      [100, 101, 102]];
 
     {
-        let mut shard_refs : Vec<&mut [u8]> =
-            Vec::with_capacity(3);
+        {
+            let mut shard_refs : Vec<&mut [u8]> =
+                Vec::with_capacity(3);
 
-        for shard in shards.iter_mut() {
-            shard_refs.push(shard);
+            for shard in shards.iter_mut() {
+                shard_refs.push(shard);
+            }
+
+            r.encode(&mut shard_refs).unwrap();
         }
 
-        r.encode(&mut shard_refs).unwrap();
+        let shard_refs =
+            convert_2D_slices!(shards =to_vec=> &[u8]);
+
+        assert!(r.verify(&shard_refs).unwrap());
     }
 
     {
-        let mut shard_refs =
-            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+        {
+            let mut shard_refs =
+                convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 
-        shard_refs[0][0] = 101;
-        shard_refs[0][1] = 102;
-        shard_refs[0][2] = 103;
+            shard_refs[0][0] = 101;
+            shard_refs[0][1] = 102;
+            shard_refs[0][2] = 103;
 
-        let shards_present = [false, true, true, true];
+            let shards_present = [false, true, true, true];
 
-        r.reconstruct(&mut shard_refs, &shards_present).unwrap();
+            r.reconstruct(&mut shard_refs, &shards_present).unwrap();
+        }
+
+        let shard_refs =
+            convert_2D_slices!(shards =to_vec=> &[u8]);
+
+        assert!(r.verify(&shard_refs).unwrap());
     }
 
     let expect : [[u8; 3]; 4] = [[0, 1, 2],
@@ -333,21 +347,28 @@ fn test_reconstruct() {
     assert_eq!(expect, shards);
 
     {
-        let mut shard_refs =
-            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+        {
+            let mut shard_refs =
+                convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 
-        shard_refs[0][0] = 201;
-        shard_refs[0][1] = 202;
-        shard_refs[0][2] = 203;
+            shard_refs[0][0] = 201;
+            shard_refs[0][1] = 202;
+            shard_refs[0][2] = 203;
 
-        shard_refs[2][0] = 101;
-        shard_refs[2][1] = 102;
-        shard_refs[2][2] = 103;
+            shard_refs[2][0] = 101;
+            shard_refs[2][1] = 102;
+            shard_refs[2][2] = 103;
 
-        let shards_present = [false, true, false, true];
+            let shards_present = [false, true, false, true];
 
-        r.reconstruct_data(&mut shard_refs,
-                           &shards_present).unwrap();
+            r.reconstruct_data(&mut shard_refs,
+                               &shards_present).unwrap();
+        }
+
+        let shard_refs =
+            convert_2D_slices!(shards =to_vec=> &[u8]);
+
+        assert!(!r.verify(&shard_refs).unwrap());
     }
 
     let expect : [[u8; 3]; 4] = [[0, 1, 2],
@@ -357,21 +378,28 @@ fn test_reconstruct() {
     assert_eq!(expect, shards);
 
     {
-        let mut shard_refs =
-            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+        {
+            let mut shard_refs =
+                convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
 
-        shard_refs[2][0] = 101;
-        shard_refs[2][1] = 102;
-        shard_refs[2][2] = 103;
+            shard_refs[2][0] = 101;
+            shard_refs[2][1] = 102;
+            shard_refs[2][2] = 103;
 
-        shard_refs[3][0] = 201;
-        shard_refs[3][1] = 202;
-        shard_refs[3][2] = 203;
+            shard_refs[3][0] = 201;
+            shard_refs[3][1] = 202;
+            shard_refs[3][2] = 203;
 
-        let shards_present = [true, true, false, false];
+            let shards_present = [true, true, false, false];
 
-        r.reconstruct_data(&mut shard_refs,
-                           &shards_present).unwrap();
+            r.reconstruct_data(&mut shard_refs,
+                               &shards_present).unwrap();
+        }
+
+        let shard_refs =
+            convert_2D_slices!(shards =to_vec=> &[u8]);
+
+        assert!(!r.verify(&shard_refs).unwrap());
     }
 
     let expect : [[u8; 3]; 4] = [[0, 1, 2],
