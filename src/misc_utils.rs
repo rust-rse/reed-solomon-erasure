@@ -92,3 +92,39 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
 
     !at_least_one_mismatch_present
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    extern crate rand;
+
+    fn fill_random(arr : &mut [u8]) {
+        for a in arr.iter_mut() {
+            *a = rand::random::<u8>();
+        }
+    }
+
+    #[test]
+    fn slices_are_equal_same_as_par_slices_are_equal() {
+        let len = 1000;
+
+        let mut slice1 = vec![0; len];
+        let mut slice2 = vec![0; len];
+
+        for _ in 0..1000 {
+            let chunk_size = rand::random::<usize>();
+
+            fill_random(&mut slice1);
+            slice2.copy_from_slice(&slice1);
+
+            assert!(slices_are_equal(&slice1, &slice2));
+            assert!(par_slices_are_equal(&slice1, &slice2, chunk_size));
+
+            slice1[0] = 0;
+            slice2[0] = 1;
+
+            assert!(!slices_are_equal(&slice1, &slice2));
+            assert!(!par_slices_are_equal(&slice1, &slice2, chunk_size));
+        }
+    }
+}
