@@ -864,26 +864,6 @@ impl ReedSolomon {
             })
     }
 
-    fn check_some_slices(&self,
-                         matrix_rows  : &[&[u8]],
-                         inputs       : &[&[u8]],
-                         to_check     : &[&[u8]])
-                         -> bool {
-        let mut expected_parity_shards : SmallVec<[Vec<u8>; 32]> =
-            SmallVec::with_capacity(to_check.len());
-        for _ in 0..to_check.len() {
-            expected_parity_shards.push(vec![0; inputs[0].len()])
-        }
-        let mut expected_parity_shards =
-            convert_2D_slices!(expected_parity_shards =>to_mut SmallVec<[&mut [u8]; 32]>,
-                               SmallVec::with_capacity);
-
-        self.check_some_slices_with_buffer(matrix_rows,
-                                           inputs,
-                                           to_check,
-                                           &mut expected_parity_shards)
-    }
-
     fn check_some_slices_with_buffer(&self,
                                      matrix_rows  : &[&[u8]],
                                      inputs       : &[&[u8]],
@@ -1151,19 +1131,21 @@ impl ReedSolomon {
 
     /// Checks if the parity shards are correct.
     ///
-    /// This is a wrapper of `verify`.
+    /// This is a wrapper of `verify_shards_with_buffer`.
     pub fn verify_shards(&self,
                          shards : &[Shard]) -> Result<bool, Error> {
-        let slices =
-            convert_2D_slices!(shards =>to SmallVec<[&[u8]; 32]>,
-                               SmallVec::with_capacity);
+        let mut buffer : SmallVec<[Box<[u8]>; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
+        for _ in 0..self.parity_shard_count {
+            buffer.push(vec![0; shards[0].len()].into_boxed_slice());
+        }
 
-        self.verify(&slices)
+        self.verify_shards_with_buffer(shards, &mut buffer)
     }
 
     /// Checks if the parity shards are correct.
     ///
-    /// This is a wrapper of `verify`.
+    /// This is a wrapper of `verify_with_buffer`.
     pub fn verify_shards_with_buffer(&self,
                                      shards : &[Shard],
                                      buffer : &mut [Shard])
@@ -1185,15 +1167,17 @@ impl ReedSolomon {
         check_piece_count!(all => self, slices);
         check_slices!(slices);
 
-        let data        = &slices[0..self.data_shard_count];
+        let mut buffer : SmallVec<[Vec<u8>; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
+        for _ in 0..self.parity_shard_count {
+            buffer.push(vec![0; slices[0].len()]);
+        }
 
-        let to_check    = &slices[self.data_shard_count..];
+        let mut buffer =
+            convert_2D_slices!(buffer =>to_mut SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
 
-        let parity_rows = self.get_parity_rows();
-
-        Ok(self.check_some_slices(&parity_rows,
-                                  data,
-                                  to_check))
+        self.verify_with_buffer(slices, &mut buffer)
     }
 
     /// Checks if the parity shards are correct.
@@ -1206,7 +1190,7 @@ impl ReedSolomon {
         check_slices!(buffer);
         check_slices!(slices, buffer[0]);
 
-        if slices.len() != buffer.len() {
+        if self.parity_shard_count != buffer.len() {
             return Err(Error::IncorrectBufferSize);
         }
 
