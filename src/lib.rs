@@ -47,6 +47,7 @@ pub enum Error {
     EmptyShard,
     InvalidShardFlags,
     InvalidIndex,
+    IncorrectBufferSize,
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -322,6 +323,9 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// ## For `encode_single_shard`, `encode_single_shard_sep`, `encode_single`, `encode_single_sep`
 ///
 /// Calling them with `i_data` being `0` will overwrite the parity shards completely. If you are using the methods correctly, then you do not need to clear the parity shards beforehand.
+///
+/// # Variants of verifying methods
+/// 
 #[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
@@ -882,9 +886,22 @@ impl ReedSolomon {
         let mut expected_parity_shards =
             convert_2D_slices!(expected_parity_shards =>to_mut SmallVec<[&mut [u8]; 32]>,
                                SmallVec::with_capacity);
+
+        self.check_some_slices_with_buffer(matrix_rows,
+                                           inputs,
+                                           to_check,
+                                           &mut expected_parity_shards)
+    }
+
+    fn check_some_slices_with_buffer(&self,
+                                     matrix_rows  : &[&[u8]],
+                                     inputs       : &[&[u8]],
+                                     to_check     : &[&[u8]],
+                                     temp_buffer  : &mut [&mut [u8]])
+                                     -> bool {
         self.code_some_slices(matrix_rows,
                               inputs,
-                              &mut expected_parity_shards);
+                              temp_buffer);
 
         // AUDIT
         //
@@ -894,7 +911,7 @@ impl ReedSolomon {
         // The logic is detailed in the AUDIT notes in that function
 
         let at_least_one_mismatch_present =
-            expected_parity_shards
+            temp_buffer
             .par_iter_mut()
             .enumerate()
             .map(|(i, expected_parity_shard)| {
