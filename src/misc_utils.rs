@@ -33,7 +33,7 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
     //   iff.   : if and only if
     //   <->    : double implication (iff.)
     //   ~      : negation (logic)
-    //   forall : for all quantifier (first order logic)
+    //   forall : universal quantifier (first order logic)
     //   exists : existential quantifier (first order logic)
     //
     // The final `any` simply applies not to the input
