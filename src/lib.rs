@@ -220,15 +220,6 @@ macro_rules! convert_2D_slices {
     }}
 }
 
-fn shards_to_slices<'a>(shards : &'a [Shard]) -> Vec<&'a [u8]> {
-    let mut result : Vec<&[u8]> =
-        Vec::with_capacity(shards.len());
-    for shard in shards.into_iter() {
-        result.push(shard);
-    }
-    result
-}
-
 fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
                                        -> Vec<&'a mut [u8]> {
     let mut result : Vec<&mut [u8]> =
@@ -625,7 +616,7 @@ macro_rules! check_piece_count {
 
 macro_rules! check_slices {
     (
-        $slices:ident
+        $slices:expr
     ) => {{
         let size = $slices[0].len();
         if size == 0 {
@@ -638,7 +629,7 @@ macro_rules! check_slices {
         }
     }};
     (
-        $slices:ident, $single:ident
+        $slices:expr, $single:expr
     ) => {{
         if $single.len() != $slices[0].len() {
             return Err(Error::IncorrectShardSize);
@@ -897,11 +888,11 @@ impl ReedSolomon {
                                      matrix_rows  : &[&[u8]],
                                      inputs       : &[&[u8]],
                                      to_check     : &[&[u8]],
-                                     temp_buffer  : &mut [&mut [u8]])
+                                     buffer       : &mut [&mut [u8]])
                                      -> bool {
         self.code_some_slices(matrix_rows,
                               inputs,
-                              temp_buffer);
+                              buffer);
 
         // AUDIT
         //
@@ -911,7 +902,7 @@ impl ReedSolomon {
         // The logic is detailed in the AUDIT notes in that function
 
         let at_least_one_mismatch_present =
-            temp_buffer
+            buffer
             .par_iter_mut()
             .enumerate()
             .map(|(i, expected_parity_shard)| {
@@ -1164,9 +1155,28 @@ impl ReedSolomon {
     pub fn verify_shards(&self,
                          shards : &[Shard]) -> Result<bool, Error> {
         let slices =
-            shards_to_slices(shards);
+            convert_2D_slices!(shards =>to SmallVec<[&[u8]; 32]>,
+                               SmallVec::with_capacity);
 
         self.verify(&slices)
+    }
+
+    /// Checks if the parity shards are correct.
+    ///
+    /// This is a wrapper of `verify`.
+    pub fn verify_shards_with_buffer(&self,
+                                     shards : &[Shard],
+                                     buffer : &mut [Shard])
+                                     -> Result<bool, Error> {
+        let slices =
+            convert_2D_slices!(shards =>to SmallVec<[&[u8]; 32]>,
+                               SmallVec::with_capacity);
+
+        let mut buffer =
+            convert_2D_slices!(buffer =>to_mut SmallVec<[&mut [u8]; 32]>,
+                               SmallVec::with_capacity);
+
+        self.verify_with_buffer(&slices, &mut buffer)
     }
 
     /// Checks if the parity shards are correct.
@@ -1175,13 +1185,41 @@ impl ReedSolomon {
         check_piece_count!(all => self, slices);
         check_slices!(slices);
 
-        let to_check = &slices[self.data_shard_count..];
+        let data        = &slices[0..self.data_shard_count];
+
+        let to_check    = &slices[self.data_shard_count..];
 
         let parity_rows = self.get_parity_rows();
 
         Ok(self.check_some_slices(&parity_rows,
-                                  &slices[0..self.data_shard_count],
+                                  data,
                                   to_check))
+    }
+
+    /// Checks if the parity shards are correct.
+    pub fn verify_with_buffer(&self,
+                              slices : &[&[u8]],
+                              buffer : &mut [&mut [u8]])
+                              -> Result<bool, Error> {
+        check_piece_count!(all => self, slices);
+        check_slices!(slices);
+        check_slices!(buffer);
+        check_slices!(slices, buffer[0]);
+
+        if slices.len() != buffer.len() {
+            return Err(Error::IncorrectBufferSize);
+        }
+
+        let data        = &slices[0..self.data_shard_count];
+
+        let to_check    = &slices[self.data_shard_count..];
+
+        let parity_rows = self.get_parity_rows();
+
+        Ok(self.check_some_slices_with_buffer(&parity_rows,
+                                              data,
+                                              to_check,
+                                              buffer))
     }
 
     /// Reconstructs all shards.
