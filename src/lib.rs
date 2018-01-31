@@ -670,7 +670,7 @@ impl ReedSolomon {
     // AUDIT
     //
     // Error detection responsibilities
-    // Terminology and symbols :
+    // Terminologies and symbols :
     //   X =A, B, C=> Y : X relegate error checking responsibilities A, B, C to Y
     //   x := A, B, C   : X needs to handle responsibilities A, B, C
     //
@@ -873,45 +873,53 @@ impl ReedSolomon {
                          inputs       : &[&[u8]],
                          to_check     : &[&[u8]])
                          -> bool {
-        let mut outputs =
-            make_blank_shards(inputs[0].len(), to_check.len());
+        let mut expected_parity_shards : SmallVec<[Vec<[u8]>; 32]> =
+            SmallVec::with_capacity(to_check.len());
+        for _ in 0..to_check.len() {
+            expected_parity_shards.push(vec![0; inputs[0].len()])
+        }
         for c in 0..self.data_shard_count {
             let input = inputs[c];
-            outputs
+            expected_parity_shards
                 .par_iter_mut()
                 .enumerate()
-                .for_each(|(i_row, output)| {
-                    output.par_chunks_mut(self.pparam.bytes_per_encode)
+                .for_each(|(i_row, expected_parity_shard)| {
+                    expected_parity_shard.par_chunks_mut(self.pparam.bytes_per_encode)
                         .into_par_iter()
                         .enumerate()
-                        .for_each(|(i, output)| {
+                        .for_each(|(i, expected)| {
                             let start =
                                 i * self.pparam.bytes_per_encode;
                             galois::mul_slice_xor(matrix_rows[i_row][c],
                                                   &input[start..start + output.len()],
-                                                  output);
+                                                  expected);
                         })
                 })
         }
-        let any_shard_mismatch =
-            outputs
+        // AUDIT
+        //
+        // Following short-circuiting logic may be provide significant speed up, but can be error prone
+        //
+        // Dev notes have been attached to explicitly state the reasoning
+        let at_least_one_mismatch_detected =
+            expected_parity_shards
             .par_iter_mut()
             .enumerate()
-            .map(|(i, output)| {
+            .map(|(i, expected_parity_shard)| {
                 let to_check = to_check[i];
-                output.par_chunks(self.pparam.bytes_per_encode)
+                expected_parity_shard.par_chunks(self.pparam.bytes_per_encode)
                     .into_par_iter()
                     .enumerate()
-                    .map(|(i, output)| {
+                    .map(|(i, expected)| {
                         let start =
                             i * self.pparam.bytes_per_encode;
-                        // the following returns true if the chunks match
-                        misc_utils::slices_are_equal(output, &to_check[start..start + output.len()])
+                        misc_utils::slices_are_equal(expected, &to_check[start..start + output.len()])
                     })
-                    .any(|x| !x)  // find the first false(some chunks are inequal), which will cause this to return true
+                    .any(|x| !x)
+                // find the first false(slice being checked is different to the expected are unequal), which will cause this to return true
             })
-            .any(|x| x);  // find the first true(some chunks are inequal)
-        !any_shard_mismatch  // if it is not that case that any of the shard has a mismatch
+            .any(|x| x);  // find the first true(some chunks are unequal)
+        !at_least_one_mismatch_detected  // if it is not that case that any of the shard has a mismatch
     }
 
     fn option_shards_size(slices : &[Option<Shard>]) -> Result<usize, Error> {
