@@ -670,6 +670,7 @@ impl ReedSolomon {
     // AUDIT
     //
     // Error detection responsibilities
+    //
     // Terminologies and symbols :
     //   X =A, B, C=> Y : X relegate error checking responsibilities A, B, C to Y
     //   x := A, B, C   : X needs to handle responsibilities A, B, C
@@ -873,7 +874,7 @@ impl ReedSolomon {
                          inputs       : &[&[u8]],
                          to_check     : &[&[u8]])
                          -> bool {
-        let mut expected_parity_shards : SmallVec<[Vec<[u8]>; 32]> =
+        let mut expected_parity_shards : SmallVec<[Vec<u8>; 32]> =
             SmallVec::with_capacity(to_check.len());
         for _ in 0..to_check.len() {
             expected_parity_shards.push(vec![0; inputs[0].len()])
@@ -891,35 +892,30 @@ impl ReedSolomon {
                             let start =
                                 i * self.pparam.bytes_per_encode;
                             galois::mul_slice_xor(matrix_rows[i_row][c],
-                                                  &input[start..start + output.len()],
+                                                  &input[start..start + expected.len()],
                                                   expected);
                         })
                 })
         }
+
         // AUDIT
         //
-        // Following short-circuiting logic may be provide significant speed up, but can be error prone
+        // `misc_utils::par_slices_are_equal` uses the same short-circuiting logic
+        // as the following code
         //
-        // Dev notes have been attached to explicitly state the reasoning
-        let at_least_one_mismatch_detected =
+        // The logic is detailed in the AUDIT notes in that function
+
+        let at_least_one_mismatch_present =
             expected_parity_shards
             .par_iter_mut()
             .enumerate()
             .map(|(i, expected_parity_shard)| {
-                let to_check = to_check[i];
-                expected_parity_shard.par_chunks(self.pparam.bytes_per_encode)
-                    .into_par_iter()
-                    .enumerate()
-                    .map(|(i, expected)| {
-                        let start =
-                            i * self.pparam.bytes_per_encode;
-                        misc_utils::slices_are_equal(expected, &to_check[start..start + output.len()])
-                    })
-                    .any(|x| !x)
-                // find the first false(slice being checked is different to the expected are unequal), which will cause this to return true
+                misc_utils::par_slices_are_equal(expected_parity_shard,
+                                                 to_check[i],
+                                                 self.pparam.bytes_per_encode)
             })
-            .any(|x| x);  // find the first true(some chunks are unequal)
-        !at_least_one_mismatch_detected  // if it is not that case that any of the shard has a mismatch
+            .any(|x| !x);  // find the first false(some slice is different from the expected one)
+        !at_least_one_mismatch_present
     }
 
     fn option_shards_size(slices : &[Option<Shard>]) -> Result<usize, Error> {

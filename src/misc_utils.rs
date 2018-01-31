@@ -18,7 +18,7 @@ pub fn slices_are_equal<T>(slice1 : &[T],
 pub fn par_slices_are_equal<T>(slice1     : &[T],
                                slice2     : &[T],
                                chunk_size : usize) -> bool
-    where T : PartialEq
+    where T : PartialEq + Sync
 {
     if slice1.len() != slice2.len() {
         return false;
@@ -90,5 +90,5 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
         })
         .any(|x| !x);
 
-    !at_least_one_mismatch_detected
+    !at_least_one_mismatch_present
 }
