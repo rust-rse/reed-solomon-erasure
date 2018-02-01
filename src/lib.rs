@@ -42,6 +42,8 @@ pub enum Error {
     TooManyDataShards,
     TooFewParityShards,
     TooManyParityShards,
+    TooFewBufferShards,
+    TooManyBufferShards,
     IncorrectShardSize,
     TooFewShardsPresent,
     EmptyShard,
@@ -248,7 +250,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// of zero length.
 ///
 /// Return `Error::IncorrectShardSize` when the provided shards
-/// are of different length.
+/// are of different lengths.
 ///
 /// ## For `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
 ///
@@ -332,7 +334,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `verify` | `verify_with_buffer` |
 ///
 /// The `with_buffer` variants also check the buffer dimensions and return
-/// `Error::TooFewParityShards`, `Error::TooManyParityShards`, `Error::EmptyShard`,
+/// `Error::TooFewBufferShards`, `Error::TooManyBufferShards`, `Error::EmptyShard`,
 /// `Error::IncorrectShardSize` when applicable.
 ///
 #[derive(Debug)]
@@ -629,6 +631,16 @@ macro_rules! check_piece_count {
         if $pieces.len() > $self.parity_shard_count {
             return Err(Error::TooManyParityShards);
         }
+    }};
+    (
+        parity_buf => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.parity_shard_count {
+            return Err(Error::TooFewBufferShards);
+        }
+        if $pieces.len() > $self.parity_shard_count {
+            return Err(Error::TooManyBufferShards);
+        }
     }}
 }
 
@@ -714,7 +726,7 @@ impl ReedSolomon {
     //   - check index `i_data` within range [0, data shard count)
     //   - check length of `parity` matches parity shard count exactly
     //   - check consistency of length of individual parity slices
-    //   - check consistency of length of `single_data` against parity slices
+    //   - check length of `single_data` matches length of first parity slice
     // `encode` :=
     //   - check length of `slices` matches total shard count exactly
     //   - check consistency of length of individual slices
@@ -723,7 +735,7 @@ impl ReedSolomon {
     //   - check length of `parity` matches parity shard count exactly
     //   - check consistency of length of individual data slices
     //   - check consistency of length of individual parity slices
-    //   - check length of first parity slice matches length of data slices
+    //   - check length of first parity slice matches length of first data slice
     //
     // Verify methods
     //
@@ -740,7 +752,7 @@ impl ReedSolomon {
     //   - check length of `buffer` matches parity shard count exactly
     //   - check consistency of length of individual slices
     //   - check consistency of length of individual slices in buffer
-    //   - check length of first slice in buffer matches length of slices
+    //   - check length of first slice in buffer matches length of first slice
     //
     // Reconstruct methods
     //
@@ -1197,6 +1209,8 @@ impl ReedSolomon {
     }
 
     /// Checks if the parity shards are correct.
+    ///
+    /// This is a wrapper of `verify_with_buffer`.
     pub fn verify(&self,
                   slices : &[&[u8]]) -> Result<bool, Error> {
         check_piece_count!(all => self, slices);
@@ -1220,8 +1234,8 @@ impl ReedSolomon {
                               slices : &[&[u8]],
                               buffer : &mut [&mut [u8]])
                               -> Result<bool, Error> {
-        check_piece_count!(all    => self, slices);
-        check_piece_count!(parity => self, buffer);
+        check_piece_count!(all        => self, slices);
+        check_piece_count!(parity_buf => self, buffer);
         check_slices!(multi => slices, multi => buffer);
 
         let data        = &slices[0..self.data_shard_count];

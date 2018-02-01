@@ -505,6 +505,54 @@ fn test_verify_too_few_shards() {
 }
 
 #[test]
+fn test_verify_shards_with_buffer_incorrect_buffer_sizes() {
+    let r = ReedSolomon::new(3, 2).unwrap();
+
+    {
+        // Test too few slices in buffer
+        let shards = make_random_shards!(100, 5);
+
+        let mut buffer = make_blank_shards(100, 1);
+
+        assert_eq!(Error::TooFewBufferShards,
+                   r.verify_shards_with_buffer(&shards,
+                                               &mut buffer).unwrap_err());
+    }
+    {
+        // Test too many slices in buffer
+        let shards = make_random_shards!(100, 5);
+
+        let mut buffer = make_blank_shards(100, 3);
+
+        assert_eq!(Error::TooManyBufferShards,
+                   r.verify_shards_with_buffer(&shards,
+                                               &mut buffer).unwrap_err());
+    }
+    {
+        // Test having first buffer being empty
+        let shards = make_random_shards!(100, 5);
+
+        let mut buffer = make_blank_shards(100, 2);
+        buffer[0] = vec![].into_boxed_slice();
+
+        assert_eq!(Error::EmptyShard,
+                   r.verify_shards_with_buffer(&shards,
+                                               &mut buffer).unwrap_err());
+    }
+    {
+        // Test having shards of inconsistent length in buffer
+        let shards = make_random_shards!(100, 5);
+
+        let mut buffer = make_blank_shards(100, 2);
+        buffer[1] = vec![0; 99].into_boxed_slice();
+
+        assert_eq!(Error::IncorrectShardSize,
+                   r.verify_shards_with_buffer(&shards,
+                                               &mut buffer).unwrap_err());
+    }
+}
+
+#[test]
 fn test_slices_or_shards_count_check() {
     let r = ReedSolomon::new(3, 2).unwrap();
 
