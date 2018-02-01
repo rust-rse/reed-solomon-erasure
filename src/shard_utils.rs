@@ -26,14 +26,14 @@ pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
     result
 }
 
-/// Transforms vector of shards to vector of option shards.
+/// Transforms slice of shards to vector of option shards.
 ///
 /// # Remarks
 ///
 /// Each shard is cloned rather than moved, which may be slow.
 ///
 /// This is mainly useful when you want to repair a vector
-/// of shards using `decode_missing`.
+/// of shards using `reconstrct_shards` or `reconstruct_data_shards`.
 pub fn shards_to_option_shards(shards : &[Shard])
                                -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
@@ -52,7 +52,7 @@ pub fn shards_to_option_shards(shards : &[Shard])
 /// Each shard is moved rather than cloned.
 ///
 /// This is mainly useful when you want to repair a vector
-/// of shards using `decode_missing`.
+/// of shards using `reconstrct_shards` or `reconstruct_data_shards`.
 pub fn shards_into_option_shards(shards : Vec<Shard>)
                                  -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
@@ -63,19 +63,15 @@ pub fn shards_into_option_shards(shards : Vec<Shard>)
     result
 }
 
-/// Transforms a section of vector of option shards to vector of shards.
-///
-/// # Arguments
-///
-/// * `start` - start of range of option shards you want to use
-/// * `count` - number of option shards you want to use
+/// Transforms slice of option shards to vector of shards.
 ///
 /// # Remarks
 ///
 /// Each shard is cloned rather than moved, which may be slow.
 ///
 /// This is mainly useful when you want to convert result of
-/// `decode_missing` to the more usable arrangement.
+/// `reconstrct_shards` or `reconstruct_data_shards` to the
+/// more usable arrangement.
 ///
 /// Panics when any of the shards is missing.
 pub fn option_shards_to_shards(shards : &[Option<Shard>])
@@ -100,7 +96,8 @@ pub fn option_shards_to_shards(shards : &[Option<Shard>])
 /// Each shard is moved rather than cloned.
 ///
 /// This is mainly useful when you want to convert result of
-/// `decode_missing` to the more usable arrangement.
+/// `reconstrct_shards` or `reconstruct_data_shards` to the
+/// more usable arrangement.
 ///
 /// Panics when any of the shards is missing.
 pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
