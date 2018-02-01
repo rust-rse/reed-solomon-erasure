@@ -47,7 +47,6 @@ pub enum Error {
     EmptyShard,
     InvalidShardFlags,
     InvalidIndex,
-    IncorrectBufferSize,
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -316,7 +315,26 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// Calling them with `i_data` being `0` will overwrite the parity shards completely. If you are using the methods correctly, then you do not need to clear the parity shards beforehand.
 ///
 /// # Variants of verifying methods
-/// 
+///
+/// `verify`, `verify_shards` allocate a buffer on the heap of the same size
+/// as the parity shards, and encode the input once using the buffer to store
+/// the computed parity shards, then check if the provided parity shards
+/// match the computed ones.
+///
+/// `verify_with_buffer`, `verify_shards_with_buffer` allow you to provide
+/// the buffer to avoid making heap allocation for the buffer in every call.
+///
+/// Following is a table of all the `with_buffer` variants
+///
+/// | not `with_buffer` | `with_buffer` |
+/// | --- | --- |
+/// | `verify_shards` | `verify_shards_with_buffer` |
+/// | `verify` | `verify_with_buffer` |
+///
+/// The `with_buffer` variants also check the buffer dimensions and return
+/// `Error::TooFewParityShards`, `Error::TooManyParityShards`, `Error::EmptyShard`,
+/// `Error::IncorrectShardSize` when applicable.
+///
 #[derive(Debug)]
 pub struct ReedSolomon {
     data_shard_count   : usize,
@@ -1185,14 +1203,11 @@ impl ReedSolomon {
                               slices : &[&[u8]],
                               buffer : &mut [&mut [u8]])
                               -> Result<bool, Error> {
-        check_piece_count!(all => self, slices);
+        check_piece_count!(all    => self, slices);
+        check_piece_count!(parity => self, buffer);
         check_slices!(slices);
         check_slices!(buffer);
         check_slices!(slices, buffer[0]);
-
-        if self.parity_shard_count != buffer.len() {
-            return Err(Error::IncorrectBufferSize);
-        }
 
         let data        = &slices[0..self.data_shard_count];
 
