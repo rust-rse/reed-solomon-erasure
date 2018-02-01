@@ -634,7 +634,7 @@ macro_rules! check_piece_count {
 
 macro_rules! check_slices {
     (
-        $slices:expr
+        multi => $slices:expr
     ) => {{
         let size = $slices[0].len();
         if size == 0 {
@@ -647,9 +647,21 @@ macro_rules! check_slices {
         }
     }};
     (
-        $slices:expr, $single:expr
+        multi => $slices:expr, single => $single:expr
     ) => {{
+        check_slices!(multi => $slices);
+
         if $slices[0].len() != $single.len() {
+            return Err(Error::IncorrectShardSize);
+        }
+    }};
+    (
+        multi => $slices1:expr, multi => $slices2:expr
+    ) => {{
+        check_slices!(multi => $slices1);
+        check_slices!(multi => $slices2);
+
+        if $slices1[0].len() != $slices2[0].len() {
             return Err(Error::IncorrectShardSize);
         }
     }}
@@ -1069,7 +1081,7 @@ impl ReedSolomon {
                          slices  : &mut [&mut [u8]]) -> Result<(), Error> {
         check_slice_index!(data => self, i_data);
         check_piece_count!(all  => self, slices);
-        check_slices!(slices);
+        check_slices!(multi => slices);
 
         // Get the slice of output buffers.
         let (mut_input, output) =
@@ -1098,8 +1110,7 @@ impl ReedSolomon {
                              parity      : &mut[&mut[u8]]) -> Result<(), Error> {
         check_slice_index!(data   => self, i_data);
         check_piece_count!(parity => self, parity);
-        check_slices!(parity);
-        check_slices!(parity, single_data);
+        check_slices!(multi => parity, single => single_data);
 
         let parity_rows = self.get_parity_rows();
 
@@ -1119,7 +1130,7 @@ impl ReedSolomon {
     pub fn encode(&self,
                   slices : &mut [&mut [u8]]) -> Result<(), Error> {
         check_piece_count!(all => self, slices);
-        check_slices!(slices);
+        check_slices!(multi => slices);
 
         // Get the slice of output buffers.
         let (mut_input, output) =
@@ -1141,9 +1152,7 @@ impl ReedSolomon {
                       parity : &mut [&mut[u8]]) -> Result<(), Error> {
         check_piece_count!(data   => self, data);
         check_piece_count!(parity => self, parity);
-        check_slices!(data);
-        check_slices!(parity);
-        check_slices!(data, parity[0]);
+        check_slices!(multi => data, multi => parity);
 
         let parity_rows = self.get_parity_rows();
 
@@ -1191,7 +1200,7 @@ impl ReedSolomon {
     pub fn verify(&self,
                   slices : &[&[u8]]) -> Result<bool, Error> {
         check_piece_count!(all => self, slices);
-        check_slices!(slices);
+        check_slices!(multi => slices);
 
         let mut buffer : SmallVec<[Vec<u8>; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
@@ -1213,9 +1222,7 @@ impl ReedSolomon {
                               -> Result<bool, Error> {
         check_piece_count!(all    => self, slices);
         check_piece_count!(parity => self, buffer);
-        check_slices!(slices);
-        check_slices!(buffer);
-        check_slices!(slices, buffer[0]);
+        check_slices!(multi => slices, multi => buffer);
 
         let data        = &slices[0..self.data_shard_count];
 
@@ -1405,7 +1412,7 @@ impl ReedSolomon {
                             slice_present : &[bool],
                             data_only     : bool) -> Result<(), Error> {
         check_piece_count!(all => self, slices);
-        check_slices!(slices);
+        check_slices!(multi => slices);
 
         if slices.len() != slice_present.len() {
             return Err(Error::InvalidShardFlags);
