@@ -1325,9 +1325,17 @@ impl ReedSolomon {
         let mut slices =
             mut_option_shards_to_mut_slices(shards);
 
+        // AUDIT
+        //
+        // The above checks cover all the checks done in
+        // `reconstruct_internal` already, so calling
+        // unwrap should be completely safe
+
         self.reconstruct_internal(&mut slices,
                                   &shard_present,
-                                  data_only)
+                                  data_only).unwrap();
+
+        Ok(())
     }
 
     fn get_data_decode_matrix(&self,
