@@ -146,8 +146,7 @@ fn test_shards_to_option_shards_to_shards() {
         let option_shards =
             shard_utils::shards_to_option_shards(&shards);
         let result        =
-            shard_utils::option_shards_to_shards(&option_shards,
-                                                 None, None);
+            shard_utils::option_shards_to_shards(&option_shards);
 
         assert_eq_shards(&expect, &result);
     }
@@ -161,7 +160,7 @@ fn test_option_shards_to_shards_missing_shards_case1() {
 
     option_shards[0] = None;
 
-    shard_utils::option_shards_to_shards(&option_shards, None, None);
+    shard_utils::option_shards_to_shards(&option_shards);
 }
 
 #[test]
@@ -172,7 +171,7 @@ fn test_option_shards_to_shards_missing_shards_case2() {
     option_shards[0] = None;
     option_shards[9] = None;
 
-    shard_utils::option_shards_to_shards(&option_shards, Some(1), Some(8));
+    shard_utils::option_shards_to_shards(&option_shards[1..8]);
 }
 
 #[test]
@@ -192,9 +191,7 @@ fn test_option_shards_to_shards_too_few_shards() {
     let shards = make_random_shards!(1_000, 10);
     let option_shards = shards_into_option_shards(shards);
 
-    shard_utils::option_shards_to_shards(&option_shards,
-                                         None,
-                                         Some(11));
+    shard_utils::option_shards_to_shards(&option_shards[0..11]);
 }
 
 #[test]
@@ -242,7 +239,7 @@ fn test_reconstruct_shards() {
     // Try to decode with all shards present
     r.reconstruct_shards(&mut shards).unwrap();
     {
-        let shards = option_shards_to_shards(&shards, None, None);
+        let shards = option_shards_to_shards(&shards);
         assert!(r.verify_shards(&shards).unwrap());
         assert_eq_shards(&shards, &master_copy);
     }
@@ -253,7 +250,7 @@ fn test_reconstruct_shards() {
     //shards[4] = None;
     r.reconstruct_shards(&mut shards).unwrap();
     {
-        let shards = option_shards_to_shards(&shards, None, None);
+        let shards = option_shards_to_shards(&shards);
         assert!(r.verify_shards(&shards).unwrap());
         assert_eq_shards(&shards, &master_copy);
     }
@@ -264,7 +261,7 @@ fn test_reconstruct_shards() {
     shards[12] = None;
     r.reconstruct_shards(&mut shards).unwrap();
     {
-        let shards = option_shards_to_shards(&shards, None, None);
+        let shards = option_shards_to_shards(&shards);
         assert!(r.verify_shards(&shards).unwrap());
         assert_eq_shards(&shards, &master_copy);
     }
@@ -275,7 +272,7 @@ fn test_reconstruct_shards() {
     shards[12] = None;
     r.reconstruct_data_shards(&mut shards).unwrap();
     {
-        let data_shards = option_shards_to_shards(&shards, Some(0), Some(8));
+        let data_shards = option_shards_to_shards(&shards[0..8]);
         assert_eq!(master_copy[0], data_shards[0]);
         assert_eq!(master_copy[1], data_shards[1]);
         assert_eq!(None, shards[12]);
