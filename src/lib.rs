@@ -1272,9 +1272,6 @@ impl ReedSolomon {
     /// This fills in the missing shards with blank shards only
     /// if there are enough shards for reconstruction.
     ///
-    /// Note that the missing parity shards are filled in with
-    /// blank shards even though they are not used.
-    ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
     pub fn reconstruct_data_shards(&self,
@@ -1334,6 +1331,15 @@ impl ReedSolomon {
         self.reconstruct_internal(&mut slices,
                                   &shard_present,
                                   data_only).unwrap();
+
+        if data_only {
+            // Remove filled in parity shards
+            for i in self.data_shard_count..self.total_shard_count {
+                if !shard_present[i] {
+                    shards[i] = None;
+                }
+            }
+        }
 
         Ok(())
     }
