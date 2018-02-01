@@ -668,12 +668,12 @@ macro_rules! check_slices {
         }
     }};
     (
-        multi => $slices1:expr, multi => $slices2:expr
+        multi => $slices_left:expr, multi => $slices_right:expr
     ) => {{
-        check_slices!(multi => $slices1);
-        check_slices!(multi => $slices2);
+        check_slices!(multi => $slices_left);
+        check_slices!(multi => $slices_right);
 
-        if $slices1[0].len() != $slices2[0].len() {
+        if $slices_left[0].len() != $slices_right[0].len() {
             return Err(Error::IncorrectShardSize);
         }
     }}
