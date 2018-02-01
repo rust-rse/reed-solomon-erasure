@@ -529,6 +529,18 @@ fn test_verify_shards_with_buffer_incorrect_buffer_sizes() {
                                                &mut buffer).unwrap_err());
     }
     {
+        // Test correct number of slices in buffer
+        let mut shards = make_random_shards!(100, 5);
+
+        r.encode_shards(&mut shards);
+
+        let mut buffer = make_blank_shards(100, 2);
+
+        assert_eq!(true,
+                   r.verify_shards_with_buffer(&shards,
+                                               &mut buffer).unwrap());
+    }
+    {
         // Test having first buffer being empty
         let shards = make_random_shards!(100, 5);
 
