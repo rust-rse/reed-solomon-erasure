@@ -255,6 +255,18 @@ fn test_reconstruct_shards() {
         assert_eq_shards(&shards, &master_copy);
     }
 
+    // Try to decode the same shards again to try to
+    // trigger the usage of cached decode matrix
+    shards[0] = None;
+    shards[2] = None;
+    //shards[4] = None;
+    r.reconstruct_shards(&mut shards).unwrap();
+    {
+        let shards = option_shards_to_shards(&shards);
+        assert!(r.verify_shards(&shards).unwrap());
+        assert_eq_shards(&shards, &master_copy);
+    }
+
     // Try to deocde with 6 data and 4 parity shards
     shards[0] = None;
     shards[2] = None;

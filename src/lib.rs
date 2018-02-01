@@ -1357,7 +1357,7 @@ impl ReedSolomon {
     }
 
     fn get_data_decode_matrix(&self,
-                              valid_indices : &[usize],
+                              valid_indices   : &[usize],
                               invalid_indices : &[usize])
                               -> Arc<Matrix> {
         // Attempt to get the cached inverted matrix out of the tree
