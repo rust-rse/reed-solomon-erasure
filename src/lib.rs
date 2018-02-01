@@ -341,7 +341,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// The `with_buffer` variants also check the dimensions of the buffer and return
 /// `Error::TooFewBufferShards`, `Error::TooManyBufferShards`, `Error::EmptyShard`,
-/// `Error::IncorrectShardSize` when applicable.
+/// or `Error::IncorrectShardSize` when applicable.
 ///
 #[derive(Debug)]
 pub struct ReedSolomon {
