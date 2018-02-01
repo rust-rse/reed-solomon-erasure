@@ -264,7 +264,8 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// ## `sep`
 ///
-/// Methods ending in `_sep` takes an immutable reference of data shard(s), and a mutable
+/// Methods ending in `_sep` takes an immutable reference of data shard(s),
+/// and a mutable
 /// reference of parity shards.
 ///
 /// They are useful as they do not need to borrow the data shard(s) mutably,
@@ -280,9 +281,11 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `encode_single` | `encode_single_sep` |
 /// | `encode`        | `encode_sep` |
 ///
-/// The `sep` variants do similar checks on the provided data shards and parity shards.
+/// The `sep` variants do similar checks on the provided data shards and
+/// parity shards.
 ///
-/// Return `Error::TooFewDataShards`, `Error::TooManyDataShards`, `Error::TooFewParityShards`, or `Error::TooManyParityShards` when applicable.
+/// Return `Error::TooFewDataShards`, `Error::TooManyDataShards`,
+/// `Error::TooFewParityShards`, or `Error::TooManyParityShards` when applicable.
 ///
 /// ## `single`
 ///
@@ -310,11 +313,14 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// ## For `encode`, `encode_shards`
 ///
-/// You do not need to clear the parity shards beforehand, as the methods will overwrite them completely.
+/// You do not need to clear the parity shards beforehand, as the methods
+/// will overwrite them completely.
 ///
 /// ## For `encode_single_shard`, `encode_single_shard_sep`, `encode_single`, `encode_single_sep`
 ///
-/// Calling them with `i_data` being `0` will overwrite the parity shards completely. If you are using the methods correctly, then you do not need to clear the parity shards beforehand.
+/// Calling them with `i_data` being `0` will overwrite the parity shards
+/// completely. If you are using the methods correctly, then you do not need
+/// to clear the parity shards beforehand.
 ///
 /// # Variants of verifying methods
 ///
