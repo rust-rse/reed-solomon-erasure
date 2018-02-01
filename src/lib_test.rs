@@ -275,11 +275,10 @@ fn test_reconstruct_shards() {
     shards[12] = None;
     r.reconstruct_data_shards(&mut shards).unwrap();
     {
-        let shards = option_shards_to_shards(&shards, None, None);
-        let blank_shard = make_blank_shard(per_shard);
-        assert_eq!(master_copy[0], shards[0]);
-        assert_eq!(master_copy[1], shards[1]);
-        assert_eq!(blank_shard, shards[12]);
+        let data_shards = option_shards_to_shards(&shards, Some(0), Some(8));
+        assert_eq!(master_copy[0], data_shards[0]);
+        assert_eq!(master_copy[1], data_shards[1]);
+        assert_eq!(None, shards[12]);
     }
 
     // Try to decode with 7 data and 1 parity shards
