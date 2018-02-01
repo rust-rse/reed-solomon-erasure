@@ -711,6 +711,7 @@ impl ReedSolomon {
     //   - check length of `parity` matches parity shard count exactly
     //   - check consistency of length of individual data slices
     //   - check consistency of length of individual parity slices
+    //   - check length of first parity slice matches length of data slices
     //
     // Verify methods
     //
