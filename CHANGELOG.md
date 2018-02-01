@@ -1,4 +1,4 @@
-## 2.5.0
+## 3.0.0
   - Added `with_buffer` variants for verifying methods
     - This gives user the option of reducing heap allocation(s)
   - Core code clean up and review, added AUDIT comments
