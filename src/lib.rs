@@ -649,7 +649,7 @@ macro_rules! check_slices {
     (
         $slices:expr, $single:expr
     ) => {{
-        if $single.len() != $slices[0].len() {
+        if $slices[0].len() != $single.len() {
             return Err(Error::IncorrectShardSize);
         }
     }}
@@ -1142,10 +1142,7 @@ impl ReedSolomon {
         check_piece_count!(parity => self, parity);
         check_slices!(data);
         check_slices!(parity);
-
-        if data[0].len() != parity[0].len() {
-            return Err(Error::IncorrectShardSize);
-        }
+        check_slices!(data, parity[0]);
 
         let parity_rows = self.get_parity_rows();
 
