@@ -1,7 +1,7 @@
 ## 3.0.0
   - Added `with_buffer` variants for verifying methods
     - This gives user the option of reducing heap allocation(s)
-  - Core code clean up and review, added AUDIT comments
+  - Core code clean up and review, added more AUDIT comments
   - Improved shard utils
   - Added code to remove leftover parity shards in `reconstruct_data_shards`
 
