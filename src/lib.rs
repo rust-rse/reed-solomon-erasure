@@ -322,7 +322,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// match the computed ones.
 ///
 /// `verify_with_buffer`, `verify_shards_with_buffer` allow you to provide
-/// the buffer to avoid making heap allocation for the buffer in every call.
+/// the buffer to avoid making heap allocation(s) for the buffer in every call.
 ///
 /// Following is a table of all the `with_buffer` variants
 ///
