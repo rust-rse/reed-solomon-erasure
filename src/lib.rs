@@ -333,7 +333,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `verify_shards` | `verify_shards_with_buffer` |
 /// | `verify` | `verify_with_buffer` |
 ///
-/// The `with_buffer` variants also check the buffer dimensions and return
+/// The `with_buffer` variants also check the dimensions of the buffer and return
 /// `Error::TooFewBufferShards`, `Error::TooManyBufferShards`, `Error::EmptyShard`,
 /// `Error::IncorrectShardSize` when applicable.
 ///
