@@ -714,10 +714,20 @@ impl ReedSolomon {
     //
     // Verify methods
     //
-    // `verify_shards` =ALL=> `verify`
+    // `verify_shards`             =ALL=> `verify_shards_with_buffer`
+    // `verify_shards_with_buffer` =ALL=> `verify_with_buffer`
     // `verify` :=
     //   - check length of `slices` matches total shard count exactly
     //   - check consistency of length of individual slices
+    //
+    //   Generates buffer then passes control to verify_with_buffer
+    //
+    // `verify_with_buffer` :=
+    //   - check length of `slices` matches total shard count exactly
+    //   - check length of `buffer` matches parity shard count exactly
+    //   - check consistency of length of individual slices
+    //   - check consistency of length of individual slices in buffer
+    //   - check length of first slice in buffer matches length of slices
     //
     // Reconstruct methods
     //
