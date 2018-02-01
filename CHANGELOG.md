@@ -1,3 +1,10 @@
+## 2.5.0
+  - Added `with_buffer` variants for verifying methods
+    - This gives user the option of reducing heap allocation(s)
+  - Core code clean up and review, added AUDIT comments
+  - Improved shard utils
+  - Added code to remove leftover parity shards in `reconstruct_data_shards`
+
 ## 2.4.0
   - Added more flexibility for `convert_2D_slices` macro
     - Now accepts expressions rather than just identifiers
