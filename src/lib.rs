@@ -1319,18 +1319,20 @@ impl ReedSolomon {
             }
         }
 
-        let mut slices =
-            mut_option_shards_to_mut_slices(shards);
+        {
+            let mut slices =
+                mut_option_shards_to_mut_slices(shards);
 
-        // AUDIT
-        //
-        // The above checks cover all the checks done in
-        // `reconstruct_internal` already, so calling
-        // unwrap should be completely safe
+            // AUDIT
+            //
+            // The above checks cover all the checks done in
+            // `reconstruct_internal` already, so calling
+            // unwrap should be completely safe
 
-        self.reconstruct_internal(&mut slices,
-                                  &shard_present,
-                                  data_only).unwrap();
+            self.reconstruct_internal(&mut slices,
+                                      &shard_present,
+                                      data_only).unwrap();
+        }
 
         if data_only {
             // Remove filled in parity shards
