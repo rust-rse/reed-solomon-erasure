@@ -156,23 +156,23 @@ macro_rules! check_slices {
 
 macro_rules! check_slice_index {
     (
-        all => $self:expr, $index:expr
+        all => $codec:expr, $index:expr
     ) => {{
-        if $index >= $self.total_shard_count {
+        if $index >= $codec.total_shard_count {
             return Err(Error::InvalidIndex);
         }
     }};
     (
-        data => $self:expr, $index:expr
+        data => $codec:expr, $index:expr
     ) => {{
-        if $index >= $self.data_shard_count {
+        if $index >= $codec.data_shard_count {
             return Err(Error::InvalidIndex);
         }
     }};
     (
-        parity => $self:expr, $index:expr
+        parity => $codec:expr, $index:expr
     ) => {{
-        if $index >= $self.parity_shard_count {
+        if $index >= $codec.parity_shard_count {
             return Err(Error::InvalidIndex);
         }
     }}
