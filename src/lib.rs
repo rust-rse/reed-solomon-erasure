@@ -489,17 +489,14 @@ impl<'a> ShardByShard<'a> {
         self.cur_input
     }
 
-    fn return_and_incre_cur_input(&mut self,
+    fn return_and_possibly_incre_cur_input(&mut self,
                                   res : Result<(), Error>)
                                   -> Result<(), SBSError> {
-        let result = match res {
-            Ok(()) => Ok(()),
+        match res {
+            Ok(()) => { self.cur_input += 1;
+                        Ok(()) },
             Err(x) => Err(SBSError::RSError(x))
-        };
-
-        self.cur_input += 1;
-
-        result
+        }
     }
 
     /// Constructs the parity shards partially using the current input data shard.
@@ -514,7 +511,7 @@ impl<'a> ShardByShard<'a> {
         let res = self.codec.encode_single(self.cur_input,
                                            slices);
 
-        self.return_and_incre_cur_input(res)
+        self.return_and_possibly_incre_cur_input(res)
     }
 
     /// Constructs the parity shards partially using the current input data shard.
@@ -531,7 +528,7 @@ impl<'a> ShardByShard<'a> {
                                                &data[self.cur_input],
                                                parity);
 
-        self.return_and_incre_cur_input(res)
+        self.return_and_possibly_incre_cur_input(res)
     }
 
     /// Constructs the parity shards partially using the current input data shard.
@@ -546,7 +543,7 @@ impl<'a> ShardByShard<'a> {
         let res = self.codec.encode_single_shard(self.cur_input,
                                                  shards);
 
-        self.return_and_incre_cur_input(res)
+        self.return_and_possibly_incre_cur_input(res)
     }
 
     /// Constructs the parity shards partially using the current input data shard.
@@ -563,7 +560,7 @@ impl<'a> ShardByShard<'a> {
                                                      &data[self.cur_input],
                                                      parity);
 
-        self.return_and_incre_cur_input(res)
+        self.return_and_possibly_incre_cur_input(res)
     }
 }
 

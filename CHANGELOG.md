@@ -5,7 +5,7 @@
   - Improved shard utils
   - Added code to remove leftover parity shards in `reconstruct_data_shards`
     - This means one fewer gotcha of using the methods
-  - `ShardByShard` code clean up
+  - `ShardByShard` code review and overhaul
 
 ## 2.4.0
   - Added more flexibility for `convert_2D_slices` macro

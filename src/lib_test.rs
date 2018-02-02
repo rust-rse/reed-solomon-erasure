@@ -532,7 +532,7 @@ fn test_verify_shards_with_buffer_incorrect_buffer_sizes() {
         // Test correct number of slices in buffer
         let mut shards = make_random_shards!(100, 5);
 
-        r.encode_shards(&mut shards);
+        r.encode_shards(&mut shards).unwrap();
 
         let mut buffer = make_blank_shards(100, 2);
 
@@ -906,7 +906,7 @@ fn shardbyshard_encode_correctly_more_rigorous() {
 }
 
 #[test]
-fn shardbyshard_error_handling() {
+fn shardbyshard_encode_error_handling() {
     {
         let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
@@ -974,10 +974,76 @@ fn shardbyshard_error_handling() {
 
         assert_eq!(0, sbs.cur_input_index());
     }
+    {
+        let r       = ReedSolomon::new(10, 3).unwrap();
+        let mut sbs = ShardByShard::new(&r);
+
+        let mut shards = make_random_shards!(100, 13);
+        shards[0] = vec![].into_boxed_slice();
+
+        {
+            let mut slice_refs =
+                convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+
+            assert_eq!(0, sbs.cur_input_index());
+
+            assert_eq!(SBSError::RSError(Error::EmptyShard),
+                       sbs.encode(&mut slice_refs).unwrap_err());
+
+            assert_eq!(0, sbs.cur_input_index());
+
+            assert_eq!(SBSError::RSError(Error::EmptyShard),
+                       sbs.encode(&mut slice_refs).unwrap_err());
+
+            assert_eq!(0, sbs.cur_input_index());
+        }
+
+        shards[0] = vec![0; 100].into_boxed_slice();
+
+        let mut slice_refs =
+            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+
+        sbs.encode(&mut slice_refs).unwrap();
+
+        assert_eq!(1, sbs.cur_input_index());
+    }
+    {
+        let r       = ReedSolomon::new(10, 3).unwrap();
+        let mut sbs = ShardByShard::new(&r);
+
+        let mut shards = make_random_shards!(100, 13);
+        shards[0] = vec![].into_boxed_slice();
+
+        {
+            let mut slice_refs =
+                convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+
+            assert_eq!(0, sbs.cur_input_index());
+
+            assert_eq!(SBSError::RSError(Error::EmptyShard),
+                       sbs.encode(&mut slice_refs).unwrap_err());
+
+            assert_eq!(0, sbs.cur_input_index());
+
+            assert_eq!(SBSError::RSError(Error::EmptyShard),
+                       sbs.encode(&mut slice_refs).unwrap_err());
+
+            assert_eq!(0, sbs.cur_input_index());
+        }
+
+        shards[0] = vec![0; 100].into_boxed_slice();
+
+        let mut slice_refs =
+            convert_2D_slices!(shards =to_mut_vec=> &mut [u8]);
+
+        sbs.encode(&mut slice_refs).unwrap();
+
+        assert_eq!(1, sbs.cur_input_index());
+    }
 }
 
 #[test]
-fn shardbyshard_sep_error_handling() {
+fn shardbyshard_encode_sep_error_handling() {
     {
         let r       = ReedSolomon::new(10, 3).unwrap();
         let mut sbs = ShardByShard::new(&r);
