@@ -650,7 +650,7 @@ impl ReedSolomon {
     /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
     pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
-                       pparam        : ParallelParam)
+                       mut pparam    : ParallelParam)
                        -> Result<ReedSolomon, Error> {
         if data_shards == 0 {
             return Err(Error::TooFewDataShards);
@@ -666,7 +666,6 @@ impl ReedSolomon {
 
         let matrix       = Self::build_matrix(data_shards, total_shards);
 
-        let mut pparam = pparam;
         if pparam.bytes_per_encode == 0 {
             pparam.bytes_per_encode = 1;
         }
