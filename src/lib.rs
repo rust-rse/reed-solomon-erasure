@@ -318,41 +318,6 @@ impl ParallelParam {
     }
 }
 
-macro_rules! sbs_encode_checks {
-    (
-        no_sep => $self:ident, $pieces:ident
-    ) => {{
-        if $self.parity_ready() {
-            return Err(SBSError::TooManyCalls);
-        }
-        if $pieces.len() < $self.codec.total_shard_count() {
-            return Err(SBSError::RSError(Error::TooFewShards));
-        }
-        if $pieces.len() > $self.codec.total_shard_count() {
-            return Err(SBSError::RSError(Error::TooManyShards));
-        }
-    }};
-    (
-        sep => $self:ident, $data:ident, $parity:ident
-    ) => {{
-        if $self.parity_ready() {
-            return Err(SBSError::TooManyCalls);
-        }
-        if $data.len() < $self.codec.data_shard_count() {
-            return Err(SBSError::RSError(Error::TooFewDataShards));
-        }
-        if $data.len() > $self.codec.data_shard_count() {
-            return Err(SBSError::RSError(Error::TooManyDataShards));
-        }
-        if $parity.len() < $self.codec.parity_shard_count() {
-            return Err(SBSError::RSError(Error::TooFewParityShards));
-        }
-        if $parity.len() > $self.codec.parity_shard_count() {
-            return Err(SBSError::RSError(Error::TooManyParityShards));
-        }
-    }}
-}
-
 impl<'a> ShardByShard<'a> {
     /// Creates a new instance of the bookkeeping struct.
     pub fn new(codec : &'a ReedSolomon) -> ShardByShard<'a> {
@@ -450,6 +415,56 @@ impl<'a> ShardByShard<'a> {
         }
     }
 
+    fn sbs_encode_shard_sep_checks(&mut self,
+                                   data   : &[Shard],
+                                   parity : &mut [Shard])
+                                   -> Result<(), SBSError> {
+        fn internal_checks (codec  : &ReedSolomon,
+                            data   : &[Shard],
+                            parity : &mut [Shard])
+                            -> Result<(), Error> {
+            check_piece_count!(data   => codec, data);
+            check_piece_count!(parity => codec, parity);
+            check_slices!(multi => data, multi => parity);
+
+            Ok(())
+        };
+
+        if self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+
+        match internal_checks(self.codec, data, parity) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(SBSError::RSError(e))
+        }
+    }
+
+    fn sbs_encode_sep_checks(&mut self,
+                             data   : &[&[u8]],
+                             parity : &mut [&mut [u8]])
+                             -> Result<(), SBSError> {
+        fn internal_checks (codec  : &ReedSolomon,
+                            data   : &[&[u8]],
+                            parity : &mut [&mut [u8]])
+                            -> Result<(), Error> {
+            check_piece_count!(data   => codec, data);
+            check_piece_count!(parity => codec, parity);
+            check_slices!(multi => data, multi => parity);
+
+            Ok(())
+        };
+
+        if self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+
+        match internal_checks(self.codec, data, parity) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(SBSError::RSError(e))
+        }
+    }
+
     /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
@@ -473,7 +488,7 @@ impl<'a> ShardByShard<'a> {
                       data   : &[&[u8]],
                       parity : &mut [&mut[u8]])
                       -> Result<(), SBSError> {
-        sbs_encode_checks!(sep => self, data, parity);
+        self.sbs_encode_sep_checks(data, parity)?;
 
         let res = self.codec.encode_single_sep(self.cur_input,
                                                &data[self.cur_input],
@@ -505,7 +520,7 @@ impl<'a> ShardByShard<'a> {
                             data   : &[Shard],
                             parity : &mut [Shard])
                             -> Result<(), SBSError> {
-        sbs_encode_checks!(sep => self, data, parity);
+        self.sbs_encode_shard_sep_checks(data, parity)?;
 
         let res = self.codec.encode_single_shard_sep(self.cur_input,
                                                      &data[self.cur_input],
