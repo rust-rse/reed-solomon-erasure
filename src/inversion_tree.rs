@@ -11,8 +11,8 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct InversionTree {
-    pub root : Mutex<InversionNode>,
-    shards   : usize,
+    pub root     : Mutex<InversionNode>,
+    total_shards : usize,
 }
 
 #[derive(Debug)]
@@ -26,11 +26,11 @@ impl InversionTree {
                parity_shards : usize)
                -> InversionTree {
         InversionTree {
-            root   : Mutex::new(
+            root : Mutex::new(
                 InversionNode::new(
                     Some(Arc::new(Matrix::identity(data_shards))),
                     data_shards + parity_shards)),
-            shards : data_shards + parity_shards
+            total_shards : data_shards + parity_shards
         }
     }
 
@@ -45,14 +45,13 @@ impl InversionTree {
         }
 
         self.root.lock().unwrap().get_inverted_matrix(invalid_indices,
-                                                      self.shards,
+                                                      self.total_shards,
                                                       0)
     }
 
     pub fn insert_inverted_matrix(&self,
                                   invalid_indices : &[usize],
-                                  matrix          : &Arc<Matrix>,
-                                  shards          : usize)
+                                  matrix          : &Arc<Matrix>)
                                   -> Result<(), Error> {
         // If no invalid indices were given then we are done because the
         // root node is already set with the identity matrix.
@@ -70,7 +69,7 @@ impl InversionTree {
         // 0 as the parent index as we start at the root of the tree.
         self.root.lock().unwrap().insert_inverted_matrix(matrix,
                                                          invalid_indices,
-                                                         shards,
+                                                         self.total_shards,
                                                          0);
 
         Ok(())
@@ -93,14 +92,14 @@ impl InversionNode {
     fn get_child<'a>(&'a mut self,
                      offset          : usize,
                      requested_index : usize,
-                     shards          : usize)
+                     total_shards    : usize)
                      -> &'a mut InversionNode {
         let node_index = requested_index - offset;
         {
             let node = &mut self.children[node_index];
             match *node {
                 None    => { *node = Some(Self::new(None,
-                                                    shards - offset)); },
+                                                    total_shards - offset)); },
                 Some(_) => {}
             }
         }
@@ -112,7 +111,7 @@ impl InversionNode {
 
     pub fn get_inverted_matrix(&mut self,
                                invalid_indices : &[usize],
-                               shards          : usize,
+                               total_shards    : usize,
                                offset          : usize)
                                -> Option<Arc<Matrix>> {
         if invalid_indices.len() == 0 {
@@ -123,9 +122,9 @@ impl InversionNode {
         } else {
             let requested_index   = invalid_indices[0];
             let remaining_indices = &invalid_indices[1..];
-            self.get_child(offset, requested_index, shards)
+            self.get_child(offset, requested_index, total_shards)
                 .get_inverted_matrix(remaining_indices,
-                                     shards,
+                                     total_shards,
                                      requested_index + 1)
         }
     }
@@ -133,17 +132,17 @@ impl InversionNode {
     pub fn insert_inverted_matrix(&mut self,
                                   matrix          : &Arc<Matrix>,
                                   invalid_indices : &[usize],
-                                  shards          : usize,
+                                  total_shards    : usize,
                                   offset          : usize) {
         if invalid_indices.len() == 0 {
             self.matrix = Some(Arc::clone(matrix));
         } else {
             let requested_index   = invalid_indices[0];
             let remaining_indices = &invalid_indices[1..];
-            self.get_child(offset, requested_index, shards)
+            self.get_child(offset, requested_index, total_shards)
                 .insert_inverted_matrix(matrix,
                                         remaining_indices,
-                                        shards,
+                                        total_shards,
                                         requested_index + 1)
         }
     }
@@ -199,7 +198,7 @@ mod tests {
 
         let matrix = Matrix::new(3, 3);
         let matrix_copy = matrix.clone();
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix), 5).unwrap();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix)).unwrap();
 
         let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
         assert_eq!(matrix_copy, *cached_matrix);
@@ -212,14 +211,14 @@ mod tests {
         let matrix = Matrix::new(3, 3);
         let matrix_copy = matrix.clone();
 
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix), 5).unwrap();
-        tree.insert_inverted_matrix(&[], &Arc::new(matrix_copy), 5).unwrap_err();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix)).unwrap();
+        tree.insert_inverted_matrix(&[], &Arc::new(matrix_copy)).unwrap_err();
 
         let matrix = Matrix::new(3, 2);
-        tree.insert_inverted_matrix(&[2], &Arc::new(matrix), 5).unwrap_err();
+        tree.insert_inverted_matrix(&[2], &Arc::new(matrix)).unwrap_err();
 
         let matrix = Matrix::new(3, 3);
-        tree.insert_inverted_matrix(&[0, 1], &Arc::new(matrix), 5).unwrap();
+        tree.insert_inverted_matrix(&[0, 1], &Arc::new(matrix)).unwrap();
     }
 
     #[test]
@@ -230,8 +229,8 @@ mod tests {
         let matrix_copy1 = matrix.clone();
         let matrix_copy2 = matrix.clone();
 
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix), 5).unwrap();
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy1), 5).unwrap();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix)).unwrap();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy1)).unwrap();
 
         let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
         assert_eq!(matrix_copy2, *cached_matrix);
@@ -265,16 +264,16 @@ mod tests {
                               [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
         let matrix3_copy = matrix3.clone();
 
-        tree.insert_inverted_matrix(&[1, 2], &Arc::new(matrix), 13).unwrap();
+        tree.insert_inverted_matrix(&[1, 2], &Arc::new(matrix)).unwrap();
 
         let result = tree.get_inverted_matrix(&[1, 2]).unwrap();
         assert_eq!(matrix_copy, *result);
 
-        tree.insert_inverted_matrix(&[1, 2, 5, 12], &Arc::new(matrix2), 13).unwrap();
+        tree.insert_inverted_matrix(&[1, 2, 5, 12], &Arc::new(matrix2)).unwrap();
         let result = tree.get_inverted_matrix(&[1, 2, 5, 12]).unwrap();
         assert_eq!(matrix2_copy, *result);
 
-        tree.insert_inverted_matrix(&[0, 3, 4, 11], &Arc::new(matrix3), 13).unwrap();
+        tree.insert_inverted_matrix(&[0, 3, 4, 11], &Arc::new(matrix3)).unwrap();
         let result = tree.get_inverted_matrix(&[0, 3, 4, 11]).unwrap();
         assert_eq!(matrix3_copy, *result);
     }

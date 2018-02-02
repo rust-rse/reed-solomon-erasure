@@ -1246,8 +1246,7 @@ impl ReedSolomon {
                 // Cache the inverted matrix in the tree for future use keyed on the
                 // indices of the invalid rows.
                 self.tree.insert_inverted_matrix(&invalid_indices,
-                                                 &data_decode_matrix,
-                                                 self.total_shard_count).unwrap();
+                                                 &data_decode_matrix).unwrap();
 
                 data_decode_matrix
             },
