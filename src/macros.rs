@@ -134,13 +134,18 @@ macro_rules! check_slices {
         }
     }};
     (
+        single => $slice_left:expr, single => $slice_right:expr
+    ) => {{
+        if $slice_left.len() != $slice_right.len() {
+            return Err(Error::IncorrectShardSize);
+        }
+    }};
+    (
         multi => $slices:expr, single => $single:expr
     ) => {{
         check_slices!(multi => $slices);
 
-        if $slices[0].len() != $single.len() {
-            return Err(Error::IncorrectShardSize);
-        }
+        check_slices!(single => $slices[0], single => $single);
     }};
     (
         multi => $slices_left:expr, multi => $slices_right:expr
@@ -148,9 +153,7 @@ macro_rules! check_slices {
         check_slices!(multi => $slices_left);
         check_slices!(multi => $slices_right);
 
-        if $slices_left[0].len() != $slices_right[0].len() {
-            return Err(Error::IncorrectShardSize);
-        }
+        check_slices!(single => $slices_left[0], single => $slices_right[0]);
     }}
 }
 
