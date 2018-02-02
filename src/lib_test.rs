@@ -1075,7 +1075,7 @@ fn shardbyshard_encode_sep_error_handling() {
         let mut sbs = ShardByShard::new(&r);
 
         let mut shards = make_random_shards!(100, 13);
-        shards[10] = vec![].into_boxed_slice();
+        shards[0] = vec![].into_boxed_slice();
         {
             let (data, parity) =
                 shards.split_at_mut(10);
@@ -1084,8 +1084,6 @@ fn shardbyshard_encode_sep_error_handling() {
                 convert_2D_slices!(data      =>to_vec &[u8]);
             let mut parity_refs =
                 convert_2D_slices!(parity    =>to_mut_vec &mut [u8]);
-
-            println!("data_refs[0].len() : {}", data_refs[0].len());
 
             assert_eq!(0, sbs.cur_input_index());
 
