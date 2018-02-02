@@ -1,15 +1,5 @@
 use super::Shard;
 
-pub mod helper {
-    pub fn calc_offset(offset : Option<usize>) -> usize {
-        match offset {
-            Some(x) => x,
-            None    => 0
-        }
-    }
-}
-
-
 /// Makes shard with byte array of zero length.
 pub fn make_zero_len_shard() -> Shard {
     Box::new([])
@@ -36,20 +26,20 @@ pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
     result
 }
 
-/// Transforms vector of shards to vector of option shards.
+/// Transforms slice of shards to vector of option shards.
 ///
 /// # Remarks
 ///
 /// Each shard is cloned rather than moved, which may be slow.
 ///
 /// This is mainly useful when you want to repair a vector
-/// of shards using `decode_missing`.
-pub fn shards_to_option_shards(shards : &Vec<Shard>)
+/// of shards using `reconstrct_shards` or `reconstruct_data_shards`.
+pub fn shards_to_option_shards(shards : &[Shard])
                                -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner : Box<[u8]> = v.clone();
+        let inner : Shard = v.clone();
         result.push(Some(inner));
     }
     result
@@ -62,7 +52,7 @@ pub fn shards_to_option_shards(shards : &Vec<Shard>)
 /// Each shard is moved rather than cloned.
 ///
 /// This is mainly useful when you want to repair a vector
-/// of shards using `decode_missing`.
+/// of shards using `reconstrct_shards` or `reconstruct_data_shards`.
 pub fn shards_into_option_shards(shards : Vec<Shard>)
                                  -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
@@ -73,38 +63,22 @@ pub fn shards_into_option_shards(shards : Vec<Shard>)
     result
 }
 
-/// Transforms a section of vector of option shards to vector of shards.
-///
-/// # Arguments
-///
-/// * `start` - start of range of option shards you want to use
-/// * `count` - number of option shards you want to use
+/// Transforms slice of option shards to vector of shards.
 ///
 /// # Remarks
 ///
 /// Each shard is cloned rather than moved, which may be slow.
 ///
 /// This is mainly useful when you want to convert result of
-/// `decode_missing` to the more usable arrangement.
+/// `reconstrct_shards` or `reconstruct_data_shards` to the
+/// more usable arrangement.
 ///
-/// Panics when any of the shards is missing or the range exceeds number of shards provided.
-pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
-                               start  : Option<usize>,
-                               count  : Option<usize>)
+/// Panics when any of the shards is missing.
+pub fn option_shards_to_shards(shards : &[Option<Shard>])
                                -> Vec<Shard> {
-    let offset = helper::calc_offset(start);
-    let count  = match count {
-        None    => shards.len(),
-        Some(x) => x
-    };
-
-    if shards.len() < offset + count {
-        panic!("Too few shards, number of shards : {}, offset + count : {}", shards.len(), offset + count);
-    }
-
     let mut result = Vec::with_capacity(shards.len());
 
-    for i in offset..offset + count {
+    for i in 0..shards.len() {
         let shard = match shards[i] {
             Some(ref x) => x,
             None        => panic!("Missing shard, index : {}", i),
@@ -122,7 +96,8 @@ pub fn option_shards_to_shards(shards : &Vec<Option<Shard>>,
 /// Each shard is moved rather than cloned.
 ///
 /// This is mainly useful when you want to convert result of
-/// `decode_missing` to the more usable arrangement.
+/// `reconstrct_shards` or `reconstruct_data_shards` to the
+/// more usable arrangement.
 ///
 /// Panics when any of the shards is missing.
 pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
