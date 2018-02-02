@@ -320,10 +320,35 @@ impl ParallelParam {
 
 macro_rules! sbs_encode_checks {
     (
-        $self:ident
+        no_sep => $self:ident, $pieces:ident
     ) => {{
         if $self.parity_ready() {
             return Err(SBSError::TooManyCalls);
+        }
+        if $pieces.len() < $self.codec.total_shard_count() {
+            return Err(SBSError::RSError(Error::TooFewShards));
+        }
+        if $pieces.len() > $self.codec.total_shard_count() {
+            return Err(SBSError::RSError(Error::TooManyShards));
+        }
+    }};
+    (
+        sep => $self:ident, $data:ident, $parity:ident
+    ) => {{
+        if $self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+        if $data.len() < $self.codec.data_shard_count() {
+            return Err(SBSError::RSError(Error::TooFewDataShards));
+        }
+        if $data.len() > $self.codec.data_shard_count() {
+            return Err(SBSError::RSError(Error::TooManyDataShards));
+        }
+        if $parity.len() < $self.codec.parity_shard_count() {
+            return Err(SBSError::RSError(Error::TooFewParityShards));
+        }
+        if $parity.len() > $self.codec.parity_shard_count() {
+            return Err(SBSError::RSError(Error::TooManyParityShards));
         }
     }}
 }
@@ -372,8 +397,8 @@ impl<'a> ShardByShard<'a> {
     }
 
     fn return_and_possibly_incre_cur_input(&mut self,
-                                  res : Result<(), Error>)
-                                  -> Result<(), SBSError> {
+                                           res : Result<(), Error>)
+                                           -> Result<(), SBSError> {
         match res {
             Ok(()) => { self.cur_input += 1;
                         Ok(()) },
@@ -388,7 +413,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode(&mut self,
                   slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
-        sbs_encode_checks!(self);
+        sbs_encode_checks!(no_sep => self, slices);
 
         let res = self.codec.encode_single(self.cur_input,
                                            slices);
@@ -404,7 +429,7 @@ impl<'a> ShardByShard<'a> {
                       data   : &[&[u8]],
                       parity : &mut [&mut[u8]])
                       -> Result<(), SBSError> {
-        sbs_encode_checks!(self);
+        sbs_encode_checks!(sep => self, data, parity);
 
         let res = self.codec.encode_single_sep(self.cur_input,
                                                &data[self.cur_input],
@@ -420,7 +445,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode_shard(&mut self,
                         shards : &mut [Shard])
                         -> Result<(), SBSError> {
-        sbs_encode_checks!(self);
+        sbs_encode_checks!(no_sep => self, shards);
 
         let res = self.codec.encode_single_shard(self.cur_input,
                                                  shards);
@@ -436,7 +461,7 @@ impl<'a> ShardByShard<'a> {
                             data   : &[Shard],
                             parity : &mut [Shard])
                             -> Result<(), SBSError> {
-        sbs_encode_checks!(self);
+        sbs_encode_checks!(sep => self, data, parity);
 
         let res = self.codec.encode_single_shard_sep(self.cur_input,
                                                      &data[self.cur_input],
