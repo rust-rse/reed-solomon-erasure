@@ -134,6 +134,6 @@ mod tests {
         let slice2 = vec![0;  999];
 
         assert!(!slices_are_equal(&slice1, &slice2));
-        assert!(!par_slices_are_equal(&slice1, &slice2));
+        assert!(!par_slices_are_equal(&slice1, &slice2, 11));
     }
 }
