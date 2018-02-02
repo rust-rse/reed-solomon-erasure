@@ -12,7 +12,7 @@ This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze
 
 Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
 
-Version `2.X.X` copies Klaus Post's implementation. The SIMD C code is copied from Nicolas Trangez's implementation with minor modifications.
+Version `>= 2.0.0` copies Klaus Post's implementation. The SIMD C code is copied from Nicolas Trangez's implementation with minor modifications.
 
 See [Notes](#notes) and [License](#license) section for details.
 
@@ -80,7 +80,7 @@ then do `cargo run --release` to start the benchmark.
 ## Performance
 Version `1.X.X`, `2.0.0` do not utilise SIMD.
 
-Version `2.1.0` onwards uses Nicolas's C files for SIMD operations.
+Version `2.1.0` onward uses Nicolas's C files for SIMD operations.
 
 Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
 
@@ -114,7 +114,7 @@ Simply search for "AUDIT" to see the dev notes that are aimed at facilitating co
 #### Implementation notes
 The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon).
 
-The `2.X.X` implementation mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and copies C files from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
+`2.0.0` onward mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and copies C files from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
 
 The test suite for both versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
 
