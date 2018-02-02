@@ -977,7 +977,7 @@ fn shardbyshard_encode_error_handling() {
             assert_eq!(0, sbs.cur_input_index());
         }
 
-        shards[0] = vec![0; 100].into_boxed_slice();
+        shards[1] = vec![0; 100].into_boxed_slice();
 
         let mut slice_refs =
             convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
@@ -1069,10 +1069,11 @@ fn shardbyshard_encode_sep_error_handling() {
         assert_eq!(0, sbs.cur_input_index());
     }
     {
-        let r       = ReedSolomon::new(10, 3).unwrap();
-        let mut sbs = ShardByShard::new(&r);
+        let r = ReedSolomon::new(10, 3).unwrap();
 
         {
+            let mut sbs = ShardByShard::new(&r);
+
             let mut shards = make_random_shards!(100, 13);
             shards[0] = vec![].into_boxed_slice();
 
@@ -1108,6 +1109,8 @@ fn shardbyshard_encode_sep_error_handling() {
             assert_eq!(1, sbs.cur_input_index());
         }
         {
+            let mut sbs = ShardByShard::new(&r);
+
             let mut shards = make_random_shards!(100, 13);
             shards[10] = vec![].into_boxed_slice();
             {
@@ -1143,10 +1146,10 @@ fn shardbyshard_encode_sep_error_handling() {
         }
     }
     {
-        let r       = ReedSolomon::new(10, 3).unwrap();
-        let mut sbs = ShardByShard::new(&r);
-
+        let r = ReedSolomon::new(10, 3).unwrap();
         {
+            let mut sbs = ShardByShard::new(&r);
+
             let mut shards = make_random_shards!(100, 13);
             shards[1] = vec![0; 99].into_boxed_slice();
             {
@@ -1181,6 +1184,8 @@ fn shardbyshard_encode_sep_error_handling() {
             assert_eq!(1, sbs.cur_input_index());
         }
         {
+            let mut sbs = ShardByShard::new(&r);
+
             let mut shards = make_random_shards!(100, 13);
             shards[11] = vec![0; 99].into_boxed_slice();
             {
