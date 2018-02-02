@@ -118,3 +118,105 @@ macro_rules! convert_2D_slices {
         result
     }}
 }
+
+macro_rules! check_slices {
+    (
+        multi => $slices:expr
+    ) => {{
+        let size = $slices[0].len();
+        if size == 0 {
+            return Err(Error::EmptyShard);
+        }
+        for slice in $slices.iter() {
+            if slice.len() != size {
+                return Err(Error::IncorrectShardSize);
+            }
+        }
+    }};
+    (
+        multi => $slices:expr, single => $single:expr
+    ) => {{
+        check_slices!(multi => $slices);
+
+        if $slices[0].len() != $single.len() {
+            return Err(Error::IncorrectShardSize);
+        }
+    }};
+    (
+        multi => $slices_left:expr, multi => $slices_right:expr
+    ) => {{
+        check_slices!(multi => $slices_left);
+        check_slices!(multi => $slices_right);
+
+        if $slices_left[0].len() != $slices_right[0].len() {
+            return Err(Error::IncorrectShardSize);
+        }
+    }}
+}
+
+macro_rules! check_slice_index {
+    (
+        all => $self:ident, $index:ident
+    ) => {{
+        if $index >= $self.total_shard_count {
+            return Err(Error::InvalidIndex);
+        }
+    }};
+    (
+        data => $self:ident, $index:ident
+    ) => {{
+        if $index >= $self.data_shard_count {
+            return Err(Error::InvalidIndex);
+        }
+    }};
+    (
+        parity => $self:ident, $index:ident
+    ) => {{
+        if $index >= $self.parity_shard_count {
+            return Err(Error::InvalidIndex);
+        }
+    }}
+}
+
+macro_rules! check_piece_count {
+    (
+        all => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.total_shard_count {
+            return Err(Error::TooFewShards);
+        }
+        if $pieces.len() > $self.total_shard_count {
+            return Err(Error::TooManyShards);
+        }
+    }};
+    (
+        data => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.data_shard_count {
+            return Err(Error::TooFewDataShards);
+        }
+        if $pieces.len() > $self.data_shard_count {
+            return Err(Error::TooManyDataShards);
+        }
+    }};
+    (
+        parity => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.parity_shard_count {
+            return Err(Error::TooFewParityShards);
+        }
+        if $pieces.len() > $self.parity_shard_count {
+            return Err(Error::TooManyParityShards);
+        }
+    }};
+    (
+        parity_buf => $self:ident, $pieces:ident
+    ) => {{
+        if $pieces.len() < $self.parity_shard_count {
+            return Err(Error::TooFewBufferShards);
+        }
+        if $pieces.len() > $self.parity_shard_count {
+            return Err(Error::TooManyBufferShards);
+        }
+    }}
+}
