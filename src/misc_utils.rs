@@ -127,4 +127,13 @@ mod tests {
             assert!(!par_slices_are_equal(&slice1, &slice2, chunk_size));
         }
     }
+
+    #[test]
+    fn unequal_length_slices() {
+        let slice1 = vec![0; 1000];
+        let slice2 = vec![0;  999];
+
+        assert!(!slices_are_equal(&slice1, &slice2));
+        assert!(!par_slices_are_equal(&slice1, &slice2));
+    }
 }
