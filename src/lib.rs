@@ -406,6 +406,50 @@ impl<'a> ShardByShard<'a> {
         }
     }
 
+    fn sbs_encode_shard_checks(&mut self,
+                               shards : &mut [Shard])
+                               -> Result<(), SBSError> {
+        fn internal_checks (codec  : &ReedSolomon,
+                            shards : &mut [Shard])
+                            -> Result<(), Error> {
+            check_piece_count!(all => codec, shards);
+            check_slices!(multi => shards);
+
+            Ok(())
+        };
+
+        if self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+
+        match internal_checks(self.codec, shards) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(SBSError::RSError(e))
+        }
+    }
+
+    fn sbs_encode_checks(&mut self,
+                         slices : &mut [&mut [u8]])
+                         -> Result<(), SBSError> {
+        fn internal_checks (codec  : &ReedSolomon,
+                            slices : &mut [&mut [u8]])
+                            -> Result<(), Error> {
+            check_piece_count!(all => codec, slices);
+            check_slices!(multi => slices);
+
+            Ok(())
+        };
+
+        if self.parity_ready() {
+            return Err(SBSError::TooManyCalls);
+        }
+
+        match internal_checks(self.codec, slices) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(SBSError::RSError(e))
+        }
+    }
+
     /// Constructs the parity shards partially using the current input data shard.
     ///
     /// Returns `TooManyCalls` when all input data shards
@@ -413,7 +457,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode(&mut self,
                   slices : &mut [&mut [u8]])
                   -> Result<(), SBSError> {
-        sbs_encode_checks!(no_sep => self, slices);
+        self.sbs_encode_checks(slices)?;
 
         let res = self.codec.encode_single(self.cur_input,
                                            slices);
@@ -445,7 +489,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode_shard(&mut self,
                         shards : &mut [Shard])
                         -> Result<(), SBSError> {
-        sbs_encode_checks!(no_sep => self, shards);
+        self.sbs_encode_shard_checks(shards)?;
 
         let res = self.codec.encode_single_shard(self.cur_input,
                                                  shards);
