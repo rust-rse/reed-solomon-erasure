@@ -156,21 +156,21 @@ macro_rules! check_slices {
 
 macro_rules! check_slice_index {
     (
-        all => $self:ident, $index:ident
+        all => $self:expr, $index:expr
     ) => {{
         if $index >= $self.total_shard_count {
             return Err(Error::InvalidIndex);
         }
     }};
     (
-        data => $self:ident, $index:ident
+        data => $self:expr, $index:expr
     ) => {{
         if $index >= $self.data_shard_count {
             return Err(Error::InvalidIndex);
         }
     }};
     (
-        parity => $self:ident, $index:ident
+        parity => $self:expr, $index:expr
     ) => {{
         if $index >= $self.parity_shard_count {
             return Err(Error::InvalidIndex);
@@ -180,42 +180,42 @@ macro_rules! check_slice_index {
 
 macro_rules! check_piece_count {
     (
-        all => $self:ident, $pieces:ident
+        all => $codec:expr, $pieces:expr
     ) => {{
-        if $pieces.len() < $self.total_shard_count {
+        if $pieces.len() < $codec.total_shard_count {
             return Err(Error::TooFewShards);
         }
-        if $pieces.len() > $self.total_shard_count {
+        if $pieces.len() > $codec.total_shard_count {
             return Err(Error::TooManyShards);
         }
     }};
     (
-        data => $self:ident, $pieces:ident
+        data => $codec:expr, $pieces:expr
     ) => {{
-        if $pieces.len() < $self.data_shard_count {
+        if $pieces.len() < $codec.data_shard_count {
             return Err(Error::TooFewDataShards);
         }
-        if $pieces.len() > $self.data_shard_count {
+        if $pieces.len() > $codec.data_shard_count {
             return Err(Error::TooManyDataShards);
         }
     }};
     (
-        parity => $self:ident, $pieces:ident
+        parity => $codec:expr, $pieces:expr
     ) => {{
-        if $pieces.len() < $self.parity_shard_count {
+        if $pieces.len() < $codec.parity_shard_count {
             return Err(Error::TooFewParityShards);
         }
-        if $pieces.len() > $self.parity_shard_count {
+        if $pieces.len() > $codec.parity_shard_count {
             return Err(Error::TooManyParityShards);
         }
     }};
     (
-        parity_buf => $self:ident, $pieces:ident
+        parity_buf => $codec:expr, $pieces:expr
     ) => {{
-        if $pieces.len() < $self.parity_shard_count {
+        if $pieces.len() < $codec.parity_shard_count {
             return Err(Error::TooFewBufferShards);
         }
-        if $pieces.len() > $self.parity_shard_count {
+        if $pieces.len() > $codec.parity_shard_count {
             return Err(Error::TooManyBufferShards);
         }
     }}
