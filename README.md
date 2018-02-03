@@ -116,7 +116,7 @@ The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https
 
 `2.0.0` onward mostly copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and copies C files from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
 
-The test suite for both versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon).
+The test suite for all versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon) as basis.
 
 ## License
 #### BackBlaze's Java Reed-Solomon implementation
