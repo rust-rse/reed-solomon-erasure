@@ -33,6 +33,8 @@ addons:
       - binutils-dev
       - libiberty-dev
 
+sudo: required
+
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
