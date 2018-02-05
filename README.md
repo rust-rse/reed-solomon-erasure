@@ -94,7 +94,7 @@ Below shows the result of one of the test configurations, other configurations s
 [Changelog](CHANGELOG.md)
 
 ## Contributions
-Contributions are welcome. Note that by submitting contributions, you agree that your work will be under the same license used by this project(MIT).
+Contributions are welcome. Note that by submitting contributions, you agree to license your work under the same license used by this project(MIT).
 
 ## Credits
 Many thanks to the following people for testing and benchmarking on various platforms
