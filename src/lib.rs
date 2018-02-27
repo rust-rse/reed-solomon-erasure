@@ -216,7 +216,7 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// The `with_buffer` variants also guarantee that the buffer contains the correct
 /// parity shards if the result is `Ok(_)` (i.e. it does not matter whether the
-/// verification passed or not, as long as there is no `Error`, the buffer
+/// verification passed or not, as long as the result is not an error, the buffer
 /// will contain the correct parity shards after the call).
 ///
 /// Following is a table of all the `with_buffer` variants
