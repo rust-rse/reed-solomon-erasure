@@ -1,5 +1,5 @@
 ## 3.0.1
-  - Updated doc for `with_buffer` variants of verify methods
+  - Updated doc for `with_buffer` variants of verifying methods
     - Stated explicitly that the buffer contains the correct parity shards after a successful call
   - Added tests for the above statement
 
