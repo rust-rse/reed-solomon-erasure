@@ -1,6 +1,6 @@
 [package]
 name    = "reed-solomon-erasure"
-version = "3.0.0"
+version = "3.0.1"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 build   = "build.rs"
 exclude = [
