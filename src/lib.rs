@@ -214,6 +214,11 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// `verify_with_buffer`, `verify_shards_with_buffer` allow you to provide
 /// the buffer to avoid making heap allocation(s) for the buffer in every call.
 ///
+/// `with_buffer` variants also guarantee that the buffer contains the correct
+/// parity shards if the result is `Ok(_)` (i.e. does not matter whether the
+/// verification passed or not, as long as there was no `Error`, then the buffer
+/// will contain the correct parity shards after the call).
+///
 /// Following is a table of all the `with_buffer` variants
 ///
 /// | not `with_buffer` | `with_buffer` |
