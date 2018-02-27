@@ -1,3 +1,8 @@
+## 3.0.1
+  - Updated doc for `with_buffer` variants of verify methods
+    - Stated explicitly that the buffer contains the correct parity shards after a successful call
+  - Added tests for the above statement
+
 ## 3.0.0
   - Added `with_buffer` variants for verifying methods
     - This gives user the option of reducing heap allocation(s)
