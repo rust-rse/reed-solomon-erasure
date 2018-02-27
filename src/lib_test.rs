@@ -29,7 +29,7 @@ macro_rules! make_random_shards {
     }}
 }
 
-fn assert_eq_shards(s1 : &Vec<Shard>, s2 : &Vec<Shard>) {
+fn assert_eq_shards(s1 : &[Shard], s2 : &[Shard]) {
     assert_eq!(s1.len(), s2.len());
     for i in 0..s1.len() {
         assert_eq!(s1[i],
@@ -509,6 +509,106 @@ fn test_verify_shards_with_buffer_incorrect_buffer_sizes() {
         assert_eq!(Error::IncorrectShardSize,
                    r.verify_shards_with_buffer(&shards,
                                                &mut buffer).unwrap_err());
+    }
+}
+
+#[test]
+fn test_verify_shards_with_buffer_gives_correct_parity_shards() {
+    let r = ReedSolomon::new(10, 3).unwrap();
+
+    for _ in 0..100 {
+        let mut shards = make_random_shards!(100, 13);
+        let shards_copy = shards.clone();
+
+        r.encode_shards(&mut shards).unwrap();
+
+        {
+            let mut buffer = make_random_shards!(100, 3);
+
+            assert!(!r.verify_shards_with_buffer(&shards_copy,
+                                                 &mut buffer).unwrap());
+
+            assert_eq_shards(&shards[10..], &buffer);
+        }
+        {
+            let mut buffer = make_random_shards!(100, 3);
+
+            assert!(r.verify_shards_with_buffer(&shards,
+                                                &mut buffer).unwrap());
+
+            assert_eq_shards(&shards[10..], &buffer);
+        }
+    }
+}
+
+#[test]
+fn test_verify_with_buffer_gives_correct_parity_shards() {
+    let r = ReedSolomon::new(10, 3).unwrap();
+
+    for _ in 0..100 {
+        let mut slices : [[u8;100]; 13] =
+            [[0; 100]; 13];
+        for slice in slices.iter_mut() {
+            fill_random(slice);
+        }
+        let slices_copy = slices.clone();
+
+        {
+            let mut slice_refs =
+                convert_2D_slices!(slices      =>to_mut_vec &mut [u8]);
+
+            r.encode(&mut slice_refs).unwrap();
+        }
+
+        {
+            let mut buffer : [[u8; 100]; 3] = [[0; 100]; 3];
+
+            {
+                let slice_copy_refs =
+                    convert_2D_slices!(slices_copy =>to_vec &[u8]);
+
+                for slice in buffer.iter_mut() {
+                    fill_random(slice);
+                }
+
+                let mut buffer_refs =
+                    convert_2D_slices!(buffer =>to_mut_vec &mut [u8]);
+
+                assert!(!r.verify_with_buffer(&slice_copy_refs,
+                                              &mut buffer_refs).unwrap());
+            }
+
+            for a in 0..3 {
+                for b in 0..100 {
+                    assert_eq!(slices[10 + a][b], buffer[a][b]);
+                }
+            }
+        }
+
+        {
+            let mut buffer : [[u8; 100]; 3] = [[0; 100]; 3];
+
+            {
+                let slice_refs =
+                    convert_2D_slices!(slices      =>to_vec &[u8]);
+
+                for slice in buffer.iter_mut() {
+                    fill_random(slice);
+                }
+
+                let mut buffer_refs =
+                    convert_2D_slices!(buffer =>to_mut_vec &mut [u8]);
+
+                assert!(r.verify_with_buffer(&slice_refs,
+                                             &mut buffer_refs).unwrap());
+            }
+
+            for a in 0..3 {
+                for b in 0..100 {
+                    assert_eq!(slices[10 + a][b], buffer[a][b]);
+                }
+            }
+        }
     }
 }
 
