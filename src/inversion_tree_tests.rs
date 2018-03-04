@@ -145,31 +145,52 @@ fn make_random_invalid_indices(data_shards   : usize,
 }
 
 quickcheck! {
-    fn qc_tree(data_shards   : usize,
-               parity_shards : usize,
-               matrix_count  : usize) -> bool {
+    fn qc_insert_then_get(data_shards   : usize,
+                          parity_shards : usize,
+                          matrix_count  : usize) -> bool {
         if data_shards   == 0 { return true; }
         if parity_shards == 0 { return true; }
         if data_shards + parity_shards > 256 { return true; }
 
         let tree = InversionTree::new(data_shards, parity_shards);
 
-        let mut matrices : Vec<(Vec<usize>, Matrix)> =
+        let mut invalid_indices_set : Vec<Vec<usize>> =
+            Vec::with_capacity(matrix_count);
+        let mut indices_and_matrices : Vec<(Vec<usize>, Matrix)> =
             Vec::with_capacity(matrix_count);
         for _ in 0..matrix_count {
             let invalid_indices = make_random_invalid_indices(data_shards,
                                                               parity_shards);
-            let matrix = make_random_matrix(data_shards);
-            match tree.insert_inverted_matrix(&invalid_indices,
-                                              &Arc::new(matrix.clone())) {
-                Ok(())                 => {},
-                Err(Error::AlreadySet) => {},
-                Err(Error::NotSquare)  => panic!(),
+            // only push to tree if it's new
+            if let None = invalid_indices_set.iter().find(|&&ref x|
+                                                          { x == &invalid_indices })
+            {
+                let matrix = make_random_matrix(data_shards);
+                match tree.insert_inverted_matrix(&invalid_indices,
+                                                  &Arc::new(matrix.clone())) {
+                    Ok(())                 => {
+                        invalid_indices_set.push((invalid_indices.clone()));
+                        indices_and_matrices.push((invalid_indices,
+                                                   matrix));
+                    }
+                    Err(Error::AlreadySet) => {},
+                    Err(Error::NotSquare)  => panic!(),
+                }
             }
-            matrices.push((invalid_indices,
-                           matrix));
         }
 
-        false
+        for &(ref invalid_indices,
+              ref recorded_matrix) in indices_and_matrices.iter() {
+            let matrix_in_tree =
+                tree.get_inverted_matrix(invalid_indices).unwrap();
+            if matrix_in_tree.as_ref() != recorded_matrix {
+                println!("indices  : {:?}", invalid_indices);
+                println!("recorded : {:?}", recorded_matrix);
+                println!("tree     : {:?}", matrix_in_tree.as_ref());
+                return false;
+            }
+        }
+
+        true
     }
 }
