@@ -3,11 +3,7 @@ extern crate rand;
 
 use super::galois::*;
 
-fn fill_random(arr : &mut [u8]) {
-    for a in arr.iter_mut() {
-        *a = rand::random::<u8>();
-    }
-}
+use super::misc_utils::fill_random;
 
 static BACKBLAZE_LOG_TABLE : [u8; 256] = [
     //-1,    0,    1,   25,    2,   50,   26,  198,
@@ -97,7 +93,7 @@ fn test_identity() {
 }
 
 quickcheck! {
-    fn qc_additive_identity(a : u8, b : u8) -> bool {
+    fn qc_additive_identity(a : u8) -> bool {
         sub(a, sub(0, a)) == 0
     }
 

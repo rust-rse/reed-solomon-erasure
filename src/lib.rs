@@ -24,11 +24,13 @@ mod macros;
 
 mod misc_utils;
 mod galois;
-mod galois_test;
+mod galois_tests;
 mod matrix;
+mod matrix_tests;
 mod inversion_tree;
+mod inversion_tree_tests;
 mod shard_utils;
-mod lib_test;
+mod lib_tests;
 
 pub use shard_utils::make_zero_len_shard;
 pub use shard_utils::make_zero_len_shards;
