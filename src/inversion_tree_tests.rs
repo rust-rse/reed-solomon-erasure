@@ -2,6 +2,7 @@
 extern crate rand;
 
 use std::sync::Arc;
+use std::collections::HashMap;
 
 use super::matrix::Matrix;
 use super::inversion_tree::*;
@@ -145,49 +146,54 @@ fn make_random_invalid_indices(data_shards   : usize,
 }
 
 quickcheck! {
-    fn qc_insert_then_get(data_shards   : usize,
-                          parity_shards : usize,
-                          matrix_count  : usize) -> bool {
+    // inversion tree is functionally the same as a map
+    fn qc_tree_same_as_hash_map(data_shards   : usize,
+                                parity_shards : usize,
+                                matrix_count  : usize) -> bool {
         if data_shards   == 0 { return true; }
         if parity_shards == 0 { return true; }
         if data_shards + parity_shards > 256 { return true; }
 
         let tree = InversionTree::new(data_shards, parity_shards);
+        let mut map = HashMap::with_capacity(matrix_count);
 
-        let mut invalid_indices_set : Vec<Vec<usize>> =
-            Vec::with_capacity(matrix_count);
-        let mut indices_and_matrices : Vec<(Vec<usize>, Matrix)> =
-            Vec::with_capacity(matrix_count);
+        let mut invalid_indices_set = Vec::with_capacity(matrix_count);
+
         for _ in 0..matrix_count {
             let invalid_indices = make_random_invalid_indices(data_shards,
                                                               parity_shards);
-            // only push to tree if it's new
-            if let None = invalid_indices_set.iter().find(|&&ref x|
-                                                          { x == &invalid_indices })
-            {
-                let matrix = make_random_matrix(data_shards);
-                match tree.insert_inverted_matrix(&invalid_indices,
-                                                  &Arc::new(matrix.clone())) {
-                    Ok(())                 => {
-                        invalid_indices_set.push((invalid_indices.clone()));
-                        indices_and_matrices.push((invalid_indices,
-                                                   matrix));
-                    }
-                    Err(Error::AlreadySet) => {},
-                    Err(Error::NotSquare)  => panic!(),
+            let matrix = make_random_matrix(data_shards);
+            match tree.insert_inverted_matrix(&invalid_indices,
+                                              &Arc::new(matrix.clone())) {
+                Ok(())                 => {
+                    map.insert(invalid_indices.clone(), matrix);
+                    invalid_indices_set.push(invalid_indices);
                 }
+                Err(Error::AlreadySet) => {},
+                Err(Error::NotSquare)  => panic!(),
             }
         }
 
-        for &(ref invalid_indices,
-              ref recorded_matrix) in indices_and_matrices.iter() {
-            let matrix_in_tree =
-                tree.get_inverted_matrix(invalid_indices).unwrap();
-            if matrix_in_tree.as_ref() != recorded_matrix {
-                println!("indices  : {:?}", invalid_indices);
-                println!("recorded : {:?}", recorded_matrix);
-                println!("tree     : {:?}", matrix_in_tree.as_ref());
-                return false;
+        for _ in 0..5 {
+            // iterate through the insertion order
+            for ref invalid_indices in invalid_indices_set.iter() {
+                let matrix_in_tree =
+                    tree.get_inverted_matrix(invalid_indices).unwrap();
+                let recorded_matrix =
+                    map.get(*invalid_indices).unwrap();
+                if matrix_in_tree.as_ref() != recorded_matrix {
+                    return false;
+                }
+            }
+
+            // iterate through the map's order
+            for (ref invalid_indices,
+                 ref recorded_matrix) in map.iter() {
+                let matrix_in_tree =
+                    tree.get_inverted_matrix(invalid_indices).unwrap();
+                if matrix_in_tree.as_ref() != *recorded_matrix {
+                    return false;
+                }
             }
         }
 
