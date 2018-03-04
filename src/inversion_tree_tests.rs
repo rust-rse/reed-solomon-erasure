@@ -127,3 +127,9 @@ fn test_extended_inverted_matrix() {
     let result = tree.get_inverted_matrix(&[0, 3, 4, 11]).unwrap();
     assert_eq!(matrix3_copy, *result);
 }
+
+quickcheck! {
+    /*fn qc_tree_caching(vec : Vec<Matrix>) -> bool {
+        true
+    }*/
+}
