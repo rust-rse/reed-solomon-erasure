@@ -1,4 +1,14 @@
+#[cfg(test)]
+extern crate rand;
+
 use super::rayon::prelude::*;
+
+#[cfg(test)]
+pub fn fill_random(arr : &mut [u8]) {
+    for a in arr.iter_mut() {
+        *a = rand::random::<u8>();
+    }
+}
 
 pub fn slices_are_equal<T>(slice1 : &[T],
                            slice2 : &[T]) -> bool
