@@ -8,6 +8,17 @@
 //! and simply leave out the corrupted shards when attempting to reconstruct
 //! the missing data.
 
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
+extern crate rayon;
+use rayon::prelude::*;
+use std::sync::Arc;
+
+extern crate smallvec;
+use smallvec::SmallVec;
+
 #[macro_use]
 mod macros;
 
@@ -27,13 +38,6 @@ pub use shard_utils::shards_to_option_shards;
 pub use shard_utils::shards_into_option_shards;
 pub use shard_utils::option_shards_to_shards;
 pub use shard_utils::option_shards_into_shards;
-
-extern crate rayon;
-use rayon::prelude::*;
-use std::sync::Arc;
-
-extern crate smallvec;
-use smallvec::SmallVec;
 
 use matrix::Matrix;
 use inversion_tree::InversionTree;

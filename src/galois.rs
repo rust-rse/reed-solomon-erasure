@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-
 extern crate libc;
 
 include!(concat!(env!("OUT_DIR"), "/table.rs"));

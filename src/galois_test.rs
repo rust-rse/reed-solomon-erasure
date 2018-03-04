@@ -1,6 +1,7 @@
 #![cfg(test)]
-use super::galois::*;
 extern crate rand;
+
+use super::galois::*;
 
 fn fill_random(arr : &mut [u8]) {
     for a in arr.iter_mut() {
@@ -70,6 +71,16 @@ fn test_associativity() {
     }
 }
 
+quickcheck! {
+    fn qc_add_associativity(a : u8, b : u8, c : u8) -> bool {
+        add(a, add(b, c)) == add(add(a, b), c)
+    }
+
+    fn qc_mul_associativity(a : u8, b : u8, c : u8) -> bool {
+        mul(a, mul(b, c)) == mul(mul(a, b), c)
+    }
+}
+
 #[test]
 fn test_identity() {
     for a in 0..256 {
@@ -82,6 +93,17 @@ fn test_identity() {
             let c = mul(a, b);
             assert_eq!(c, 1);
         }
+    }
+}
+
+quickcheck! {
+    fn qc_additive_identity(a : u8, b : u8) -> bool {
+        sub(a, sub(0, a)) == 0
+    }
+
+    fn qc_multiplicative_identity(a : u8) -> bool {
+        if a == 0 { true }
+        else      { mul(a, div(1, a)) == 1 }
     }
 }
 
@@ -101,6 +123,16 @@ fn test_commutativity() {
     }
 }
 
+quickcheck! {
+    fn qc_add_commutativity(a : u8, b : u8) -> bool {
+        add(a, b) == add(b, a)
+    }
+
+    fn qc_mul_commutativity(a : u8, b : u8) -> bool {
+        mul(a, b) == mul(b, a)
+    }
+}
+
 #[test]
 fn test_distributivity() {
     for a in 0..256 {
@@ -114,6 +146,12 @@ fn test_distributivity() {
                 assert_eq!(x, y);
             }
         }
+    }
+}
+
+quickcheck! {
+    fn qc_add_distributivity(a : u8, b : u8, c : u8) -> bool {
+        mul(a, add(b, c)) == add(mul(a, b), mul(a, c))
     }
 }
 
