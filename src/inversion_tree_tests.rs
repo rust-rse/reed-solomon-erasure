@@ -149,9 +149,12 @@ quickcheck! {
     // inversion tree is functionally the same as a map
     fn qc_tree_same_as_hash_map(data_shards   : usize,
                                 parity_shards : usize,
-                                matrix_count  : usize,
+                                matrix_count  : u8,
                                 iter_order    : Vec<usize>,
-                                read_count    : usize) -> bool {
+                                read_count    : u8) -> bool {
+        let matrix_count = matrix_count as usize;
+        let read_count   = read_count   as usize;
+
         if data_shards   == 0 { return true; }
         if parity_shards == 0 { return true; }
         if data_shards + parity_shards > 256 { return true; }
@@ -178,17 +181,19 @@ quickcheck! {
 
         for _ in 0..read_count {
             // iterate according to the provided order
-            for i in iter_order.iter() {
-                let i = i % invalid_indices_set.len();
+            if invalid_indices_set.len() > 0 {
+                for i in iter_order.iter() {
+                    let i = i % invalid_indices_set.len();
 
-                let invalid_indices = &invalid_indices_set[i];
+                    let invalid_indices = &invalid_indices_set[i];
 
-                let matrix_in_tree =
-                    tree.get_inverted_matrix(invalid_indices).unwrap();
-                let recorded_matrix =
-                    map.get(invalid_indices).unwrap();
-                if matrix_in_tree.as_ref() != recorded_matrix {
-                    return false;
+                    let matrix_in_tree =
+                        tree.get_inverted_matrix(invalid_indices).unwrap();
+                    let recorded_matrix =
+                        map.get(invalid_indices).unwrap();
+                    if matrix_in_tree.as_ref() != recorded_matrix {
+                        return false;
+                    }
                 }
             }
 
