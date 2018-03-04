@@ -97,7 +97,7 @@ fn test_identity() {
 }
 
 quickcheck! {
-    fn qc_additive_identity(a : u8, b : u8) -> bool {
+    fn qc_additive_identity(a : u8) -> bool {
         sub(a, sub(0, a)) == 0
     }
 

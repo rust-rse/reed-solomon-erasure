@@ -27,6 +27,7 @@ mod galois;
 mod galois_test;
 mod matrix;
 mod inversion_tree;
+mod inversion_tree_test;
 mod shard_utils;
 mod lib_test;
 
