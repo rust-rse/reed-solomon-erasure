@@ -13,6 +13,7 @@ mod macros;
 
 mod misc_utils;
 mod galois;
+mod galois_test;
 mod matrix;
 mod inversion_tree;
 mod shard_utils;
