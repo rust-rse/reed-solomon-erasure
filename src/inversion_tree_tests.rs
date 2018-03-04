@@ -147,6 +147,7 @@ fn make_random_invalid_indices(data_shards   : usize,
 
 quickcheck! {
     // inversion tree is functionally the same as a map
+    // but more efficient
     fn qc_tree_same_as_hash_map(data_shards   : usize,
                                 parity_shards : usize,
                                 matrix_count  : usize,
