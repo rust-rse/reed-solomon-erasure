@@ -1,7 +1,8 @@
 #![cfg(test)]
+extern crate rand;
+
 use super::galois::*;
 
-extern crate rand;
 use super::misc_utils::fill_random;
 
 static BACKBLAZE_LOG_TABLE : [u8; 256] = [
