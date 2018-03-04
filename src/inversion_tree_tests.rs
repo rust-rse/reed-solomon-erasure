@@ -1,8 +1,11 @@
 #![cfg(test)]
+extern crate rand;
+
 use std::sync::Arc;
 
 use super::matrix::Matrix;
 use super::inversion_tree::*;
+use super::matrix_tests::make_random_matrix;
 
 macro_rules! matrix {
     (
@@ -128,8 +131,45 @@ fn test_extended_inverted_matrix() {
     assert_eq!(matrix3_copy, *result);
 }
 
+fn make_random_invalid_indices(data_shards   : usize,
+                               parity_shards : usize) -> Vec<usize> {
+    let mut invalid_count = 0;
+    let mut res = Vec::new();
+    for i in 0..data_shards + parity_shards {
+        if rand::random::<bool>() && invalid_count < parity_shards {
+            res.push(i);
+            invalid_count += 1;
+        }
+    }
+    res
+}
+
 quickcheck! {
-    /*fn qc_tree_caching(vec : Vec<Matrix>) -> bool {
-        true
-    }*/
+    fn qc_tree(data_shards   : usize,
+               parity_shards : usize,
+               matrix_count  : usize) -> bool {
+        if data_shards   == 0 { return true; }
+        if parity_shards == 0 { return true; }
+        if data_shards + parity_shards > 256 { return true; }
+
+        let tree = InversionTree::new(data_shards, parity_shards);
+
+        let mut matrices : Vec<(Vec<usize>, Matrix)> =
+            Vec::with_capacity(matrix_count);
+        for _ in 0..matrix_count {
+            let invalid_indices = make_random_invalid_indices(data_shards,
+                                                              parity_shards);
+            let matrix = make_random_matrix(data_shards);
+            match tree.insert_inverted_matrix(&invalid_indices,
+                                              &Arc::new(matrix.clone())) {
+                Ok(())                 => {},
+                Err(Error::AlreadySet) => {},
+                Err(Error::NotSquare)  => panic!(),
+            }
+            matrices.push((invalid_indices,
+                           matrix));
+        }
+
+        false
+    }
 }

@@ -12,20 +12,15 @@ macro_rules! matrix {
     ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
 }
 
-use super::quickcheck::{Arbitrary, Gen};
 use super::misc_utils::fill_random;
 
-impl Arbitrary for Matrix {
-    fn arbitrary<G : Gen>(g : &mut G) -> Self {
-        let size = g.size();
-
-        let mut vec : Vec<Vec<u8>> = vec![vec![0; size]; size];
-        for v in vec.iter_mut() {
-            fill_random(v);
-        }
-
-        Matrix::new_with_data(vec)
+pub fn make_random_matrix(size : usize) -> Matrix {
+    let mut vec : Vec<Vec<u8>> = vec![vec![0; size]; size];
+    for v in vec.iter_mut() {
+        fill_random(v);
     }
+
+    Matrix::new_with_data(vec)
 }
 
 #[test]
