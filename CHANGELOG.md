@@ -1,5 +1,5 @@
 ## 3.0.3
-- Added quickcheck tests to the test suite
+- Added QuickCheck tests to the test suite
   - InversionTree is heavily tested now
 - No code changes as no bugs were found
 
