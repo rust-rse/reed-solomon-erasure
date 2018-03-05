@@ -167,7 +167,7 @@ dependencies = [
 
 [[package]]
 name = "rayon"
-version = "0.9.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "either 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -194,7 +194,7 @@ dependencies = [
  "libc 0.2.37 (registry+https://github.com/rust-lang/crates.io-index)",
  "quickcheck 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "rayon 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rayon 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -295,7 +295,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c51a3322e4bca9d212ad9a158a02abc6934d005490c054a2778df73a70aa0a30"
 "checksum quickcheck 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "15cda2c09a11b72e8563c57760dd5cf8b1fb3bb595df5759b5653048ab04e030"
 "checksum rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "eba5f8cb59cc50ed56be8880a5c7b496bfd9bd26394e176bc67884094145c2c5"
-"checksum rayon 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ed02d09394c94ffbdfdc755ad62a132e94c3224a8354e78a1200ced34df12edf"
+"checksum rayon 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "485541959c8ecc49865526fe6c4de9653dd6e60d829d6edf0be228167b60372d"
 "checksum rayon-core 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9d24ad214285a7729b174ed6d3bcfcb80177807f959d95fafd5bfc5c4f201ac8"
 "checksum regex 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "5be5347bde0c48cfd8c3fdc0766cdfe9d8a755ef84d620d6794c778c91de8b2b"
 "checksum regex-syntax 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8e931c58b93d86f080c734bfd2bce7dd0079ae2331235818133c8be7f422e20e"

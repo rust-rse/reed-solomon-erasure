@@ -5,6 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/darrenldl/reed-solomon-erasure/badge.svg?branch=master)](https://coveralls.io/github/darrenldl/reed-solomon-erasure?branch=master)
 [![Crates](https://img.shields.io/crates/v/reed-solomon-erasure.svg)](https://crates.io/crates/reed-solomon-erasure)
 [![Documentation](https://docs.rs/reed-solomon-erasure/badge.svg)](https://docs.rs/reed-solomon-erasure)
+[![dependency status](https://deps.rs/repo/github/darrenldl/reed-solomon-erasure/status.svg)](https://deps.rs/repo/github/darrenldl/reed-solomon-erasure)
 
 Rust implementation of Reed-Solomon erasure coding
 

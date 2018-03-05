@@ -2,6 +2,8 @@
 - Added QuickCheck tests to the test suite
   - InversionTree is heavily tested now
 - No code changes as no bugs were found
+- Deps update
+  - Updated rayon from 0.9 to 1.0
 
 ## 3.0.2
 - Same as 3.0.1, but 3.0.1 had unapplied changes
