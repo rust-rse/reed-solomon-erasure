@@ -1,3 +1,6 @@
+## 3.0.4
+- Upgraded InversionTree QuickCheck test
+
 ## 3.0.3
 - Added QuickCheck tests to the test suite
   - InversionTree is heavily tested now

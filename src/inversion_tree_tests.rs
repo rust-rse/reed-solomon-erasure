@@ -8,6 +8,10 @@ use super::matrix::Matrix;
 use super::inversion_tree::*;
 use super::matrix_tests::make_random_matrix;
 
+use super::quickcheck::{QuickCheck,
+                        Gen,
+                        Arbitrary};
+
 macro_rules! matrix {
     (
         $(
@@ -145,81 +149,110 @@ fn make_random_invalid_indices(data_shards   : usize,
     res
 }
 
-quickcheck! {
-    // inversion tree is functionally the same as a map
-    // but more efficient
-    fn qc_tree_same_as_hash_map(data_shards   : usize,
-                                parity_shards : usize,
-                                matrix_count  : usize,
-                                iter_order    : Vec<usize>,
-                                read_count    : usize) -> bool {
-        if data_shards   == 0 { return true; }
-        if parity_shards == 0 { return true; }
-        if data_shards + parity_shards > 256 { return true; }
+#[derive(Debug, Clone)]
+struct QCTreeTestParam {
+    data_shards   : usize,
+    parity_shards : usize,
+    matrix_count  : usize,
+    iter_order    : Vec<usize>,
+    read_count    : usize,
+}
 
-        if matrix_count > 100 { return true; }
-        if read_count   >  10 { return true; }
+impl Arbitrary for QCTreeTestParam {
+    fn arbitrary<G : Gen>(g : &mut G) -> Self {
+        let size   = g.size();
 
-        let tree = InversionTree::new(data_shards, parity_shards);
-        let mut map = HashMap::with_capacity(matrix_count);
+        let matrix_count = 5 + size % 100;
 
-        let mut invalid_indices_set = Vec::with_capacity(matrix_count);
-
+        let mut iter_order = Vec::with_capacity(matrix_count);
         for _ in 0..matrix_count {
-            let invalid_indices = make_random_invalid_indices(data_shards,
-                                                              parity_shards);
-            let matrix = make_random_matrix(data_shards);
-            match tree.insert_inverted_matrix(&invalid_indices,
-                                              &Arc::new(matrix.clone())) {
-                Ok(())                 => {
-                    map.insert(invalid_indices.clone(), matrix);
-                    invalid_indices_set.push(invalid_indices);
-                }
-                Err(Error::AlreadySet) => {},
-                Err(Error::NotSquare)  => panic!(),
-            }
+            iter_order.push(rand::random::<usize>());
         }
 
-        for _ in 0..read_count {
-            // iterate according to the provided order
-            if invalid_indices_set.len() > 0 {
-                for i in iter_order.iter() {
-                    let i = i % invalid_indices_set.len();
+        QCTreeTestParam {
+            data_shards   : 1 + size % 50,
+            parity_shards : 1 + size % 50,
+            matrix_count,
+            iter_order,
+            read_count    : 2 + size % 10,
+        }
+    }
+}
 
-                    let invalid_indices = &invalid_indices_set[i];
+#[test]
+fn qc_tree_same_as_hash_map() {
+    QuickCheck::new()
+        .min_tests_passed(10_000)
+        .tests(11_000)
+        .max_tests(100_000)
+        .quickcheck(
+            qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> bool);
+}
 
-                    let matrix_in_tree =
-                        tree.get_inverted_matrix(invalid_indices).unwrap();
-                    let matrix_in_map =
-                        map.get(invalid_indices).unwrap();
-                    if matrix_in_tree.as_ref() != matrix_in_map {
-                        return false;
-                    }
-                }
-            }
+// inversion tree is functionally the same as a map
+// but more efficient
+fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
+                                 -> bool {
+    let tree = InversionTree::new(param.data_shards,
+                                  param.parity_shards);
+    let mut map = HashMap::with_capacity(param.matrix_count);
 
-            // iterate through the insertion order
-            for ref invalid_indices in invalid_indices_set.iter() {
+    let mut invalid_indices_set = Vec::with_capacity(param.matrix_count);
+
+    for _ in 0..param.matrix_count {
+        let invalid_indices = make_random_invalid_indices(param.data_shards,
+                                                          param.parity_shards);
+        let matrix = make_random_matrix(param.data_shards);
+        match tree.insert_inverted_matrix(&invalid_indices,
+                                          &Arc::new(matrix.clone())) {
+            Ok(())                 => {
+                map.insert(invalid_indices.clone(), matrix);
+                invalid_indices_set.push(invalid_indices);
+            },
+            Err(Error::AlreadySet) => {},
+            Err(Error::NotSquare)  => panic!(),
+        }
+    }
+
+    for _ in 0..param.read_count {
+        // iterate according to the provided order
+        if invalid_indices_set.len() > 0 {
+            for i in param.iter_order.iter() {
+                let i = i % invalid_indices_set.len();
+
+                let invalid_indices = &invalid_indices_set[i];
+
                 let matrix_in_tree =
                     tree.get_inverted_matrix(invalid_indices).unwrap();
                 let matrix_in_map =
-                    map.get(*invalid_indices).unwrap();
+                    map.get(invalid_indices).unwrap();
                 if matrix_in_tree.as_ref() != matrix_in_map {
                     return false;
                 }
             }
+        }
 
-            // iterate through the map's order
-            for (ref invalid_indices,
-                 ref matrix_in_map) in map.iter() {
-                let matrix_in_tree =
-                    tree.get_inverted_matrix(invalid_indices).unwrap();
-                if matrix_in_tree.as_ref() != *matrix_in_map {
-                    return false;
-                }
+        // iterate through the insertion order
+        for ref invalid_indices in invalid_indices_set.iter() {
+            let matrix_in_tree =
+                tree.get_inverted_matrix(invalid_indices).unwrap();
+            let matrix_in_map =
+                map.get(*invalid_indices).unwrap();
+            if matrix_in_tree.as_ref() != matrix_in_map {
+                return false;
             }
         }
 
-        true
+        // iterate through the map's order
+        for (ref invalid_indices,
+             ref matrix_in_map) in map.iter() {
+            let matrix_in_tree =
+                tree.get_inverted_matrix(invalid_indices).unwrap();
+            if matrix_in_tree.as_ref() != *matrix_in_map {
+                return false;
+            }
+        }
     }
+
+    true
 }
