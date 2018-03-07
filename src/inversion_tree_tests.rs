@@ -170,8 +170,8 @@ impl Arbitrary for QCTreeTestParam {
         }
 
         QCTreeTestParam {
-            data_shards   : 1 + size % 256,
-            parity_shards : 1 + size % 256,
+            data_shards   : 1 + size % 50,
+            parity_shards : 1 + size % 50,
             matrix_count,
             iter_order,
             read_count    : 2 + size % 10,
@@ -182,8 +182,8 @@ impl Arbitrary for QCTreeTestParam {
 #[test]
 fn qc_tree_same_as_hash_map() {
     QuickCheck::new()
-        .min_tests_passed(1_000)
-        .tests(2_000)
+        .min_tests_passed(10_000)
+        .tests(11_000)
         .max_tests(100_000)
         .quickcheck(
             qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> bool);
