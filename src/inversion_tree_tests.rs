@@ -162,17 +162,20 @@ struct QCTreeTestParam {
 impl Arbitrary for QCTreeTestParam {
     fn arbitrary<G : Gen>(g : &mut G) -> Self {
         let size   = g.size();
-        let mut iter_order = Vec::with_capacity(size * 2);
-        for _ in 0..size * 2 {
+
+        let matrix_count = 1 + size % 100;
+
+        let mut iter_order = Vec::with_capacity(matrix_count);
+        for _ in 0..matrix_count {
             iter_order.push(rand::random::<usize>());
         }
 
         QCTreeTestParam {
-            data_shards   : size % 256,
-            parity_shards : size % 256,
-            matrix_count  : size % 100,
+            data_shards   : 1 + size % 128,
+            parity_shards : 1 + size % 128,
+            matrix_count,
             iter_order,
-            read_count    : size % 10,
+            read_count    : 1 + size % 10,
         }
     }
 }
@@ -180,9 +183,9 @@ impl Arbitrary for QCTreeTestParam {
 #[test]
 fn qc_tree_same_as_hash_map() {
     QuickCheck::new()
-        .min_tests_passed(10_000)
-        .tests(20_000)
-        .max_tests(1_000_000)
+        .min_tests_passed(1_000)
+        .tests(2_000)
+        .max_tests(100_000)
         .quickcheck(
             qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> TestResult);
 }
