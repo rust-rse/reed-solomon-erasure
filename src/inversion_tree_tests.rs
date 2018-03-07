@@ -162,7 +162,7 @@ impl Arbitrary for QCTreeTestParam {
     fn arbitrary<G : Gen>(g : &mut G) -> Self {
         let size   = g.size();
 
-        let matrix_count = 1 + size % 100;
+        let matrix_count = 5 + size % 100;
 
         let mut iter_order = Vec::with_capacity(matrix_count);
         for _ in 0..matrix_count {
@@ -174,7 +174,7 @@ impl Arbitrary for QCTreeTestParam {
             parity_shards : 1 + size % 256,
             matrix_count,
             iter_order,
-            read_count    : 1 + size % 10,
+            read_count    : 2 + size % 10,
         }
     }
 }
