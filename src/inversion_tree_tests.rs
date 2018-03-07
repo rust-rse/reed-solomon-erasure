@@ -170,8 +170,8 @@ impl Arbitrary for QCTreeTestParam {
         }
 
         QCTreeTestParam {
-            data_shards   : 1 + size % 128,
-            parity_shards : 1 + size % 128,
+            data_shards   : 1 + size % 256,
+            parity_shards : 1 + size % 256,
             matrix_count,
             iter_order,
             read_count    : 1 + size % 10,
