@@ -8,8 +8,7 @@ use super::matrix::Matrix;
 use super::inversion_tree::*;
 use super::matrix_tests::make_random_matrix;
 
-use super::quickcheck::{TestResult,
-                        QuickCheck,
+use super::quickcheck::{QuickCheck,
                         Gen,
                         Arbitrary};
 
@@ -187,22 +186,13 @@ fn qc_tree_same_as_hash_map() {
         .tests(2_000)
         .max_tests(100_000)
         .quickcheck(
-            qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> TestResult);
+            qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> bool);
 }
 
 // inversion tree is functionally the same as a map
 // but more efficient
 fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
-                                 -> TestResult {
-    if param.data_shards   == 0 { return TestResult::discard(); }
-    if param.parity_shards == 0 { return TestResult::discard(); }
-    if param.data_shards + param.parity_shards > 256 {
-        return TestResult::discard();
-    }
-
-    if param.matrix_count > 100 { return TestResult::discard(); }
-    if param.read_count   >  10 { return TestResult::discard(); }
-
+                                 -> bool {
     let tree = InversionTree::new(param.data_shards,
                                   param.parity_shards);
     let mut map = HashMap::with_capacity(param.matrix_count);
@@ -237,7 +227,7 @@ fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
                 let matrix_in_map =
                     map.get(invalid_indices).unwrap();
                 if matrix_in_tree.as_ref() != matrix_in_map {
-                    return TestResult::from_bool(false);
+                    return false;
                 }
             }
         }
@@ -249,7 +239,7 @@ fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
             let matrix_in_map =
                 map.get(*invalid_indices).unwrap();
             if matrix_in_tree.as_ref() != matrix_in_map {
-                return TestResult::from_bool(false);
+                return false;
             }
         }
 
@@ -259,10 +249,10 @@ fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
             let matrix_in_tree =
                 tree.get_inverted_matrix(invalid_indices).unwrap();
             if matrix_in_tree.as_ref() != *matrix_in_map {
-                return TestResult::from_bool(false);
+                return false;
             }
         }
     }
 
-    TestResult::from_bool(true)
+    true
 }
