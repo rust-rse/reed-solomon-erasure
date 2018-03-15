@@ -1,3 +1,6 @@
+#[cfg(test)]
+use rand;
+
 use rayon::prelude::*;
 
 #[cfg(test)]

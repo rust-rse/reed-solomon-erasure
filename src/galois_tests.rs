@@ -1,4 +1,6 @@
 #![cfg(test)]
+use rand;
+
 use super::galois::*;
 
 use super::misc_utils::fill_random;

@@ -1,4 +1,6 @@
 #![cfg(test)]
+use rand;
+
 use std::sync::Arc;
 use std::collections::HashMap;
 
