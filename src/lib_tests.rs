@@ -1,6 +1,5 @@
 #![cfg(test)]
 #![allow(dead_code)]
-extern crate rand;
 
 use super::*;
 use super::shard_utils;

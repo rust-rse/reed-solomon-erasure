@@ -1,7 +1,5 @@
 #![allow(dead_code)]
-
-extern crate smallvec;
-use self::smallvec::SmallVec;
+use super::SmallVec;
 
 use galois;
 #[derive(Debug)]
@@ -10,9 +8,9 @@ pub enum Error {
 }
 
 macro_rules! acc {
-    ($m:ident, $r:expr, $c:expr)
-        =>
-    {
+    (
+        $m:ident, $r:expr, $c:expr
+    ) => {
         $m.data[$r * $m.col_count + $c]
     }
 }

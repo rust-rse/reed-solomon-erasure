@@ -12,12 +12,17 @@
 #[macro_use]
 extern crate quickcheck;
 
+#[cfg(test)]
+extern crate rand;
+
 extern crate rayon;
 use rayon::prelude::*;
 use std::sync::Arc;
 
 extern crate smallvec;
 use smallvec::SmallVec;
+
+extern crate libc;
 
 #[macro_use]
 mod macros;

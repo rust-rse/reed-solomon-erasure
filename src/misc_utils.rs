@@ -1,7 +1,4 @@
-#[cfg(test)]
-extern crate rand;
-
-use super::rayon::prelude::*;
+use rayon::prelude::*;
 
 #[cfg(test)]
 pub fn fill_random(arr : &mut [u8]) {
@@ -106,7 +103,6 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
 #[cfg(test)]
 mod tests {
     use super::*;
-    extern crate rand;
 
     fn fill_random(arr : &mut [u8]) {
         for a in arr.iter_mut() {

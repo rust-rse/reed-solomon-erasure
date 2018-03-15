@@ -1,6 +1,4 @@
 #![cfg(test)]
-extern crate rand;
-
 use std::sync::Arc;
 use std::collections::HashMap;
 
