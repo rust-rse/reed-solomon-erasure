@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use super::SmallVec;
+use smallvec::SmallVec;
 
 use galois;
 #[derive(Debug)]
