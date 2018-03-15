@@ -1,9 +1,9 @@
 #![cfg(test)]
 use rand;
 
-use super::galois::*;
+use galois::*;
 
-use super::misc_utils::fill_random;
+use misc_utils::fill_random;
 
 static BACKBLAZE_LOG_TABLE : [u8; 256] = [
     //-1,    0,    1,   25,    2,   50,   26,  198,

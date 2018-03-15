@@ -2,8 +2,8 @@
 #![allow(dead_code)]
 
 use super::*;
-use super::shard_utils;
-use self::rand::{thread_rng, Rng};
+use shard_utils;
+use rand::{thread_rng, Rng};
 
 macro_rules! shards {
     (

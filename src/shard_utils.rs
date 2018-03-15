@@ -1,4 +1,4 @@
-use super::Shard;
+use Shard;
 
 /// Makes shard with byte array of zero length.
 pub fn make_zero_len_shard() -> Shard {

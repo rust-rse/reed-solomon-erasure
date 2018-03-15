@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use std::sync::Arc;
 
-use super::matrix::Matrix;
+use matrix::Matrix;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Error {

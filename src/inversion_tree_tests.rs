@@ -4,13 +4,13 @@ use rand;
 use std::sync::Arc;
 use std::collections::HashMap;
 
-use super::matrix::Matrix;
-use super::inversion_tree::*;
-use super::matrix_tests::make_random_matrix;
+use matrix::Matrix;
+use inversion_tree::*;
+use matrix_tests::make_random_matrix;
 
-use super::quickcheck::{QuickCheck,
-                        Gen,
-                        Arbitrary};
+use quickcheck::{QuickCheck,
+                 Gen,
+                 Arbitrary};
 
 macro_rules! matrix {
     (

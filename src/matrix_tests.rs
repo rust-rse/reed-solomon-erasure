@@ -1,5 +1,7 @@
 #![cfg(test)]
-use super::Matrix;
+use matrix::Matrix;
+
+use misc_utils::fill_random;
 
 macro_rules! matrix {
     (
@@ -11,8 +13,6 @@ macro_rules! matrix {
     );
     ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
 }
-
-use super::misc_utils::fill_random;
 
 pub fn make_random_matrix(size : usize) -> Matrix {
     let mut vec : Vec<Vec<u8>> = vec![vec![0; size]; size];
