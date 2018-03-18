@@ -6,13 +6,7 @@ rust:
 
 branches:
   except:
-    - test
-    - test2
-    - rewrite-using-klauspost-go
-
-matrix:
-  allow_features:
-    - rust: nightly
+    - dev
 
 script:
   - cargo build --verbose --all
