@@ -6,7 +6,9 @@ build   = "build.rs"
 exclude = [
     "BackBlaze_JavaReedSolomon/*",
     "KlausPost_reedsolomon/*",
-    "NicolasT_reedsolomon/*"
+    "NicolasT_reedsolomon/*",
+    "appveyor.yml",
+    ".travis.yml"
 ]
 
 description   = "Rust implementation of Reed-Solomon erasure coding"
