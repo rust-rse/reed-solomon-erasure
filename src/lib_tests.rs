@@ -437,6 +437,55 @@ quickcheck! {
                 r.verify(&refs).unwrap()
             })
     }
+
+    fn qc_encode_verify_reconstruct_verify_shards(data    : usize,
+                                                  parity  : usize,
+                                                  corrupt : usize,
+                                                  size    : usize) -> bool {
+        let data   = 1 + data % 256;
+        let mut parity = 1 + parity % 256;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
+
+        let corrupt = corrupt % (parity + 1);
+
+        let mut corrupt_pos_s = Vec::with_capacity(corrupt);
+        for _ in 0..corrupt {
+            let mut pos = rand::random::<usize>() % (data + parity);
+
+            while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
+                pos = rand::random::<usize>() % (data + parity);
+            }
+
+            corrupt_pos_s.push(pos);
+        }
+
+        let size = 1 + size % 1_000_000;
+
+        let r = ReedSolomon::new(data, parity).unwrap();
+
+        let mut expect = make_random_shards!(size, data + parity);
+        r.encode_shards(&mut expect).unwrap();
+
+        let expect = expect;
+
+        let mut shards = shards_into_option_shards(expect.clone());
+
+        // corrupt shards
+        for &p in corrupt_pos_s.iter() {
+            shards[p] = None;
+        }
+
+        // reconstruct
+        r.reconstruct_shards(&mut shards).unwrap();
+
+        let shards = option_shards_into_shards(shards);
+
+        r.verify_shards(&expect).unwrap()
+            && expect == shards
+            && r.verify_shards(&shards).unwrap()
+    }
 }
 
 #[test]
