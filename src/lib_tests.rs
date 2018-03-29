@@ -15,7 +15,7 @@ macro_rules! shards {
 
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{
-        let mut shards = Vec::with_capacity(13);
+        let mut shards = Vec::with_capacity(20);
         for _ in 0..$size {
             shards.push(make_blank_shard($per_shard));
         }
@@ -362,6 +362,81 @@ fn test_reconstruct() {
                                  [101, 102, 103],
                                  [201, 202, 203]];
     assert_eq!(expect, shards);
+}
+
+quickcheck! {
+    fn qc_encode_verify_reconstruct_verify(data    : usize,
+                                           parity  : usize,
+                                           corrupt : usize,
+                                           size    : usize) -> bool {
+        let data   = 1 + data % 256;
+        let mut parity = 1 + parity % 256;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
+
+        let corrupt = corrupt % (parity + 1);
+
+        let mut corrupt_pos_s = Vec::with_capacity(corrupt);
+        for _ in 0..corrupt {
+            let mut pos = rand::random::<usize>() % (data + parity);
+
+            while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
+                pos = rand::random::<usize>() % (data + parity);
+            }
+
+            corrupt_pos_s.push(pos);
+        }
+
+        let size = 1 + size % 1_000_000;
+
+        let r = ReedSolomon::new(data, parity).unwrap();
+
+        let mut expect = make_random_shards!(size, data + parity);
+        {
+            let mut refs =
+                convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
+
+            r.encode(&mut refs).unwrap();
+        }
+
+        let expect = expect;
+
+        let mut shards = expect.clone();
+
+        // corrupt shards
+        for &p in corrupt_pos_s.iter() {
+            fill_random(&mut shards[p]);
+        }
+        let mut slice_present = vec![true; data + parity];
+        for &p in corrupt_pos_s.iter() {
+            slice_present[p] = false;
+        }
+
+        // reconstruct
+        {
+            let mut refs =
+                convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
+
+            r.reconstruct(&mut refs, &slice_present).unwrap();
+        }
+
+        ({
+            let refs =
+                convert_2D_slices!(expect =>to_vec &[u8]);
+
+            r.verify(&refs).unwrap()
+        })
+            &&
+            expect == shards
+            &&
+            ({
+                let refs =
+                    convert_2D_slices!(shards =>to_vec &[u8]);
+
+                r.verify(&refs).unwrap()
+            })
+    }
 }
 
 #[test]

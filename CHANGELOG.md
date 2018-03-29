@@ -1,5 +1,6 @@
 ## 3.0.4
 - Upgraded InversionTree QuickCheck test
+- Upgraded test suite for main codec methods(e.g. encode, reconstruct)
 
 ## 3.0.3
 - Added QuickCheck tests to the test suite
