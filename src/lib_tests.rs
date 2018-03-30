@@ -1286,7 +1286,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && sbs.cur_input_index() == data + 1
+            && sbs.cur_input_index() == data
             && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 
@@ -1321,7 +1321,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && sbs.cur_input_index() == data + 1
+            && sbs.cur_input_index() == data
             && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 }
@@ -1454,7 +1454,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && sbs.cur_input_index() == data + 1
+            && sbs.cur_input_index() == data
             && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 
@@ -1497,7 +1497,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && sbs.cur_input_index() == data + 1
+            && sbs.cur_input_index() == data
             && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 }
