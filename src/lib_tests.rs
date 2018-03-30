@@ -369,8 +369,8 @@ quickcheck! {
                                            parity  : usize,
                                            corrupt : usize,
                                            size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -442,8 +442,8 @@ quickcheck! {
                                                   parity  : usize,
                                                   corrupt : usize,
                                                   size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -491,8 +491,8 @@ quickcheck! {
                  parity  : usize,
                  corrupt : usize,
                  size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -554,8 +554,8 @@ quickcheck! {
                         parity  : usize,
                         corrupt : usize,
                         size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -601,8 +601,8 @@ quickcheck! {
     fn qc_encode_sep_same_as_encode(data    : usize,
                                     parity  : usize,
                                     size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -643,8 +643,8 @@ quickcheck! {
     fn qc_encode_sep_same_as_encode_shards(data    : usize,
                                            parity  : usize,
                                            size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -674,8 +674,8 @@ quickcheck! {
     fn qc_encode_single_same_as_encode(data    : usize,
                                        parity  : usize,
                                        size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -713,8 +713,8 @@ quickcheck! {
     fn qc_encode_single_same_as_encode_shards(data    : usize,
                                               parity  : usize,
                                               size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -742,8 +742,8 @@ quickcheck! {
     fn qc_encode_single_sep_same_as_encode(data    : usize,
                                            parity  : usize,
                                            size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -786,8 +786,8 @@ quickcheck! {
     fn qc_encode_single_sep_same_as_encode_shards(data    : usize,
                                                   parity  : usize,
                                                   size    : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -1249,8 +1249,8 @@ quickcheck! {
                                              parity : usize,
                                              size   : usize,
                                              reuse  : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -1299,8 +1299,8 @@ quickcheck! {
                                                     parity : usize,
                                                     size   : usize,
                                                     reuse  : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -1420,8 +1420,8 @@ quickcheck! {
                                                  parity : usize,
                                                  size   : usize,
                                                  reuse  : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
@@ -1479,8 +1479,8 @@ quickcheck! {
                                                         parity : usize,
                                                         size   : usize,
                                                         reuse  : usize) -> bool {
-        let data   = 1 + data % 256;
-        let mut parity = 1 + parity % 256;
+        let data   = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
         if data + parity > 256 {
             parity -= data + parity - 256;
         }
