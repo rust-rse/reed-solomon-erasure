@@ -83,15 +83,17 @@ fn test_insert_inverted_matrix() {
 fn test_double_insert_inverted_matrix() {
     let tree = InversionTree::new(3, 2);
 
-    let matrix = Matrix::new(3, 3);
-    let matrix_copy1 = matrix.clone();
-    let matrix_copy2 = matrix.clone();
+    let matrix1 = make_random_matrix(3);
+    let matrix2 = make_random_matrix(3);
 
-    tree.insert_inverted_matrix(&[1], &Arc::new(matrix)).unwrap();
+    let matrix_copy1 = matrix1.clone();
+    let matrix_copy2 = matrix2.clone();
+
     tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy1)).unwrap();
+    tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy2)).unwrap();
 
     let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
-    assert_eq!(matrix_copy2, *cached_matrix);
+    assert_eq!(matrix2, *cached_matrix);
 }
 
 #[test]
