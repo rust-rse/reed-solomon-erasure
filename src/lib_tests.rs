@@ -1286,6 +1286,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
+            && { sbs.reset().unwrap(); !sbs.parity_ready() }
     }
 
     fn qc_shardbyshard_encode_same_as_encode_shards(data   : usize,
@@ -1319,6 +1320,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
+            && { sbs.reset().unwrap(); !sbs.parity_ready() }
     }
 }
 
@@ -1450,6 +1452,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
+            && { sbs.reset().unwrap(); !sbs.parity_ready() }
     }
 
     fn qc_shardbyshard_encode_sep_same_as_encode_shards(data   : usize,
@@ -1491,6 +1494,7 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
+            && { sbs.reset().unwrap(); !sbs.parity_ready() }
     }
 }
 
