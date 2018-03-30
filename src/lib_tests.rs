@@ -1286,7 +1286,8 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && { sbs.reset().unwrap(); !sbs.parity_ready() }
+            && sbs.cur_input_index() == data + 1
+            && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 
     fn qc_shardbyshard_encode_same_as_encode_shards(data   : usize,
@@ -1320,7 +1321,8 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && { sbs.reset().unwrap(); !sbs.parity_ready() }
+            && sbs.cur_input_index() == data + 1
+            && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 }
 
@@ -1452,7 +1454,8 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && { sbs.reset().unwrap(); !sbs.parity_ready() }
+            && sbs.cur_input_index() == data + 1
+            && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 
     fn qc_shardbyshard_encode_sep_same_as_encode_shards(data   : usize,
@@ -1494,7 +1497,8 @@ quickcheck! {
 
         expect == shards
             && sbs.parity_ready()
-            && { sbs.reset().unwrap(); !sbs.parity_ready() }
+            && sbs.cur_input_index() == data + 1
+            && { sbs.reset().unwrap(); !sbs.parity_ready() && sbs.cur_input_index() == 0 }
     }
 }
 
