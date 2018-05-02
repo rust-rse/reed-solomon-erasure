@@ -142,7 +142,7 @@ fn test_option_shards_to_shards_too_few_shards() {
 }
 
 #[test]
-fn test_reedsolomon_clone() {
+fn test_reed_solomon_clone() {
     let r1 = ReedSolomon::new(10, 3).unwrap();
     let r2 = r1.clone();
 
