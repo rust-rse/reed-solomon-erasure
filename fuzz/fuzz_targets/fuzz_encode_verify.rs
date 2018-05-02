@@ -10,6 +10,8 @@ fuzz_target!(|data: &[u8]| {
         let parity_shards = data[1] as usize;
         let shard_size    = data[2] as usize;
 
+        let data = data[3..];
+
         if data_shards > 0
             && parity_shards > 0
             && shard_size > 0
@@ -22,7 +24,7 @@ fuzz_target!(|data: &[u8]| {
             assert_eq!(codec.parity_shard_count(), parity_shards);
             assert_eq!(codec.total_shard_count(), data_shards + parity_shards);
 
-            let data_slices       : Vec<&[u8]>     = data[3..].chunks(shard_size).collect();
+            let data_slices       : Vec<&[u8]>     = data.chunks(shard_size).collect();
             let mut parity_buffer : Vec<u8>        = vec![0u8; shard_size * parity_shards];
             {
                 let mut parity_slices : Vec<&mut [u8]> = parity_buffer.chunks_mut(shard_size).collect();
