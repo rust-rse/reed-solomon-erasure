@@ -18,5 +18,5 @@ git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
 members = ["."]
 
 [[bin]]
-name = "fuzz_reedsolomon"
-path = "fuzz_targets/fuzz_reedsolomon.rs"
+name = "fuzz_encode_verify"
+path = "fuzz_targets/fuzz_encode_verify.rs"

@@ -21,9 +21,25 @@ fuzz_target!(|data: &[u8]| {
 
             let data_slices       : Vec<&[u8]>     = data.chunks(shard_size).collect();
             let mut parity_buffer : Vec<u8>        = vec![0u8; shard_size * parity_shards];
-            let mut parity_slices : Vec<&mut [u8]> = parity_buffer.chunks_mut(shard_size).collect();
+            {
+                let mut parity_slices : Vec<&mut [u8]> = parity_buffer.chunks_mut(shard_size).collect();
 
-            codec.encode_sep(&data_slices, &mut parity_slices).unwrap();
+                codec.encode_sep(&data_slices, &mut parity_slices).unwrap();
+            }
+
+            {
+                let parity_slices : Vec<&[u8]> = parity_buffer.chunks(shard_size).collect();
+
+                let mut slices = Vec::with_capacity(data_shards + parity_shards);
+                for &d in data_slices.iter() {
+                    slices.push(d);
+                }
+                for &p in parity_slices.iter() {
+                    slices.push(p);
+                }
+
+                assert!(codec.verify(&slices).unwrap());
+            }
         }
     }
 });
