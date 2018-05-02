@@ -42,6 +42,32 @@ fuzz_target!(|data: &[u8]| {
                 }
 
                 {
+                    let mut data_slices   : Vec<&mut [u8]> =
+                        data.chunks_mut(shard_size).collect();
+                    let mut parity_slices : Vec<&mut [u8]> =
+                        parity_buffer.chunks_mut(shard_size).collect();
+
+                    let mut slices : Vec<&mut [u8]> =
+                        Vec::with_capacity(data_shards + parity_shards);
+                    for d in data_slices.iter_mut() {
+                        slices.push(d);
+                    }
+                    for p in parity_slices.iter_mut() {
+                        slices.push(p);
+                    }
+
+                    for i in 0..corrupt_count {
+                        let corrupt =
+                            (corrupt_index + i) % (data_shards + parity_shards);
+                        slice_present[corrupt] = false;
+
+                        for i in 0..shard_size {
+                            slices[corrupt][i] = 0;
+                        }
+                    }
+                }
+
+                {
                     let data_slices   : Vec<&[u8]> = data.chunks(shard_size).collect();
                     let parity_slices : Vec<&[u8]> = parity_buffer.chunks(shard_size).collect();
 
@@ -64,16 +90,6 @@ fuzz_target!(|data: &[u8]| {
 
                     let mut slices : Vec<&mut [u8]> =
                         Vec::with_capacity(data_shards + parity_shards);
-                    for i in 0..corrupt_count {
-                        let corrupt =
-                            (corrupt_index + i) % (data_shards + parity_shards);
-                        slice_present[corrupt] = false;
-
-                        for i in 0..shard_size {
-                            slices[corrupt][i] = 0;
-                        }
-                    }
-
                     for d in data_slices.iter_mut() {
                         slices.push(d);
                     }
