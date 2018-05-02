@@ -10,7 +10,7 @@ fuzz_target!(|data: &[u8]| {
         let parity_shards = data[1] as usize;
         let shard_size    = data[2] as usize;
 
-        let data = data[3..];
+        let data = &data[3..];
 
         if data_shards > 0
             && parity_shards > 0
