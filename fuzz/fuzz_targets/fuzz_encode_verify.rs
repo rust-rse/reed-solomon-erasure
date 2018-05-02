@@ -5,7 +5,7 @@ extern crate reed_solomon_erasure;
 use reed_solomon_erasure::ReedSolomon;
 
 fuzz_target!(|data: &[u8]| {
-    if data.len() >= 3 {
+    if data.len() >= 4 {
         let data_shards   = data[0] as usize;
         let parity_shards = data[1] as usize;
         let shard_size    = data[2] as usize;
