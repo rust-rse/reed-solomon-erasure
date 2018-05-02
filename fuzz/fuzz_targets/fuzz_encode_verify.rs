@@ -10,7 +10,9 @@ fuzz_target!(|data: &[u8]| {
         let parity_shards = data[1] as usize;
         let shard_size    = data[2] as usize;
 
-        if data_shards + parity_shards <= 256
+        if data_shards > 0
+            && parity_shards > 0
+            && data_shards + parity_shards <= 256
             && data.len() >= 3 + data_shards * shard_size
         {
             let codec = ReedSolomon::new(data_shards, parity_shards).unwrap();

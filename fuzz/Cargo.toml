@@ -20,3 +20,7 @@ members = ["."]
 [[bin]]
 name = "fuzz_encode_verify"
 path = "fuzz_targets/fuzz_encode_verify.rs"
+
+[[bin]]
+name = "fuzz_encode_repair"
+path = "fuzz_targets/fuzz_encode_repair.rs"
