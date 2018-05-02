@@ -12,6 +12,7 @@ fuzz_target!(|data: &[u8]| {
 
         if data_shards > 0
             && parity_shards > 0
+            && shard_size > 0
             && data_shards + parity_shards <= 256
             && data.len() >= 3 + data_shards * shard_size
         {
