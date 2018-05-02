@@ -67,7 +67,7 @@ fuzz_target!(|data: &[u8]| {
                     }
                 }
 
-                {
+                if corrupt_count > 0 {
                     let data_slices   : Vec<&[u8]> = data.chunks(shard_size).collect();
                     let parity_slices : Vec<&[u8]> = parity_buffer.chunks(shard_size).collect();
 
