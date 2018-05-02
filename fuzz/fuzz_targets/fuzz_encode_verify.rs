@@ -34,7 +34,7 @@ fuzz_target!(|data: &[u8]| {
                 let parity_slices : Vec<&[u8]> = parity_buffer.chunks(shard_size).collect();
 
                 let mut slices = Vec::with_capacity(data_shards + parity_shards);
-                for &d in data_slices.iter() {
+                for &d in &data_slices[0..data_shards] {
                     slices.push(d);
                 }
                 for &p in parity_slices.iter() {
