@@ -1,3 +1,7 @@
+## 3.0.5
+- Added fuzzing suite
+  - No code changes as no bugs where found
+
 ## 3.0.4
 - Upgraded InversionTree QuickCheck test
   - No code changes as no bugs were found
