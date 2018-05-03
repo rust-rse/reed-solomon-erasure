@@ -146,7 +146,7 @@ dependencies = [
 
 [[package]]
 name = "reed-solomon-erasure"
-version = "3.0.4"
+version = "3.0.5"
 dependencies = [
  "cc 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -159,7 +159,7 @@ name = "reed-solomon-erasure-fuzz"
 version = "0.0.1"
 dependencies = [
  "libfuzzer-sys 0.1.0 (git+https://github.com/rust-fuzz/libfuzzer-sys.git)",
- "reed-solomon-erasure 3.0.4",
+ "reed-solomon-erasure 3.0.5",
 ]
 
 [[package]]
