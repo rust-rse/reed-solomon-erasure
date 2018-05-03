@@ -5,19 +5,21 @@ extern crate reed_solomon_erasure;
 use reed_solomon_erasure::ReedSolomon;
 
 fuzz_target!(|data: &[u8]| {
-    if data.len() >= 6 {
+    if data.len() >= 7 {
         let data_shards   = data[0] as usize;
         let parity_shards = data[1] as usize;
         let shard_size    = data[2] as usize;
         let run_count     = data[3] as usize;
-        let corrupt_count = data[4] as usize;
-        let corrupt_index = data[5] as usize;
+        let interval      = data[4] as usize;
+        let corrupt_count = data[5] as usize;
+        let corrupt_index = data[6] as usize;
 
-        let data = &data[6..];
+        let data = &data[7..];
 
         if data_shards > 0
             && parity_shards > 0
             && shard_size > 0
+            && interval > 0
             && corrupt_count <= parity_shards
             && data_shards + parity_shards <= 256
             && data.len() == data_shards * shard_size
@@ -58,7 +60,7 @@ fuzz_target!(|data: &[u8]| {
 
                     for i in 0..corrupt_count {
                         let corrupt =
-                            (corrupt_index + i) % (data_shards + parity_shards);
+                            (corrupt_index + i * interval) % (data_shards + parity_shards);
                         slice_present[corrupt] = false;
 
                         for i in 0..shard_size {
