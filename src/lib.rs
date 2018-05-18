@@ -1,5 +1,3 @@
-#![warn(unused_extern_crates)]
-
 //! This crate provides an encoder/decoder for Reed-Solomon erasure code.
 //!
 //! Please note that erasure coding means errors are not directly detected or corrected,
