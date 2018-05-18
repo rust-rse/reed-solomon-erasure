@@ -54,7 +54,7 @@ impl std::error::Error for Error {
 pub enum SBSError {
     TooManyCalls,
     LeftoverShards,
-    RSError(Error)
+    RSError(Error),
 }
 
 impl SBSError {
