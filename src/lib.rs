@@ -49,6 +49,8 @@ pub use shard_utils::option_shards_into_shards;
 use matrix::Matrix;
 use inversion_tree::InversionTree;
 
+use std::fmt::Formatter;
+
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Error {
     TooFewShards,
@@ -64,6 +66,26 @@ pub enum Error {
     EmptyShard,
     InvalidShardFlags,
     InvalidIndex,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        match *self {
+            Error::TooFewShards        => write!(f, "TooFewShards"),
+            Error::TooManyShards       => write!(f, "TooManyShards"),
+            Error::TooFewDataShards    => write!(f, "TooFewDataShards"),
+            Error::TooManyDataShards   => write!(f, "TooManyDataShards"),
+            Error::TooFewParityShards  => write!(f, "TooFewParityShards"),
+            Error::TooManyParityShards => write!(f, "TooManyParityShards"),
+            Error::TooFewBufferShards  => write!(f, "TooFewBufferShards"),
+            Error::TooManyBufferShards => write!(f, "TooManyBufferShards"),
+            Error::IncorrectShardSize  => write!(f, "IncorrectShardSize"),
+            Error::TooFewShardsPresent => write!(f, "TooFewShardsPresent"),
+            Error::EmptyShard          => write!(f, "EmptyShard"),
+            Error::InvalidShardFlags   => write!(f, "InvalidShardFlags"),
+            Error::InvalidIndex        => write!(f, "InvalidIndex"),
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]

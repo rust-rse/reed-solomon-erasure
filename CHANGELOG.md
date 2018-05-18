@@ -1,3 +1,7 @@
+## 3.1.0
+- Impl'd `std::error::Error` for `reed_solomon_erasure::Error`
+  - See #17, suggested by [DrPeterVanNostrand](https://github.com/DrPeterVanNostrand)
+
 ## 3.0.5
 - Added fuzzing suite
   - No code changes as no bugs where found
