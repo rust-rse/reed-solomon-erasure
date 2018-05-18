@@ -88,6 +88,26 @@ impl std::fmt::Display for Error {
     }
 }
 
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::TooFewShards        => "reed-solomon-erasure : Too few shards",
+            Error::TooManyShards       => "reed-solomon-erasure : Too many shards",
+            Error::TooFewDataShards    => "reed-solomon-erasure : Too few data shards",
+            Error::TooManyDataShards   => "reed-solomon-erasure : Too many data shards",
+            Error::TooFewParityShards  => "reed-solomon-erasure : Too few parity shards",
+            Error::TooManyParityShards => "reed-solomon-erasure : Too many parity shards",
+            Error::TooFewBufferShards  => "reed-solomon-erasure : Too few buffer shards",
+            Error::TooManyBufferShards => "reed-solomon-erasure : Too many buffer shards",
+            Error::IncorrectShardSize  => "reed-solomon-erasure : Incorrect shard size",
+            Error::TooFewShardsPresent => "reed-solomon-erasure : Too few shards present",
+            Error::EmptyShard          => "reed-solomon-erasure : Empty shard",
+            Error::InvalidShardFlags   => "reed-solomon-erasure : Invalid shard flags",
+            Error::InvalidIndex        => "reed-solomon-erasure : Invalid index",
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum SBSError {
     TooManyCalls,
