@@ -36,10 +36,10 @@ mod inversion_tree;
 mod inversion_tree_tests;
 mod shard_utils;
 mod lib_tests;
-mod error;
+mod errors;
 
-pub use error::Error;
-pub use error::SBSError;
+pub use errors::Error;
+pub use errors::SBSError;
 
 pub use shard_utils::make_zero_len_shard;
 pub use shard_utils::make_zero_len_shards;
