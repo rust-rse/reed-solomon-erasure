@@ -91,19 +91,19 @@ impl std::fmt::Display for Error {
 impl std::error::Error for Error {
     fn description(&self) -> &str {
         match *self {
-            Error::TooFewShards        => "reed-solomon-erasure : Too few shards",
-            Error::TooManyShards       => "reed-solomon-erasure : Too many shards",
-            Error::TooFewDataShards    => "reed-solomon-erasure : Too few data shards",
-            Error::TooManyDataShards   => "reed-solomon-erasure : Too many data shards",
-            Error::TooFewParityShards  => "reed-solomon-erasure : Too few parity shards",
-            Error::TooManyParityShards => "reed-solomon-erasure : Too many parity shards",
-            Error::TooFewBufferShards  => "reed-solomon-erasure : Too few buffer shards",
-            Error::TooManyBufferShards => "reed-solomon-erasure : Too many buffer shards",
-            Error::IncorrectShardSize  => "reed-solomon-erasure : Incorrect shard size",
-            Error::TooFewShardsPresent => "reed-solomon-erasure : Too few shards present",
-            Error::EmptyShard          => "reed-solomon-erasure : Empty shard",
-            Error::InvalidShardFlags   => "reed-solomon-erasure : Invalid shard flags",
-            Error::InvalidIndex        => "reed-solomon-erasure : Invalid index",
+            Error::TooFewShards        => "reed_solomon_erasure : Error : Too few shards",
+            Error::TooManyShards       => "reed_solomon_erasure : Error : Too many shards",
+            Error::TooFewDataShards    => "reed_solomon_erasure : Error : Too few data shards",
+            Error::TooManyDataShards   => "reed_solomon_erasure : Error : Too many data shards",
+            Error::TooFewParityShards  => "reed_solomon_erasure : Error : Too few parity shards",
+            Error::TooManyParityShards => "reed_solomon_erasure : Error : Too many parity shards",
+            Error::TooFewBufferShards  => "reed_solomon_erasure : Error : Too few buffer shards",
+            Error::TooManyBufferShards => "reed_solomon_erasure : Error : Too many buffer shards",
+            Error::IncorrectShardSize  => "reed_solomon_erasure : Error : Incorrect shard size",
+            Error::TooFewShardsPresent => "reed_solomon_erasure : Error : Too few shards present",
+            Error::EmptyShard          => "reed_solomon_erasure : Error : Empty shard",
+            Error::InvalidShardFlags   => "reed_solomon_erasure : Error : Invalid shard flags",
+            Error::InvalidIndex        => "reed_solomon_erasure : Error : Invalid index",
         }
     }
 }
@@ -113,6 +113,41 @@ pub enum SBSError {
     TooManyCalls,
     LeftoverShards,
     RSError(Error)
+}
+
+impl std::fmt::Display for SBSError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        match *self {
+            SBSError::TooManyCalls   => write!(f, "TooManyCalls"),
+            SBSError::LeftoverShards => write!(f, "LeftoverShards"),
+            SBSError::RSError(e)     => write!(f, "RSError : {}", e),
+        }
+    }
+}
+
+impl std::error::Error for SBSError {
+    fn description(&self) -> &str {
+        match *self {
+            SBSError::TooManyCalls => "reed_solomon_erasure : ShardByShard : too many calls",
+            SBSError::LeftoverShards => "reed_solomon_erasure : ShardByShard too many calls",
+            SBSError::RSError(e)     =>
+                match e {
+                    Error::TooFewShards        => "reed_solomon_erasure : ShardByShard::RSError : Too few shards",
+                    Error::TooManyShards       => "reed_solomon_erasure : ShardByShard::RSError : Too many shards",
+                    Error::TooFewDataShards    => "reed_solomon_erasure : ShardByShard::RSError : Too few data shards",
+                    Error::TooManyDataShards   => "reed_solomon_erasure : ShardByShard::RSError : Too many data shards",
+                    Error::TooFewParityShards  => "reed_solomon_erasure : ShardByShard::RSError : Too few parity shards",
+                    Error::TooManyParityShards => "reed_solomon_erasure : ShardByShard::RSError : Too many parity shards",
+                    Error::TooFewBufferShards  => "reed_solomon_erasure : ShardByShard::RSError : Too few buffer shards",
+                    Error::TooManyBufferShards => "reed_solomon_erasure : ShardByShard::RSError : Too many buffer shards",
+                    Error::IncorrectShardSize  => "reed_solomon_erasure : ShardByShard::RSError : Incorrect shard size",
+                    Error::TooFewShardsPresent => "reed_solomon_erasure : ShardByShard::RSError : Too few shards present",
+                    Error::EmptyShard          => "reed_solomon_erasure : ShardByShard::RSError : Empty shard",
+                    Error::InvalidShardFlags   => "reed_solomon_erasure : ShardByShard::RSError : Invalid shard flags",
+                    Error::InvalidIndex        => "reed_solomon_erasure : ShardByShard::RSError : Invalid index",
+                }
+        }
+    }
 }
 
 /// Convenience data type provided by this library.
