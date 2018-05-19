@@ -138,11 +138,10 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// ## `sep`
 ///
-/// Methods ending in `_sep` takes an immutable reference of data shard(s),
-/// and a mutable
-/// reference of parity shards.
+/// Methods ending in `_sep` takes an immutable reference to data shards,
+/// and a mutable reference to parity shards.
 ///
-/// They are useful as they do not need to borrow the data shard(s) mutably,
+/// They are useful as they do not need to borrow the data shards mutably,
 /// and other work that only needs read-only access to data shards can be done
 /// in parallel/concurrently during the encoding.
 ///
@@ -1365,7 +1364,7 @@ impl ReedSolomon {
                 }
             }
             {
-                // Gather up the references of all data slices
+                // Gather up all the data slices
                 let mut i_old_data_slice = 0;
                 let mut i_new_data_slice = 0;
                 let mut all_data_slices : SmallVec<[&[u8]; 32]> =
