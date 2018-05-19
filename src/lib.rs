@@ -1225,8 +1225,9 @@ impl ReedSolomon {
                 let mut sub_matrix =
                     Matrix::new(self.data_shard_count,
                                 self.data_shard_count);
-                for sub_matrix_row in 0..valid_indices.len() {
-                    let valid_index = valid_indices[sub_matrix_row];
+                for (sub_matrix_row, &valid_index) in
+                    valid_indices.into_iter().enumerate()
+                {
                     for c in 0..self.data_shard_count {
                         sub_matrix.set(sub_matrix_row, c,
                                        self.matrix.get(valid_index, c));
