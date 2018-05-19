@@ -1,12 +1,8 @@
 ## 3.1.0
 - Impl'd `std::error::Error` for `reed_solomon_erasure::Error` and `reed_solomon_erasure::SBSError`
   - See issue [#17](https://github.com/darrenldl/reed-solomon-erasure/issues/17), suggested by [DrPeterVanNostrand](https://github.com/DrPeterVanNostrand)
-
-## 3.0.5
 - Added fuzzing suite
   - No code changes as no bugs where found
-
-## 3.0.4
 - Upgraded InversionTree QuickCheck test
   - No code changes as no bugs were found
 - Upgraded test suite for main codec methods(e.g. encode, reconstruct)
