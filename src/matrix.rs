@@ -160,8 +160,7 @@ impl Matrix {
 
         if r1 == r2 {
             return;
-        }
-        else {
+        } else {
             let mut tmp;
             for i in 0..self.col_count {
                 tmp = self.data[r1_s + i];

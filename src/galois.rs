@@ -16,13 +16,11 @@ pub fn mul(a : u8, b : u8) -> u8 {
 }
 
 pub fn div(a : u8, b : u8) -> u8 {
-    if a == 0 {
+    if        a == 0 {
         0
-    }
-    else if b == 0 {
+    } else if b == 0 {
         panic!("Divisor is 0")
-    }
-    else {
+    } else {
         let log_a = LOG_TABLE[a as usize];
         let log_b = LOG_TABLE[b as usize];
         let mut log_result = log_a as isize - log_b as isize;
@@ -34,13 +32,11 @@ pub fn div(a : u8, b : u8) -> u8 {
 }
 
 pub fn exp(a : u8, n : usize) -> u8 {
-    if n == 0 {
+    if        n == 0 {
         1
-    }
-    else if a == 0 {
+    } else if a == 0 {
         0
-    }
-    else {
+    } else {
         let log_a = LOG_TABLE[a as usize];
         let mut log_result = log_a as usize * n;
         while 255 <= log_result {
