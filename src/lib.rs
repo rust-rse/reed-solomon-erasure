@@ -183,6 +183,11 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `encode` | `encode_single` |
 /// | `encode_sep` | `encode_single_sep` |
 ///
+/// The `single` variants do similar checks on the provided data shards and parity shards,
+/// and also do index check on `i_data`.
+///
+/// Return `Error::InvalidIndex` if `i_data >= data_shard_count`.
+///
 /// # Encoding behaviour
 ///
 /// ## For `encode`, `encode_shards`
@@ -627,7 +632,7 @@ impl ReedSolomon {
     ///
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
-    /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
     pub fn new(data_shards : usize,
                parity_shards : usize)
                -> Result<ReedSolomon, Error> {
@@ -644,7 +649,7 @@ impl ReedSolomon {
     ///
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
-    /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
     pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
                        mut pparam    : ParallelParam)
@@ -655,7 +660,7 @@ impl ReedSolomon {
         if parity_shards == 0 {
             return Err(Error::TooFewParityShards);
         }
-        if 256 < data_shards + parity_shards {
+        if data_shards + parity_shards > 256 {
             return Err(Error::TooManyShards);
         }
 
@@ -836,8 +841,6 @@ impl ReedSolomon {
     ///
     /// This is a wrapper of `encode_single`.
     ///
-    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
-    ///
     /// # Warning
     ///
     /// You must apply this method on the data shards in strict sequential order(0..data shard count),
@@ -861,8 +864,6 @@ impl ReedSolomon {
     /// The slots where the parity shards sit at will be overwritten.
     ///
     /// This is a wrapper of `encode_single_sep`.
-    ///
-    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
     ///
     /// # Warning
     ///
@@ -919,8 +920,6 @@ impl ReedSolomon {
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
-    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
-    ///
     /// # Warning
     ///
     /// You must apply this method on the data shards in strict sequential order(0..data shard count),
@@ -948,8 +947,6 @@ impl ReedSolomon {
     /// The data shard must match the index `i_data`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
-    ///
-    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
     ///
     /// # Warning
     ///
