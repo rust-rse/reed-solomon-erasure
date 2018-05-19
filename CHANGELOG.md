@@ -11,6 +11,8 @@
 - Upgraded test suite for ShardByShard methods
   - A lot of heavy QuickCheck tests were added
   - No code changes due to this as no bugs were found
+- Minor code refactoring in `reconstruct_internal` method
+  - This means `reconstruct` and related methods are slightly more optimized
 
 ## 3.0.3
 - Added QuickCheck tests to the test suite

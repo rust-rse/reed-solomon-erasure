@@ -1291,8 +1291,6 @@ impl ReedSolomon {
         // and the invalid rows we don't have until we have enough valid rows.
         let mut sub_shards             : SmallVec<[&[u8];     32]> =
             SmallVec::with_capacity(self.data_shard_count);
-        let mut leftover_parity_shards : SmallVec<[&[u8];     32]> =
-            SmallVec::with_capacity(self.parity_shard_count);
         let mut missing_data_slices    : SmallVec<[&mut [u8]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
         let mut missing_parity_slices  : SmallVec<[&mut [u8]; 32]> =
@@ -1310,7 +1308,11 @@ impl ReedSolomon {
                     sub_shards.push(slice);
                     valid_indices.push(matrix_row);
                 } else {
-                    leftover_parity_shards.push(slice);
+                    // Already have enough shards in `sub_shards`
+                    // as we only need N shards, where N = `data_shard_count`,
+                    // for the data decode matrix
+                    //
+                    // So nothing to do here
                 }
             } else {
                 if i < self.data_shard_count {
@@ -1332,9 +1334,10 @@ impl ReedSolomon {
         // Re-create any data shards that were missing.
         //
         // The input to the coding is all of the shards we actually
-        // have, and the output is the missing data shards.  The computation
+        // have, and the output is the missing data shards. The computation
         // is done using the special decode matrix we just built.
-        let mut matrix_rows = Vec::with_capacity(self.parity_shard_count);
+        let mut matrix_rows : SmallVec<[&[u8]; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
         for i_slice in 0..self.data_shard_count {
             if !slice_present[i_slice] {
                 matrix_rows.push(data_decode_matrix.get_row(i_slice));
