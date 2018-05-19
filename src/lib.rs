@@ -37,6 +37,7 @@ mod inversion_tree_tests;
 mod shard_utils;
 mod lib_tests;
 mod errors;
+mod errors_tests;
 
 pub use errors::Error;
 pub use errors::SBSError;
@@ -913,6 +914,8 @@ impl ReedSolomon {
     /// indexed by `i_data`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// Returns `InvalidIndex` if `i_data` is not a valid index.
     ///
     /// # Warning
     ///
