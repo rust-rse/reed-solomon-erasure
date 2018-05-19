@@ -2,15 +2,15 @@
 - Impl'd `std::error::Error` for `reed_solomon_erasure::Error` and `reed_solomon_erasure::SBSError`
   - See issue [#17](https://github.com/darrenldl/reed-solomon-erasure/issues/17), suggested by [DrPeterVanNostrand](https://github.com/DrPeterVanNostrand)
 - Added fuzzing suite
-  - No code changes as no bugs where found
+  - No code changes due to this as no bugs were found
 - Upgraded InversionTree QuickCheck test
-  - No code changes as no bugs were found
+  - No code changes due to this as no bugs were found
 - Upgraded test suite for main codec methods(e.g. encode, reconstruct)
   - A lot of heavy QuickCheck tests were added
-  - No code changes as no bugs were found
+  - No code changes due to this as no bugs were found
 - Upgraded test suite for ShardByShard methods
   - A lot of heavy QuickCheck tests were added
-  - No code changes as no bugs were found
+  - No code changes due to this as no bugs were found
 
 ## 3.0.3
 - Added QuickCheck tests to the test suite
