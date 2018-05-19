@@ -334,7 +334,7 @@ impl<'a> ShardByShard<'a> {
     /// You should call this when you have added and encoded
     /// all data shards, and have finished using the parity shards.
     ///
-    /// Returns `LeftoverShards` when there are shards encoded
+    /// Returns `SBSError::LeftoverShards` when there are shards encoded
     /// but parity shards are not ready to use.
     pub fn reset(&mut self) -> Result<(), SBSError>{
         if self.cur_input > 0
@@ -459,7 +459,7 @@ impl<'a> ShardByShard<'a> {
 
     /// Constructs the parity shards partially using the current input data shard.
     ///
-    /// Returns `TooManyCalls` when all input data shards
+    /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode(&mut self,
                   slices : &mut [&mut [u8]])
@@ -474,7 +474,7 @@ impl<'a> ShardByShard<'a> {
 
     /// Constructs the parity shards partially using the current input data shard.
     ///
-    /// Returns `TooManyCalls` when all input data shards
+    /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_sep(&mut self,
                       data   : &[&[u8]],
@@ -491,7 +491,7 @@ impl<'a> ShardByShard<'a> {
 
     /// Constructs the parity shards partially using the current input data shard.
     ///
-    /// Returns `TooManyCalls` when all input data shards
+    /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_shard(&mut self,
                         shards : &mut [Shard])
@@ -836,6 +836,8 @@ impl ReedSolomon {
     ///
     /// This is a wrapper of `encode_single`.
     ///
+    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
+    ///
     /// # Warning
     ///
     /// You must apply this method on the data shards in strict sequential order(0..data shard count),
@@ -859,6 +861,8 @@ impl ReedSolomon {
     /// The slots where the parity shards sit at will be overwritten.
     ///
     /// This is a wrapper of `encode_single_sep`.
+    ///
+    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
     ///
     /// # Warning
     ///
@@ -915,7 +919,7 @@ impl ReedSolomon {
     ///
     /// The slots where the parity shards sit at will be overwritten.
     ///
-    /// Returns `InvalidIndex` if `i_data` is not a valid index.
+    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
     ///
     /// # Warning
     ///
@@ -944,6 +948,8 @@ impl ReedSolomon {
     /// The data shard must match the index `i_data`.
     ///
     /// The slots where the parity shards sit at will be overwritten.
+    ///
+    /// Returns `Error::InvalidIndex` if `i_data` is not a valid index.
     ///
     /// # Warning
     ///
