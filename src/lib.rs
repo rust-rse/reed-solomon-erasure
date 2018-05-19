@@ -1288,7 +1288,7 @@ impl ReedSolomon {
         // the missing data shards.
         //
         // Also, create an array of indices of the valid rows we do have
-        // and the invalid rows we don't have up until we have enough valid rows.
+        // and the invalid rows we don't have until we have enough valid rows.
         let mut sub_shards             : SmallVec<[&[u8];     32]> =
             SmallVec::with_capacity(self.data_shard_count);
         let mut leftover_parity_shards : SmallVec<[&[u8];     32]> =
