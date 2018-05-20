@@ -549,7 +549,7 @@ impl ReedSolomon {
     //
     // Terminologies and symbols :
     //   X =A, B, C=> Y : X delegates error checking responsibilities A, B, C to Y
-    //   x := A, B, C   : X needs to handle responsibilities A, B, C
+    //   X := A, B, C   : X needs to handle responsibilities A, B, C
     //
     // Encode methods
     //
