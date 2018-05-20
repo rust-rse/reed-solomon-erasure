@@ -46,8 +46,7 @@ fn multiply(log_table : &[u8; FIELD_SIZE],
             b : u8) -> u8 {
     if a == 0 || b == 0 {
         0
-    }
-    else {
+    } else {
         let log_a = log_table[a as usize];
         let log_b = log_table[b as usize];
         let log_result = log_a as usize + log_b as usize;

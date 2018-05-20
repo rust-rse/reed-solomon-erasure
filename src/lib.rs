@@ -36,6 +36,11 @@ mod inversion_tree;
 mod inversion_tree_tests;
 mod shard_utils;
 mod lib_tests;
+mod errors;
+mod errors_tests;
+
+pub use errors::Error;
+pub use errors::SBSError;
 
 pub use shard_utils::make_zero_len_shard;
 pub use shard_utils::make_zero_len_shards;
@@ -48,30 +53,6 @@ pub use shard_utils::option_shards_into_shards;
 
 use matrix::Matrix;
 use inversion_tree::InversionTree;
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum Error {
-    TooFewShards,
-    TooManyShards,
-    TooFewDataShards,
-    TooManyDataShards,
-    TooFewParityShards,
-    TooManyParityShards,
-    TooFewBufferShards,
-    TooManyBufferShards,
-    IncorrectShardSize,
-    TooFewShardsPresent,
-    EmptyShard,
-    InvalidShardFlags,
-    InvalidIndex,
-}
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum SBSError {
-    TooManyCalls,
-    LeftoverShards,
-    RSError(Error)
-}
 
 /// Convenience data type provided by this library.
 pub type Shard = Box<[u8]>;
@@ -158,11 +139,10 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 ///
 /// ## `sep`
 ///
-/// Methods ending in `_sep` takes an immutable reference of data shard(s),
-/// and a mutable
-/// reference of parity shards.
+/// Methods ending in `_sep` takes an immutable reference to data shards,
+/// and a mutable reference to parity shards.
 ///
-/// They are useful as they do not need to borrow the data shard(s) mutably,
+/// They are useful as they do not need to borrow the data shards mutably,
 /// and other work that only needs read-only access to data shards can be done
 /// in parallel/concurrently during the encoding.
 ///
@@ -202,6 +182,11 @@ fn mut_option_shards_to_mut_slices<'a>(shards : &'a mut [Option<Shard>])
 /// | `encode_shards_sep` | `encode_single_shard_sep` |
 /// | `encode` | `encode_single` |
 /// | `encode_sep` | `encode_single_sep` |
+///
+/// The `single` variants do similar checks on the provided data shards and parity shards,
+/// and also do index check on `i_data`.
+///
+/// Return `Error::InvalidIndex` if `i_data >= data_shard_count`.
 ///
 /// # Encoding behaviour
 ///
@@ -354,7 +339,7 @@ impl<'a> ShardByShard<'a> {
     /// You should call this when you have added and encoded
     /// all data shards, and have finished using the parity shards.
     ///
-    /// Returns `LeftoverShards` when there are shards encoded
+    /// Returns `SBSError::LeftoverShards` when there are shards encoded
     /// but parity shards are not ready to use.
     pub fn reset(&mut self) -> Result<(), SBSError>{
         if self.cur_input > 0
@@ -479,7 +464,7 @@ impl<'a> ShardByShard<'a> {
 
     /// Constructs the parity shards partially using the current input data shard.
     ///
-    /// Returns `TooManyCalls` when all input data shards
+    /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode(&mut self,
                   slices : &mut [&mut [u8]])
@@ -494,7 +479,7 @@ impl<'a> ShardByShard<'a> {
 
     /// Constructs the parity shards partially using the current input data shard.
     ///
-    /// Returns `TooManyCalls` when all input data shards
+    /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_sep(&mut self,
                       data   : &[&[u8]],
@@ -511,7 +496,7 @@ impl<'a> ShardByShard<'a> {
 
     /// Constructs the parity shards partially using the current input data shard.
     ///
-    /// Returns `TooManyCalls` when all input data shards
+    /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode` or `encode_shard`.
     pub fn encode_shard(&mut self,
                         shards : &mut [Shard])
@@ -563,8 +548,8 @@ impl ReedSolomon {
     // Error detection responsibilities
     //
     // Terminologies and symbols :
-    //   X =A, B, C=> Y : X relegate error checking responsibilities A, B, C to Y
-    //   x := A, B, C   : X needs to handle responsibilities A, B, C
+    //   X =A, B, C=> Y : X delegates error checking responsibilities A, B, C to Y
+    //   X := A, B, C   : X needs to handle responsibilities A, B, C
     //
     // Encode methods
     //
@@ -647,7 +632,7 @@ impl ReedSolomon {
     ///
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
-    /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
     pub fn new(data_shards : usize,
                parity_shards : usize)
                -> Result<ReedSolomon, Error> {
@@ -664,7 +649,7 @@ impl ReedSolomon {
     ///
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
-    /// Returns `Error::TooManyShards` if `256 < data_shards + parity_shards`.
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
     pub fn with_pparam(data_shards   : usize,
                        parity_shards : usize,
                        mut pparam    : ParallelParam)
@@ -675,7 +660,7 @@ impl ReedSolomon {
         if parity_shards == 0 {
             return Err(Error::TooFewParityShards);
         }
-        if 256 < data_shards + parity_shards {
+        if data_shards + parity_shards > 256 {
             return Err(Error::TooManyShards);
         }
 
@@ -1246,8 +1231,9 @@ impl ReedSolomon {
                 let mut sub_matrix =
                     Matrix::new(self.data_shard_count,
                                 self.data_shard_count);
-                for sub_matrix_row in 0..valid_indices.len() {
-                    let valid_index = valid_indices[sub_matrix_row];
+                for (sub_matrix_row, &valid_index) in
+                    valid_indices.into_iter().enumerate()
+                {
                     for c in 0..self.data_shard_count {
                         sub_matrix.set(sub_matrix_row, c,
                                        self.matrix.get(valid_index, c));
@@ -1309,11 +1295,9 @@ impl ReedSolomon {
         // the missing data shards.
         //
         // Also, create an array of indices of the valid rows we do have
-        // and the invalid rows we don't have up until we have enough valid rows.
+        // and the invalid rows we don't have until we have enough valid rows.
         let mut sub_shards             : SmallVec<[&[u8];     32]> =
             SmallVec::with_capacity(self.data_shard_count);
-        let mut leftover_parity_shards : SmallVec<[&[u8];     32]> =
-            SmallVec::with_capacity(self.parity_shard_count);
         let mut missing_data_slices    : SmallVec<[&mut [u8]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
         let mut missing_parity_slices  : SmallVec<[&mut [u8]; 32]> =
@@ -1331,7 +1315,11 @@ impl ReedSolomon {
                     sub_shards.push(slice);
                     valid_indices.push(matrix_row);
                 } else {
-                    leftover_parity_shards.push(slice);
+                    // Already have enough shards in `sub_shards`
+                    // as we only need N shards, where N = `data_shard_count`,
+                    // for the data decode matrix
+                    //
+                    // So nothing to do here
                 }
             } else {
                 if i < self.data_shard_count {
@@ -1353,9 +1341,10 @@ impl ReedSolomon {
         // Re-create any data shards that were missing.
         //
         // The input to the coding is all of the shards we actually
-        // have, and the output is the missing data shards.  The computation
+        // have, and the output is the missing data shards. The computation
         // is done using the special decode matrix we just built.
-        let mut matrix_rows = Vec::with_capacity(self.parity_shard_count);
+        let mut matrix_rows : SmallVec<[&[u8]; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
         for i_slice in 0..self.data_shard_count {
             if !slice_present[i_slice] {
                 matrix_rows.push(data_decode_matrix.get_row(i_slice));
@@ -1385,7 +1374,7 @@ impl ReedSolomon {
                 }
             }
             {
-                // Gather up the references of all data slices
+                // Gather up all the data slices
                 let mut i_old_data_slice = 0;
                 let mut i_new_data_slice = 0;
                 let mut all_data_slices : SmallVec<[&[u8]; 32]> =
