@@ -548,7 +548,7 @@ impl ReedSolomon {
     // Error detection responsibilities
     //
     // Terminologies and symbols :
-    //   X =A, B, C=> Y : X relegate error checking responsibilities A, B, C to Y
+    //   X =A, B, C=> Y : X delegates error checking responsibilities A, B, C to Y
     //   x := A, B, C   : X needs to handle responsibilities A, B, C
     //
     // Encode methods
