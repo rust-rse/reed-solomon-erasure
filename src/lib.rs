@@ -1295,7 +1295,16 @@ impl ReedSolomon {
         // the missing data shards.
         //
         // Also, create an array of indices of the valid rows we do have
-        // and the invalid rows we don't have until we have enough valid rows.
+        // and the invalid rows we don't have.
+        //
+        // The valid indices are used to construct the data decode matrix,
+        // the invalid indices are used to key the data decode matrix
+        // in the inversion tree.
+        //
+        // We only need exactly N valid indices, where N = `data_shard_count`,
+        // as the data decode matrix is a N x N matrix, thus only needs
+        // N valid indices for determining the N rows to pick from
+        // `self.matrix`.
         let mut sub_shards             : SmallVec<[&[u8];     32]> =
             SmallVec::with_capacity(self.data_shard_count);
         let mut missing_data_slices    : SmallVec<[&mut [u8]; 32]> =

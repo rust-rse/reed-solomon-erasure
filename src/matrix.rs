@@ -53,7 +53,7 @@ impl Matrix {
 
         Matrix { row_count : rows,
                  col_count : cols,
-                 data }
+                 data              }
     }
 
     pub fn new_with_data(init_data : Vec<Vec<u8>>) -> Matrix {
