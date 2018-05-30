@@ -1,3 +1,8 @@
+## 3.1.1
+- Fixed internal function `matrix::augment`
+  - Not actually used in core code base
+  - Bug does not affect core code base
+
 ## 3.1.0
 - Impl'd `std::error::Error` for `reed_solomon_erasure::Error` and `reed_solomon_erasure::SBSError`
   - See issue [#17](https://github.com/darrenldl/reed-solomon-erasure/issues/17), suggested by [DrPeterVanNostrand](https://github.com/DrPeterVanNostrand)
