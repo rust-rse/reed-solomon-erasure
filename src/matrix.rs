@@ -116,7 +116,7 @@ impl Matrix {
     }
 
     pub fn augment(&self, rhs : &Matrix) -> Matrix {
-        if self.row_count != self.col_count {
+        if self.row_count != self.row_count {
             panic!("Matrices do not have the same row count, lhs : {}, rhs : {}", self.row_count, rhs.row_count)
         }
         let mut result = Self::new(self.row_count,
