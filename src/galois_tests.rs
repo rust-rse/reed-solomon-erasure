@@ -243,22 +243,6 @@ fn test_slice_add() {
             assert_eq!(expect[i], output[i]);
         }
     }
-
-    for i in 0..256 {
-        let a = i as u8;
-        for j in 0..256 {
-            let b = j as u8;
-            for k in 0..256 {
-                let c = k as u8;
-                let x = add(a, add(b, c));
-                let y = add(add(a, b), c);
-                assert_eq!(x, y);
-                let x = mul(a, mul(b, c));
-                let y = mul(mul(a, b), c);
-                assert_eq!(x, y);
-            }
-        }
-    }
 }
 
 #[test]
