@@ -188,7 +188,7 @@ fn test_galois() {
     for i in 0..input.len() {
         assert_eq!(expect_xor[i], output1[i]);
     }
-    mul_slice_xor(52, &input, &mut output2);
+    mul_slice_xor_pure_rust(52, &input, &mut output2);
     for i in 0..input.len() {
         assert_eq!(expect_xor[i], output2[i]);
     }
