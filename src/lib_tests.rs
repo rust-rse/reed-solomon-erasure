@@ -133,15 +133,6 @@ fn test_option_shards_into_missing_shards() {
 }
 
 #[test]
-#[should_panic]
-fn test_option_shards_to_shards_too_few_shards() {
-    let shards = make_random_shards!(1_000, 10);
-    let option_shards = shards_into_option_shards(shards);
-
-    shard_utils::option_shards_to_shards(&option_shards[0..11]);
-}
-
-#[test]
 fn test_reed_solomon_clone() {
     let r1 = ReedSolomon::new(10, 3).unwrap();
     let r2 = r1.clone();
