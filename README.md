@@ -53,7 +53,7 @@ fn main () {
     r.encode_shards(&mut master_copy).unwrap();
 
     // Make a copy and transform it into option shards arrangement
-    // for feeding into decode_missing
+    // for feeding into reconstruct_shards
     let mut shards = shards_into_option_shards(master_copy.clone());
 
     // We can remove up to 2 shards, which may be data or parity shards
