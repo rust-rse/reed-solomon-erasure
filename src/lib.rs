@@ -1124,7 +1124,7 @@ impl ReedSolomon {
 
     /// Reconstructs all shards.
     ///
-    /// This fills in the missing shards with blank shards only
+    /// This fills in the missing shards with blank shards if and only
     /// if there are enough shards for reconstruction.
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
@@ -1136,7 +1136,7 @@ impl ReedSolomon {
 
     /// Reconstructs only the data shards.
     ///
-    /// This fills in the missing data shards with blank shards only
+    /// This fills in the missing data shards with blank shards if and only
     /// if there are enough shards for reconstruction.
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
