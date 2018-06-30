@@ -2,7 +2,7 @@
 - Fixed benchmark data
   - Previously used MB=10^6 bytes while I should have used MB=2^20 bytes
   - Table in README has been updated accordingly
-    - The `>= 2.1.0` data is obtained by measuring again with corrected `rse-benchmark` code
+    - The `>= 2.1.0` data is obtained by measuring again with the corrected `rse-benchmark` code
     - The `2.0.X` and `1.X.X` data are simply adjusted by mutiplying `10^6` then dividing by `2^20`
 
 ## 3.1.1
