@@ -89,7 +89,7 @@ Below shows the result of one of the test configurations, other configurations s
 
 |Configuration| Klaus Post's | >= 2.1.0 | 2.0.X | 1.X.X |
 |---|---|---|---|---|
-| 10x2x1M | ~7800MB/s |~4800MB/s | ~1100MB/s | ~250MB/s |
+| 10x2x1M | ~7800MB/s |~4500MB/s | ~1000MB/s | ~240MB/s |
 
 ## Changelog
 [Changelog](CHANGELOG.md)
