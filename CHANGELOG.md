@@ -1,4 +1,7 @@
 ## 3.1.2
+- Fixed `Matrix::augment`
+  - The error checking code was incorrect
+  - Since this method is used in internal code only, and the only use case is a correct use case, the error did not lead to any bugs
 - Fixed benchmark data
   - Previously used MB=10^6 bytes while I should have used MB=2^20 bytes
   - Table in README has been updated accordingly
