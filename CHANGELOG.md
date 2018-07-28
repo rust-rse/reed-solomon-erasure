@@ -7,6 +7,8 @@
   - Table in README has been updated accordingly
     - The `>= 2.1.0` data is obtained by measuring again with the corrected `rse-benchmark` code
     - The `2.0.X` and `1.X.X` data are simply adjusted by mutiplying `10^6` then dividing by `2^20`
+- Dependencies update
+  - Updated `rand` from `0.4` to `0.5.4`
 
 ## 3.1.0
 - Impl'd `std::error::Error` for `reed_solomon_erasure::Error` and `reed_solomon_erasure::SBSError`
