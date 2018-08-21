@@ -9,6 +9,8 @@
     - The `2.0.X` and `1.X.X` data are simply adjusted by mutiplying `10^6` then dividing by `2^20`
 - Dependencies update
   - Updated `rand` from `0.4` to `0.5.4`
+- Added special handling in `build.rs` for CC options on Android
+  - `-march=native` is not available for GCC on Android, see issue #23
 
 ## 3.1.0
 - Impl'd `std::error::Error` for `reed_solomon_erasure::Error` and `reed_solomon_erasure::SBSError`
