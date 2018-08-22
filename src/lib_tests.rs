@@ -5,14 +5,6 @@ use super::*;
 use shard_utils;
 use rand::{thread_rng, Rng};
 
-macro_rules! shards {
-    (
-        $( [ $( $x:expr ),* ] ),*
-    ) => {{
-        vec![ $( vec![ $( $x as u8),* ].into_boxed_slice() ),* ]
-    }}
-}
-
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{
         let mut shards = Vec::with_capacity(20);
