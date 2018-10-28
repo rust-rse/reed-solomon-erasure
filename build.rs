@@ -153,9 +153,6 @@ fn write_tables() {
     write_table!(2D => f, mul_table_high, "MUL_TABLE_HIGH", "u8");
 }
 
-#[cfg(
-    all(not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64")))]
 fn compile_simd_c() {
     let pure_rust              = cfg!(feature = "pure-rust");
     let architecture_supported = cfg!(target_arch = "x86_64") || cfg!(target_arch = "aarch64");
