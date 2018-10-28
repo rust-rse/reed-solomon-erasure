@@ -58,15 +58,27 @@ macro_rules! return_if_empty {
 
 
 #[cfg(
-    any(feature = "pure-rust",
-        not(any(target_arch = "x86_64", target_arch = "aarch64"))))]
+    not(
+        all(
+            not(feature = "pure-rust"),
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            not(any(target_os="android", target_os="androidabi", target_os="ios"))
+        )
+    )
+)]
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     mul_slice_pure_rust(c, input, out);
 }
 
 #[cfg(
-    any(feature = "pure-rust",
-        not(any(target_arch = "x86_64", target_arch = "aarch64"))))]
+    not(
+        all(
+            not(feature = "pure-rust"),
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            not(any(target_os="android", target_os="androidabi", target_os="ios"))
+        )
+    )
+)]
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     mul_slice_xor_pure_rust(c, input, out);
 }
@@ -195,8 +207,12 @@ pub fn slice_xor(input : &[u8], out : &mut [u8]) {
 }
 
 #[cfg(
-    all(not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64")))]
+    all(
+        not(feature = "pure-rust"),
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(any(target_os="android", target_os="androidabi", target_os="ios"))
+    )
+)]
 extern {
     fn reedsolomon_gal_mul(low   : *const libc::uint8_t,
                            high  : *const libc::uint8_t,
@@ -214,8 +230,12 @@ extern {
 }
 
 #[cfg(
-    all(not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64")))]
+    all(
+        not(feature = "pure-rust"),
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(any(target_os="android", target_os="androidabi", target_os="ios"))
+    )
+)]
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     let low  : *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
     let high : *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
@@ -236,8 +256,12 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
 }
 
 #[cfg(
-    all(not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64")))]
+    all(
+        not(feature = "pure-rust"),
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(any(target_os="android", target_os="androidabi", target_os="ios"))
+    )
+)]
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
     let low  : *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
     let high : *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
