@@ -5,7 +5,7 @@ use super::*;
 use shard_utils;
 use rand::{thread_rng, Rng};
 
-macro_rules! shards {
+macro_rules! shards_for_test {
     (
         $( [ $( $x:expr ),* ] ),*
     ) => {{
@@ -857,16 +857,16 @@ fn test_reconstruct_error_handling() {
 fn test_one_encode() {
     let r = ReedSolomon::new(5, 5).unwrap();
 
-    let mut shards = shards!([0, 1],
-                             [4, 5],
-                             [2, 3],
-                             [6, 7],
-                             [8, 9],
-                             [0, 0],
-                             [0, 0],
-                             [0, 0],
-                             [0, 0],
-                             [0, 0]);
+    let mut shards = shards_for_test!([0, 1],
+                                      [4, 5],
+                                      [2, 3],
+                                      [6, 7],
+                                      [8, 9],
+                                      [0, 0],
+                                      [0, 0],
+                                      [0, 0],
+                                      [0, 0],
+                                      [0, 0]);
 
     r.encode_shards(&mut shards).unwrap();
     { assert_eq!(shards[5][0], 12);
@@ -1086,10 +1086,10 @@ fn test_check_slices_or_shards_size() {
     let r = ReedSolomon::new(2, 2).unwrap();
 
     {
-        let mut shards = shards!([0, 0, 0],
-                                 [0, 1],
-                                 [1, 2, 3],
-                                 [0, 0, 0]);
+        let mut shards = shards_for_test!([0, 0, 0],
+                                          [0, 1],
+                                          [1, 2, 3],
+                                          [0, 0, 0]);
 
         assert_eq!(Error::IncorrectShardSize,
                    r.encode_shards(&mut shards)
@@ -1105,10 +1105,10 @@ fn test_check_slices_or_shards_size() {
                    .unwrap_err());
     }
     {
-        let mut shards = shards!([0, 1],
-                                 [0, 1],
-                                 [1, 2, 3],
-                                 [0, 0, 0]);
+        let mut shards = shards_for_test!([0, 1],
+                                          [0, 1],
+                                          [1, 2, 3],
+                                          [0, 0, 0]);
 
         assert_eq!(Error::IncorrectShardSize,
                    r.encode_shards(&mut shards)
@@ -1124,10 +1124,10 @@ fn test_check_slices_or_shards_size() {
                    .unwrap_err());
     }
     {
-        let mut shards = shards!([0, 1],
-                                 [0, 1, 4],
-                                 [1, 2, 3],
-                                 [0, 0, 0]);
+        let mut shards = shards_for_test!([0, 1],
+                                          [0, 1, 4],
+                                          [1, 2, 3],
+                                          [0, 0, 0]);
 
         assert_eq!(Error::IncorrectShardSize,
                    r.encode_shards(&mut shards)
@@ -1143,10 +1143,10 @@ fn test_check_slices_or_shards_size() {
                    .unwrap_err());
     }
     {
-        let mut shards = shards!([],
-                                 [0, 1, 3],
-                                 [1, 2, 3],
-                                 [0, 0, 0]);
+        let mut shards = shards_for_test!([],
+                                          [0, 1, 3],
+                                          [1, 2, 3],
+                                          [0, 0, 0]);
 
         assert_eq!(Error::EmptyShard,
                    r.encode_shards(&mut shards)
