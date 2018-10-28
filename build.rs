@@ -157,7 +157,9 @@ fn write_tables() {
     all(not(feature = "pure-rust"),
         any(target_arch = "x86_64", target_arch = "aarch64")))]
 fn compile_simd_c() {
-    if cfg!(target_os = "android") {
+    if     cfg!(target_os = "android")
+        || cfg!(target_os = "ios")
+    {
         cc::Build::new()
             .opt_level(3)
             .flag("-std=c11")
