@@ -157,15 +157,16 @@ fn write_tables() {
     all(not(feature = "pure-rust"),
         any(target_arch = "x86_64", target_arch = "aarch64")))]
 fn compile_simd_c() {
-    if     cfg!(target_os = "android")
-        || cfg!(target_os = "ios")
-    {
-        cc::Build::new()
-            .opt_level(3)
-            .flag("-std=c11")
-            .file("simd_c/reedsolomon.c")
-            .compile("reedsolomon");
-    } else {
+    let pure_rust              = cfg!(feature = "pure-rust");
+    let architecture_supported = cfg!(target_arch = "x86_64") || cfg!(target_arch = "aarch64");
+    let platform_supported     = !(cfg!(target_os = "android") || cfg!(target_os = "ios"));
+
+    let simd_enabled =
+        !pure_rust
+        && architecture_supported
+        && platform_supported;
+
+    if simd_enabled {
         cc::Build::new()
             .opt_level(3)
             .flag("-march=native")
@@ -174,11 +175,6 @@ fn compile_simd_c() {
             .compile("reedsolomon");
     }
 }
-
-#[cfg(
-    any(feature = "pure-rust",
-        not(any(target_arch = "x86_64", target_arch = "aarch64"))))]
-fn compile_simd_c() {}
 
 fn main() {
     write_tables();
