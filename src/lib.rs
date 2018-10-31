@@ -1,10 +1,10 @@
 //! This crate provides an encoder/decoder for Reed-Solomon erasure code.
 //!
 //! Please note that erasure coding means errors are not directly detected or corrected,
-//! but missing data pieces(shards) can be reconstructed given that
+//! but missing data pieces (shards) can be reconstructed given that
 //! the configuration provides high enough redundancy.
 //!
-//! You will have to implement error detection separately(e.g. via checksums)
+//! You will have to implement error detection separately (e.g. via checksums)
 //! and simply leave out the corrupted shards when attempting to reconstruct
 //! the missing data.
 
@@ -781,7 +781,7 @@ impl ReedSolomon {
                                                  to_check[i],
                                                  self.pparam.bytes_per_encode)
             })
-            .any(|x| !x);  // find the first false(some slice is different from the expected one)
+            .any(|x| !x);  // find the first false (some slice is different from the expected one)
         !at_least_one_mismatch_present
     }
 
