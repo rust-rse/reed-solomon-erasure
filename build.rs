@@ -157,7 +157,7 @@ fn write_tables() {
     all(
         not(feature = "pure-rust"),
         any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="androideabi", target_os="ios"))
+        not(any(target_os="android", target_os="ios"))
     )
 )]
 fn compile_simd_c() {
@@ -174,7 +174,7 @@ fn compile_simd_c() {
         all(
             not(feature = "pure-rust"),
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="androideabi", target_os="ios"))
+            not(any(target_os="android", target_os="ios"))
         )
     )
 )]

@@ -62,7 +62,7 @@ macro_rules! return_if_empty {
         all(
             not(feature = "pure-rust"),
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="androideabi", target_os="ios"))
+            not(any(target_os="android", target_os="ios"))
         )
     )
 )]
@@ -75,7 +75,7 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
         all(
             not(feature = "pure-rust"),
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="androideabi", target_os="ios"))
+            not(any(target_os="android", target_os="ios"))
         )
     )
 )]
@@ -210,7 +210,7 @@ pub fn slice_xor(input : &[u8], out : &mut [u8]) {
     all(
         not(feature = "pure-rust"),
         any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="androideabi", target_os="ios"))
+        not(any(target_os="android", target_os="ios"))
     )
 )]
 extern {
@@ -233,7 +233,7 @@ extern {
     all(
         not(feature = "pure-rust"),
         any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="androideabi", target_os="ios"))
+        not(any(target_os="android", target_os="ios"))
     )
 )]
 pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
@@ -259,7 +259,7 @@ pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
     all(
         not(feature = "pure-rust"),
         any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="androideabi", target_os="ios"))
+        not(any(target_os="android", target_os="ios"))
     )
 )]
 pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
