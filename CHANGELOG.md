@@ -1,3 +1,7 @@
+## 3.1.2
+- Doc fix
+  - Added space before parantheses in code comments and documentation
+
 ## 3.1.1
 - Fixed `Matrix::augment`
   - The error checking code was incorrect
