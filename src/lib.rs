@@ -843,7 +843,7 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order (0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
@@ -867,7 +867,7 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order (0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
@@ -922,7 +922,7 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order (0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
@@ -950,7 +950,7 @@ impl ReedSolomon {
     ///
     /// # Warning
     ///
-    /// You must apply this method on the data shards in strict sequential order(0..data shard count),
+    /// You must apply this method on the data shards in strict sequential order (0..data shard count),
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.

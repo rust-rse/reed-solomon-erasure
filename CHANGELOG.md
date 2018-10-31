@@ -19,7 +19,7 @@
   - No code changes due to this as no bugs were found
 - Upgraded InversionTree QuickCheck test
   - No code changes due to this as no bugs were found
-- Upgraded test suite for main codec methods(e.g. encode, reconstruct)
+- Upgraded test suite for main codec methods (e.g. encode, reconstruct)
   - A lot of heavy QuickCheck tests were added
   - No code changes due to this as no bugs were found
 - Upgraded test suite for ShardByShard methods
@@ -95,7 +95,7 @@
 
 ## 2.0.0
 - Complete rewrite of most code following Klaus Post's design
-- Added optimsations(parallelism, loop unrolling)
+- Added optimsations (parallelism, loop unrolling)
 - 4-5x faster than `1.X.X`
 
 ## 1.1.1
