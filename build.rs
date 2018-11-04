@@ -154,30 +154,30 @@ fn write_tables() {
 }
 
 #[cfg(
-    all(not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64")))]
+    all(
+        not(feature = "pure-rust"),
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(any(target_os="android", target_os="ios"))
+    )
+)]
 fn compile_simd_c() {
-    if     cfg!(target_os = "android")
-        || cfg!(target_os = "ios")
-    {
-        cc::Build::new()
-            .opt_level(3)
-            .flag("-std=c11")
-            .file("simd_c/reedsolomon.c")
-            .compile("reedsolomon");
-    } else {
-        cc::Build::new()
-            .opt_level(3)
-            .flag("-march=native")
-            .flag("-std=c11")
-            .file("simd_c/reedsolomon.c")
-            .compile("reedsolomon");
-    }
+    cc::Build::new()
+        .opt_level(3)
+        .flag("-march=native")
+        .flag("-std=c11")
+        .file("simd_c/reedsolomon.c")
+        .compile("reedsolomon");
 }
 
 #[cfg(
-    any(feature = "pure-rust",
-        not(any(target_arch = "x86_64", target_arch = "aarch64"))))]
+    not(
+        all(
+            not(feature = "pure-rust"),
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            not(any(target_os="android", target_os="ios"))
+        )
+    )
+)]
 fn compile_simd_c() {}
 
 fn main() {
