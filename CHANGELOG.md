@@ -1,6 +1,7 @@
 ## 3.1.2
 - Doc fix
   - Added space before parantheses in code comments and documentation
+- Disabled SIMD C code for Android and iOS targets entirely
 
 ## 3.1.1
 - Fixed `Matrix::augment`
