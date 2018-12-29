@@ -4,15 +4,15 @@ use rand;
 use rayon::prelude::*;
 
 #[cfg(test)]
-pub fn fill_random(arr : &mut [u8]) {
+pub fn fill_random(arr: &mut [u8]) {
     for a in arr.iter_mut() {
         *a = rand::random::<u8>();
     }
 }
 
-pub fn slices_are_equal<T>(slice1 : &[T],
-                           slice2 : &[T]) -> bool
-    where T : PartialEq
+pub fn slices_are_equal<T>(slice1: &[T],
+                           slice2: &[T]) -> bool
+    where T: PartialEq
 {
     if slice1.len() != slice2.len() {
         return false;
@@ -25,10 +25,10 @@ pub fn slices_are_equal<T>(slice1 : &[T],
     true
 }
 
-pub fn par_slices_are_equal<T>(slice1     : &[T],
-                               slice2     : &[T],
-                               chunk_size : usize) -> bool
-    where T : PartialEq + Sync
+pub fn par_slices_are_equal<T>(slice1: &[T],
+                               slice2: &[T],
+                               chunk_size: usize) -> bool
+    where T: PartialEq + Sync
 {
     if slice1.len() != slice2.len() {
         return false;
@@ -38,13 +38,13 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
     //
     // Short-circuiting parallel equality check
     //
-    // Terminologies and Symbols :
-    //   f -> v : function f with some arguments returns v
-    //   iff.   : if and only if
-    //   <->    : double implication (iff.)
-    //   ~      : negation (logic)
-    //   forall : universal quantifier (first order logic)
-    //   exists : existential quantifier (first order logic)
+    // Terminologies and Symbols:
+    //   f -> v: function f with some arguments returns v
+    //   iff.: if and only if
+    //   <->: double implication (iff.)
+    //   ~: negation (logic)
+    //   forall: universal quantifier (first order logic)
+    //   exists: existential quantifier (first order logic)
     //
     // The final `any` simply applies not to the input
     // to find the first false, then returns true if
@@ -68,7 +68,7 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
     //
     // The negation of ">= 1 mismatch is present" is "no mismatch is present"
     //
-    // Informal proof :
+    // Informal proof:
     //   ">= 1 mismatch is present" is the same as "there exists a mismatch"
     //
     //   Suppose P(x) is the predicate for equality, where x is a tuple for
@@ -94,7 +94,7 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
         .enumerate()
         .map(|(i, slice1_part)| {
             let slice2_start = i * chunk_size;
-            let slice2_part  = &slice2[slice2_start..
+            let slice2_part= &slice2[slice2_start..
                                        slice2_start + slice1_part.len()];
             slices_are_equal(slice1_part, slice2_part)
         })
@@ -107,7 +107,7 @@ pub fn par_slices_are_equal<T>(slice1     : &[T],
 mod tests {
     use super::*;
 
-    fn fill_random(arr : &mut [u8]) {
+    fn fill_random(arr: &mut [u8]) {
         for a in arr.iter_mut() {
             *a = rand::random::<u8>();
         }

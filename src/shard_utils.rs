@@ -5,7 +5,7 @@ pub fn make_zero_len_shard() -> Shard {
     Box::new([])
 }
 
-pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
+pub fn make_zero_len_shards(count: usize) -> Vec<Shard> {
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
         result.push(make_zero_len_shard());
@@ -14,11 +14,11 @@ pub fn make_zero_len_shards(count : usize) -> Vec<Shard> {
 }
 
 /// Makes shard with byte array filled with zeros of some length.
-pub fn make_blank_shard(size : usize) -> Shard {
+pub fn make_blank_shard(size: usize) -> Shard {
     vec![0; size].into_boxed_slice()
 }
 
-pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
+pub fn make_blank_shards(size: usize, count: usize) -> Vec<Shard> {
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
         result.push(make_blank_shard(size));
@@ -34,12 +34,12 @@ pub fn make_blank_shards(size : usize, count : usize) -> Vec<Shard> {
 ///
 /// This is mainly useful when you want to repair a vector
 /// of shards using `reconstrct_shards` or `reconstruct_data_shards`.
-pub fn shards_to_option_shards(shards : &[Shard])
+pub fn shards_to_option_shards(shards: &[Shard])
                                -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner : Shard = v.clone();
+        let inner: Shard = v.clone();
         result.push(Some(inner));
     }
     result
@@ -53,7 +53,7 @@ pub fn shards_to_option_shards(shards : &[Shard])
 ///
 /// This is mainly useful when you want to repair a vector
 /// of shards using `reconstrct_shards` or `reconstruct_data_shards`.
-pub fn shards_into_option_shards(shards : Vec<Shard>)
+pub fn shards_into_option_shards(shards: Vec<Shard>)
                                  -> Vec<Option<Shard>> {
     let mut result = Vec::with_capacity(shards.len());
 
@@ -74,16 +74,16 @@ pub fn shards_into_option_shards(shards : Vec<Shard>)
 /// more usable arrangement.
 ///
 /// Panics when any of the shards is missing.
-pub fn option_shards_to_shards(shards : &[Option<Shard>])
+pub fn option_shards_to_shards(shards: &[Option<Shard>])
                                -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
 
     for i in 0..shards.len() {
         let shard = match shards[i] {
             Some(ref x) => x,
-            None        => panic!("Missing shard, index : {}", i),
+            None=> panic!("Missing shard, index: {}", i),
         };
-        let inner : Box<[u8]> = shard.clone();
+        let inner: Box<[u8]> = shard.clone();
         result.push(inner);
     }
     result
@@ -100,14 +100,14 @@ pub fn option_shards_to_shards(shards : &[Option<Shard>])
 /// more usable arrangement.
 ///
 /// Panics when any of the shards is missing.
-pub fn option_shards_into_shards(shards : Vec<Option<Shard>>)
+pub fn option_shards_into_shards(shards: Vec<Option<Shard>>)
                                  -> Vec<Shard> {
     let mut result = Vec::with_capacity(shards.len());
 
     for shard in shards.into_iter() {
         let shard = match shard {
             Some(x) => x,
-            None    => panic!("Missing shard"),
+            None=> panic!("Missing shard"),
         };
         result.push(shard);
     }

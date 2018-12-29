@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use smallvec::SmallVec;
 
-use galois;
+use galois_8 as galois;
 #[derive(Debug)]
 pub enum Error {
     SingularMatrix,
@@ -15,8 +15,8 @@ macro_rules! acc {
     }
 }
 
-pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
-    let mut result : Vec<T> =
+pub fn flatten<T>(m: Vec<Vec<T>>) -> Vec<T> {
+    let mut result: Vec<T> =
         Vec::with_capacity(m.len() * m[0].len());
     for row in m.into_iter() {
         for v in row.into_iter() {
@@ -28,35 +28,35 @@ pub fn flatten<T>(m : Vec<Vec<T>>) -> Vec<T> {
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Matrix {
-    row_count : usize,
-    col_count : usize,
-    data      : SmallVec<[u8; 1024]> // store in flattened structure
+    row_count: usize,
+    col_count: usize,
+    data: SmallVec<[u8; 1024]> // store in flattened structure
     // the smallvec can hold a matrix of size up to 32x32 in stack
 }
 
-fn calc_matrix_row_start_end(col_count : usize,
-                             row : usize)
+fn calc_matrix_row_start_end(col_count: usize,
+                             row: usize)
                              -> (usize, usize) {
     let start = row * col_count;
-    let end   = start + col_count;
+    let end = start + col_count;
 
     (start, end)
 }
 
 impl Matrix {
-    fn calc_row_start_end(&self, row : usize) -> (usize, usize) {
+    fn calc_row_start_end(&self, row: usize) -> (usize, usize) {
         calc_matrix_row_start_end(self.col_count, row)
     }
 
-    pub fn new(rows : usize, cols : usize) -> Matrix {
+    pub fn new(rows: usize, cols: usize) -> Matrix {
         let data = SmallVec::from_vec(vec![0; rows * cols]);
 
-        Matrix { row_count : rows,
-                 col_count : cols,
+        Matrix { row_count: rows,
+                 col_count: cols,
                  data              }
     }
 
-    pub fn new_with_data(init_data : Vec<Vec<u8>>) -> Matrix {
+    pub fn new_with_data(init_data: Vec<Vec<u8>>) -> Matrix {
         let rows = init_data.len();
         let cols = init_data[0].len();
 
@@ -68,12 +68,12 @@ impl Matrix {
 
         let data = SmallVec::from_vec(flatten(init_data));
 
-        Matrix { row_count : rows,
-                 col_count : cols,
+        Matrix { row_count: rows,
+                 col_count: cols,
                  data }
     }
 
-    pub fn identity(size : usize) -> Matrix {
+    pub fn identity(size: usize) -> Matrix {
         let mut result = Self::new(size, size);
         for i in 0..size {
             acc!(result, i, i) = 1;
@@ -89,17 +89,17 @@ impl Matrix {
         self.row_count
     }
 
-    pub fn get(&self, r : usize, c : usize) -> u8 {
+    pub fn get(&self, r: usize, c: usize) -> u8 {
         acc!(self, r, c)
     }
 
-    pub fn set(&mut self, r : usize, c : usize, val : u8) {
+    pub fn set(&mut self, r: usize, c: usize, val: u8) {
         acc!(self, r, c) = val;
     }
 
-    pub fn multiply(&self, rhs : &Matrix) -> Matrix {
+    pub fn multiply(&self, rhs: &Matrix) -> Matrix {
         if self.col_count != rhs.row_count {
-            panic!("Colomn count on left is different from row count on right, lhs : {}, rhs : {}", self.col_count, rhs.row_count)
+            panic!("Colomn count on left is different from row count on right, lhs: {}, rhs: {}", self.col_count, rhs.row_count)
         }
         let mut result = Self::new(self.row_count, rhs.col_count);
         for r in 0..self.row_count {
@@ -115,9 +115,9 @@ impl Matrix {
         result
     }
 
-    pub fn augment(&self, rhs : &Matrix) -> Matrix {
+    pub fn augment(&self, rhs: &Matrix) -> Matrix {
         if self.row_count != rhs.row_count {
-            panic!("Matrices do not have the same row count, lhs : {}, rhs : {}", self.row_count, rhs.row_count)
+            panic!("Matrices do not have the same row count, lhs: {}, rhs: {}", self.row_count, rhs.row_count)
         }
         let mut result = Self::new(self.row_count,
                                    self.col_count + rhs.col_count);
@@ -135,10 +135,10 @@ impl Matrix {
     }
 
     pub fn sub_matrix(&self,
-                      rmin : usize,
-                      cmin : usize,
-                      rmax : usize,
-                      cmax : usize) -> Matrix {
+                      rmin: usize,
+                      cmin: usize,
+                      rmax: usize,
+                      cmax: usize) -> Matrix {
         let mut result = Self::new(rmax - rmin, cmax - cmin);
         for r in rmin..rmax {
             for c in cmin..cmax {
@@ -148,13 +148,13 @@ impl Matrix {
         result
     }
 
-    pub fn get_row(&self, row : usize) -> &[u8] {
+    pub fn get_row(&self, row: usize) -> &[u8] {
         let (start, end) = self.calc_row_start_end(row);
 
         &self.data[start..end]
     }
 
-    pub fn swap_rows(&mut self, r1 : usize, r2 : usize) {
+    pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         let (r1_s, _) = self.calc_row_start_end(r1);
         let (r2_s, _) = self.calc_row_start_end(r2);
 
@@ -244,7 +244,7 @@ impl Matrix {
                            col_count * 2))
     }
 
-    pub fn vandermonde(rows : usize, cols : usize) -> Matrix {
+    pub fn vandermonde(rows: usize, cols: usize) -> Matrix {
         let mut result = Self::new(rows, cols);
 
         for r in 0..rows {

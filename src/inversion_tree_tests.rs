@@ -138,8 +138,8 @@ fn test_extended_inverted_matrix() {
     assert_eq!(matrix3_copy, *result);
 }
 
-fn make_random_invalid_indices(data_shards   : usize,
-                               parity_shards : usize) -> Vec<usize> {
+fn make_random_invalid_indices(data_shards: usize,
+                               parity_shards: usize) -> Vec<usize> {
     let mut invalid_count = 0;
     let mut res = Vec::new();
     for i in 0..data_shards + parity_shards {
@@ -153,16 +153,16 @@ fn make_random_invalid_indices(data_shards   : usize,
 
 #[derive(Debug, Clone)]
 struct QCTreeTestParam {
-    data_shards   : usize,
-    parity_shards : usize,
-    matrix_count  : usize,
-    iter_order    : Vec<usize>,
-    read_count    : usize,
+    data_shards: usize,
+    parity_shards: usize,
+    matrix_count: usize,
+    iter_order: Vec<usize>,
+    read_count: usize,
 }
 
 impl Arbitrary for QCTreeTestParam {
-    fn arbitrary<G : Gen>(g : &mut G) -> Self {
-        let size   = g.size();
+    fn arbitrary<G: Gen>(g: &mut G) -> Self {
+        let size = g.size();
 
         let matrix_count = 5 + size % 100;
 
@@ -172,11 +172,11 @@ impl Arbitrary for QCTreeTestParam {
         }
 
         QCTreeTestParam {
-            data_shards   : 1 + size % 50,
-            parity_shards : 1 + size % 50,
+            data_shards: 1 + size % 50,
+            parity_shards: 1 + size % 50,
             matrix_count,
             iter_order,
-            read_count    : 2 + size % 10,
+            read_count: 2 + size % 10,
         }
     }
 }
@@ -193,7 +193,7 @@ fn qc_tree_same_as_hash_map() {
 
 // inversion tree is functionally the same as a map
 // but more efficient
-fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
+fn qc_tree_same_as_hash_map_prop(param: QCTreeTestParam)
                                  -> bool {
     let tree = InversionTree::new(param.data_shards,
                                   param.parity_shards);
@@ -207,12 +207,12 @@ fn qc_tree_same_as_hash_map_prop(param : QCTreeTestParam)
         let matrix = make_random_matrix(param.data_shards);
         match tree.insert_inverted_matrix(&invalid_indices,
                                           &Arc::new(matrix.clone())) {
-            Ok(())                 => {
+            Ok(()) => {
                 map.insert(invalid_indices.clone(), matrix);
                 invalid_indices_set.push(invalid_indices);
             },
             Err(Error::AlreadySet) => {},
-            Err(Error::NotSquare)  => panic!(),
+            Err(Error::NotSquare)=> panic!(),
         }
     }
 

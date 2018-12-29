@@ -1,8 +1,8 @@
 [package]
-name    = "reed-solomon-erasure"
+name= "reed-solomon-erasure"
 version = "3.1.2"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
-build   = "build.rs"
+build = "build.rs"
 exclude = [
     "BackBlaze_JavaReedSolomon/*",
     "KlausPost_reedsolomon/*",
@@ -11,36 +11,36 @@ exclude = [
     ".travis.yml"
 ]
 
-description   = "Rust implementation of Reed-Solomon erasure coding"
+description = "Rust implementation of Reed-Solomon erasure coding"
 
 documentation = "https://docs.rs/reed-solomon-erasure"
-homepage      = "https://github.com/darrenldl/reed-solomon-erasure"
-repository    = "https://github.com/darrenldl/reed-solomon-erasure"
+homepage= "https://github.com/darrenldl/reed-solomon-erasure"
+repository= "https://github.com/darrenldl/reed-solomon-erasure"
 
-readme        = "README.md"
+readme= "README.md"
 
-keywords      = ["reed-solomon", "erasure"]
+keywords= ["reed-solomon", "erasure"]
 
-categories    = ["encoding"]
+categories= ["encoding"]
 
-license       = "MIT"
+license = "MIT"
 
 [features]
 pure-rust = []
 
 [badges]
 travis-ci = { repository = "darrenldl/reed-solomon-erasure" }
-appveyor  = { repository = "darrenldl/reed-solomon-erasure" }
-codecov   = { repository = "darrenldl/reed-solomon-erasure" }
+appveyor= { repository = "darrenldl/reed-solomon-erasure" }
+codecov = { repository = "darrenldl/reed-solomon-erasure" }
 coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
-rayon    = "1.0"
+rayon= "1.0"
 smallvec = "0.6"
-libc     = "0.2"
+libc = "0.2"
 
 [dev-dependencies]
-rand       = "0.5.4"
+rand = "0.5.4"
 quickcheck = "0.7"
 
 [build-dependencies]

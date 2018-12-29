@@ -14,8 +14,8 @@ macro_rules! matrix {
     ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
 }
 
-pub fn make_random_matrix(size : usize) -> Matrix {
-    let mut vec : Vec<Vec<u8>> = vec![vec![0; size]; size];
+pub fn make_random_matrix(size: usize) -> Matrix {
+    let mut vec: Vec<Vec<u8>> = vec![vec![0; size]; size];
     for v in vec.iter_mut() {
         fill_random(v);
     }

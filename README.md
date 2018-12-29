@@ -73,7 +73,7 @@ fn main () {
 
 ## Benchmark it yourself
 You can test performance under different configurations quickly(e.g. data parity shards ratio, parallel parameters)
-by cloning this repo : https://github.com/darrenldl/rse-benchmark
+by cloning this repo: https://github.com/darrenldl/rse-benchmark
 
 `rse-benchmark` contains a copy of this library(usually a fully functional dev version), so you only need to adjust `main.rs`
 then do `cargo run --release` to start the benchmark.
@@ -83,7 +83,7 @@ Version `1.X.X`, `2.0.0` do not utilise SIMD.
 
 Version `2.1.0` onward uses Nicolas's C files for SIMD operations.
 
-Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
+Machine: laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
 
 Below shows the result of one of the test configurations, other configurations show similar results in terms of ratio.
 
@@ -100,9 +100,9 @@ Contributions are welcome. Note that by submitting contributions, you agree to l
 ## Credits
 Many thanks to the following people for testing and benchmarking on various platforms
 
-  - [lnicola](https://github.com/lnicola/) (platforms : (Linux, Intel))
+  - [lnicola](https://github.com/lnicola/) (platforms: (Linux, Intel))
 
-  - [hexjelly](https://github.com/hexjelly) (platforms : (Windows, AMD))
+  - [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
 
 Polished version of the results will be published later.
 
