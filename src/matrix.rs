@@ -106,8 +106,10 @@ impl Matrix {
             for c in 0..rhs.col_count {
                 let mut val = 0;
                 for i in 0..self.col_count {
-                    val ^= galois::mul(acc!(self, r, i),
+                    let mul = galois::mul(acc!(self, r, i),
                                        acc!(rhs,  i, c));
+
+                    val = galois::add(val, mul);
                 }
                 acc!(result, r, c) = val;
             }
@@ -202,9 +204,10 @@ impl Matrix {
                 if acc!(self, r_below, r) != 0 {
                     let scale = acc!(self, r_below, r);
                     for c in 0..self.col_count {
-                        acc!(self, r_below, c) ^=
-                            galois::mul(scale,
-                                        acc!(self, r, c));
+                        acc!(self, r_below, c) = galois::add(
+                            acc!(self, r_below, c),
+                            galois::mul(scale, acc!(self, r, c)),
+                        );
                     }
                 }
             }
@@ -216,9 +219,10 @@ impl Matrix {
                 if acc!(self, r_above, d) != 0 {
                     let scale = acc!(self, r_above, d);
                     for c in 0..self.col_count {
-                        acc!(self, r_above, c) ^=
-                            galois::mul(scale,
-                                        acc!(self, d, c));
+                        acc!(self, r_above, c) = galois::add(
+                            acc!(self, r_above, c),
+                            galois::mul(scale, acc!(self, d, c)),
+                        );
                     }
                 }
             }

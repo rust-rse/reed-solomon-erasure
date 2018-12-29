@@ -23,8 +23,6 @@ use std::sync::Arc;
 
 use smallvec::SmallVec;
 
-extern crate libc;
-
 #[macro_use]
 mod macros;
 

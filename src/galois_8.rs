@@ -1,8 +1,5 @@
 //! Implementation of GF(2^8): the finite field with 2^8 elements.
 
-#![allow(dead_code)]
-use libc;
-
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
 /// Add two elements.
@@ -63,34 +60,8 @@ macro_rules! return_if_empty {
     }
 }
 
-
-#[cfg(
-    not(
-        all(
-            not(feature = "pure-rust"),
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="ios"))
-        )
-    )
-)]
+/// Multiply every element of `input` by `c`, writing into output.
 pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
-    mul_slice_pure_rust(c, input, out);
-}
-
-#[cfg(
-    not(
-        all(
-            not(feature = "pure-rust"),
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="ios"))
-        )
-    )
-)]
-pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
-    mul_slice_xor_pure_rust(c, input, out);
-}
-
-pub fn mul_slice_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
     let mt = &MUL_TABLE[c as usize];
     let mt_ptr: *const u8 = &mt[0];
 
@@ -100,7 +71,7 @@ pub fn mul_slice_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
     return_if_empty!(len);
 
     let mut input_ptr: *const u8 = &input[0];
-    let mut out_ptr: *mut   u8 = &mut out[0];
+    let mut out_ptr: *mut u8 = &mut out[0];
 
     let mut n: isize = 0;
     unsafe {
@@ -132,7 +103,7 @@ pub fn mul_slice_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
      */
 }
 
-pub fn mul_slice_xor_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
+pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
     let mt = &MUL_TABLE[c as usize];
     let mt_ptr: *const u8 = &mt[0];
 
@@ -142,7 +113,7 @@ pub fn mul_slice_xor_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
     return_if_empty!(len);
 
     let mut input_ptr: *const u8 = &input[0];
-    let mut out_ptr: *mut   u8 = &mut out[0];
+    let mut out_ptr: *mut u8 = &mut out[0];
 
     let mut n: isize = 0;
     unsafe {
@@ -213,85 +184,10 @@ pub fn slice_xor(input: &[u8], out: &mut [u8]) {
      */
 }
 
-#[cfg(
-    all(
-        not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
-extern {
-    fn reedsolomon_gal_mul(low: *const libc::uint8_t,
-                           high: *const libc::uint8_t,
-                           input: *const libc::uint8_t,
-                           out: *mut   libc::uint8_t,
-                           len: libc::size_t)
-                           -> libc::size_t;
-
-    fn reedsolomon_gal_mul_xor(low: *const libc::uint8_t,
-                               high: *const libc::uint8_t,
-                               input: *const libc::uint8_t,
-                               out: *mut   libc::uint8_t,
-                               len: libc::size_t)
-                               -> libc::size_t;
-}
-
-#[cfg(
-    all(
-        not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
-pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
-    let low: *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
-    let high: *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
-
-    assert_eq!(input.len(), out.len());
-
-    let input_ptr: *const libc::uint8_t = &input[0];
-    let out_ptr: *mut   libc::uint8_t = &mut out[0];
-    let size: libc::size_t = input.len();
-
-    let bytes_done: usize = unsafe {
-        reedsolomon_gal_mul(low, high, input_ptr, out_ptr, size) as usize
-    };
-
-    mul_slice_pure_rust(c,
-                        &input[bytes_done..],
-                        &mut out[bytes_done..]);
-}
-
-#[cfg(
-    all(
-        not(feature = "pure-rust"),
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
-pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
-    let low: *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
-    let high: *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
-
-    assert_eq!(input.len(), out.len());
-
-    let input_ptr: *const libc::uint8_t = &input[0];
-    let out_ptr: *mut   libc::uint8_t = &mut out[0];
-    let size: libc::size_t = input.len();
-
-    let bytes_done: usize = unsafe {
-        reedsolomon_gal_mul_xor(low, high, input_ptr, out_ptr, size) as usize
-    };
-
-    mul_slice_xor_pure_rust(c,
-                            &input[bytes_done..],
-                            &mut out[bytes_done..]);
-}
-
 #[cfg(test)]
 mod tests {
     use rand;
-    use galois::*;
+    use super::*;
     use misc_utils::fill_random;
 
     static BACKBLAZE_LOG_TABLE: [u8; 256] = [
@@ -467,7 +363,7 @@ mod tests {
         for i in 0..input.len() {
             assert_eq!(expect[i], output1[i]);
         }
-        mul_slice_pure_rust(25, &input, &mut output2);
+        mul_slice(25, &input, &mut output2);
         for i in 0..input.len() {
             assert_eq!(expect[i], output2[i]);
         }
@@ -477,7 +373,7 @@ mod tests {
         for i in 0..input.len() {
             assert_eq!(expect_xor[i], output1[i]);
         }
-        mul_slice_xor_pure_rust(52, &input, &mut output2);
+        mul_slice_xor(52, &input, &mut output2);
         for i in 0..input.len() {
             assert_eq!(expect_xor[i], output2[i]);
         }
@@ -487,7 +383,7 @@ mod tests {
         for i in 0..input.len() {
             assert_eq!(expect[i], output1[i]);
         }
-        mul_slice_pure_rust(177, &input, &mut output2);
+        mul_slice(177, &input, &mut output2);
         for i in 0..input.len() {
             assert_eq!(expect[i], output2[i]);
         }
@@ -497,7 +393,7 @@ mod tests {
         for i in 0..input.len() {
             assert_eq!(expect_xor[i], output1[i]);
         }
-        mul_slice_xor_pure_rust(117, &input, &mut output2);
+        mul_slice_xor(117, &input, &mut output2);
         for i in 0..input.len() {
             assert_eq!(expect_xor[i], output2[i]);
         }
@@ -545,7 +441,7 @@ mod tests {
         div(1, 0); }
 
     #[test]
-    fn test_pure_rust_same_as_maybe_ffi() {
+    fn test_same_as_maybe_ffi() {
         let len = 10_003;
         for _ in 0..100 {
             let c = rand::random::<u8>();
@@ -557,7 +453,7 @@ mod tests {
                 let mut output_copy = output.clone();
 
                 mul_slice(c, &input, &mut output);
-                mul_slice_pure_rust(c, &input, &mut output_copy);
+                mul_slice(c, &input, &mut output_copy);
 
                 assert_eq!(output, output_copy);
             }
@@ -567,7 +463,7 @@ mod tests {
                 let mut output_copy = output.clone();
 
                 mul_slice_xor(c, &input, &mut output);
-                mul_slice_xor_pure_rust(c, &input, &mut output_copy);
+                mul_slice_xor(c, &input, &mut output_copy);
 
                 assert_eq!(output, output_copy);
             }

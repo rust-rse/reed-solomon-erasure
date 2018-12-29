@@ -25,9 +25,6 @@ categories= ["encoding"]
 
 license = "MIT"
 
-[features]
-pure-rust = []
-
 [badges]
 travis-ci = { repository = "darrenldl/reed-solomon-erasure" }
 appveyor= { repository = "darrenldl/reed-solomon-erasure" }
@@ -37,7 +34,6 @@ coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 [dependencies]
 rayon= "1.0"
 smallvec = "0.6"
-libc = "0.2"
 
 [dev-dependencies]
 rand = "0.5.4"
