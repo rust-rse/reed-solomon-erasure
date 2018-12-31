@@ -152,7 +152,7 @@ pub fn slice_xor(input: &[u8], out: &mut [u8]) {
     return_if_empty!(len);
 
     let mut input_ptr: *const u8 = &input[0];
-    let mut out_ptr: *mut   u8 = &mut out[0];
+    let mut out_ptr: *mut u8 = &mut out[0];
 
     let mut n: isize = 0;
     unsafe {

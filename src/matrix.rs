@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use smallvec::SmallVec;
+use galois_8;
 
-use galois_8 as galois;
 #[derive(Debug)]
 pub enum Error {
     SingularMatrix,
@@ -106,10 +106,10 @@ impl Matrix {
             for c in 0..rhs.col_count {
                 let mut val = 0;
                 for i in 0..self.col_count {
-                    let mul = galois::mul(acc!(self, r, i),
+                    let mul = galois_8::mul(acc!(self, r, i),
                                        acc!(rhs,  i, c));
 
-                    val = galois::add(val, mul);
+                    val = galois_8::add(val, mul);
                 }
                 acc!(result, r, c) = val;
             }
@@ -192,9 +192,9 @@ impl Matrix {
             }
             // Scale to 1.
             if acc!(self, r, r) != 1 {
-                let scale = galois::div(1, acc!(self, r, r));
+                let scale = galois_8::div(1, acc!(self, r, r));
                 for c in 0..self.col_count {
-                    acc!(self, r, c) = galois::mul(acc!(self, r, c), scale);
+                    acc!(self, r, c) = galois_8::mul(acc!(self, r, c), scale);
                 }
             }
             // Make everything below the 1 be a 0 by subtracting
@@ -204,9 +204,9 @@ impl Matrix {
                 if acc!(self, r_below, r) != 0 {
                     let scale = acc!(self, r_below, r);
                     for c in 0..self.col_count {
-                        acc!(self, r_below, c) = galois::add(
+                        acc!(self, r_below, c) = galois_8::add(
                             acc!(self, r_below, c),
-                            galois::mul(scale, acc!(self, r, c)),
+                            galois_8::mul(scale, acc!(self, r, c)),
                         );
                     }
                 }
@@ -219,9 +219,9 @@ impl Matrix {
                 if acc!(self, r_above, d) != 0 {
                     let scale = acc!(self, r_above, d);
                     for c in 0..self.col_count {
-                        acc!(self, r_above, c) = galois::add(
+                        acc!(self, r_above, c) = galois_8::add(
                             acc!(self, r_above, c),
-                            galois::mul(scale, acc!(self, d, c)),
+                            galois_8::mul(scale, acc!(self, d, c)),
                         );
                     }
                 }
@@ -253,7 +253,7 @@ impl Matrix {
 
         for r in 0..rows {
             for c in 0..cols {
-                acc!(result, r, c) = galois::exp(r as u8, c);
+                acc!(result, r, c) = galois_8::exp(r as u8, c);
             }
         }
         result
