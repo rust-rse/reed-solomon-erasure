@@ -937,8 +937,12 @@ impl ReedSolomon {
 
         for shard in shards.iter_mut() {
             if let Some(len) = shard.len() {
+                if len == 0 {
+                    return Err(Error::EmptyShard);
+                }
                 number_present += 1;
                 if let Some(old_len) = shard_len {
+
                     if len != old_len {
                         // mismatch between shards.
                         return Err(Error::IncorrectShardSize);
