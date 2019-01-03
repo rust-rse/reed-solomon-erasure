@@ -198,7 +198,7 @@ macro_rules! check_slice_index {
         if $index >= $codec.parity_shard_count {
             return Err(Error::InvalidIndex);
         }
-    }}
+    }};
 }
 
 macro_rules! check_piece_count {
@@ -241,5 +241,5 @@ macro_rules! check_piece_count {
         if $pieces.as_ref().len() > $codec.parity_shard_count {
             return Err(Error::TooManyBufferShards);
         }
-    }}
+    }};
 }

@@ -10,9 +10,9 @@ pub fn fill_random(arr: &mut [u8]) {
     }
 }
 
-pub fn slices_are_equal<T>(slice1: &[T],
-                           slice2: &[T]) -> bool
-    where T: PartialEq
+pub fn slices_are_equal<T>(slice1: &[T], slice2: &[T]) -> bool
+where
+    T: PartialEq,
 {
     if slice1.len() != slice2.len() {
         return false;
@@ -25,10 +25,9 @@ pub fn slices_are_equal<T>(slice1: &[T],
     true
 }
 
-pub fn par_slices_are_equal<T>(slice1: &[T],
-                               slice2: &[T],
-                               chunk_size: usize) -> bool
-    where T: PartialEq + Sync
+pub fn par_slices_are_equal<T>(slice1: &[T], slice2: &[T], chunk_size: usize) -> bool
+where
+    T: PartialEq + Sync,
 {
     if slice1.len() != slice2.len() {
         return false;
@@ -88,14 +87,13 @@ pub fn par_slices_are_equal<T>(slice1: &[T],
     // as that is only true when there is no mismatch, and only false when
     // mismatch is present
 
-    let at_least_one_mismatch_present =
-        slice1.par_chunks(chunk_size)
+    let at_least_one_mismatch_present = slice1
+        .par_chunks(chunk_size)
         .into_par_iter()
         .enumerate()
         .map(|(i, slice1_part)| {
             let slice2_start = i * chunk_size;
-            let slice2_part= &slice2[slice2_start..
-                                       slice2_start + slice1_part.len()];
+            let slice2_part = &slice2[slice2_start..slice2_start + slice1_part.len()];
             slices_are_equal(slice1_part, slice2_part)
         })
         .any(|x| !x);
@@ -140,7 +138,7 @@ mod tests {
     #[test]
     fn unequal_length_slices() {
         let slice1 = vec![0; 1000];
-        let slice2 = vec![0;  999];
+        let slice2 = vec![0; 999];
 
         assert!(!slices_are_equal(&slice1, &slice2));
         assert!(!par_slices_are_equal(&slice1, &slice2, 11));

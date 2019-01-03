@@ -13,7 +13,7 @@ fn gen_log_table(polynomial: usize) -> [u8; FIELD_SIZE] {
     let mut result: [u8; FIELD_SIZE] = [0; FIELD_SIZE];
     let mut b: usize = 1;
 
-    for log in 0..FIELD_SIZE-1 {
+    for log in 0..FIELD_SIZE - 1 {
         result[b] = log as u8;
 
         b = b << 1;
@@ -32,18 +32,15 @@ fn gen_exp_table(log_table: &[u8; FIELD_SIZE]) -> [u8; EXP_TABLE_SIZE] {
     let mut result: [u8; EXP_TABLE_SIZE] = [0; EXP_TABLE_SIZE];
 
     for i in 1..FIELD_SIZE {
-        let log    = log_table[i] as usize;
-        result[log]= i as u8;
+        let log = log_table[i] as usize;
+        result[log] = i as u8;
         result[log + FIELD_SIZE - 1] = i as u8;
     }
 
     result
 }
 
-fn multiply(log_table: &[u8; FIELD_SIZE],
-            exp_table: &[u8; EXP_TABLE_SIZE],
-            a: u8,
-            b: u8) -> u8 {
+fn multiply(log_table: &[u8; FIELD_SIZE], exp_table: &[u8; EXP_TABLE_SIZE], a: u8, b: u8) -> u8 {
     if a == 0 || b == 0 {
         0
     } else {
@@ -54,9 +51,10 @@ fn multiply(log_table: &[u8; FIELD_SIZE],
     }
 }
 
-fn gen_mul_table(log_table: &[u8; FIELD_SIZE],
-                  exp_table: &[u8; EXP_TABLE_SIZE])
-                  -> [[u8; FIELD_SIZE]; FIELD_SIZE] {
+fn gen_mul_table(
+    log_table: &[u8; FIELD_SIZE],
+    exp_table: &[u8; EXP_TABLE_SIZE],
+) -> [[u8; FIELD_SIZE]; FIELD_SIZE] {
     let mut result: [[u8; FIELD_SIZE]; FIELD_SIZE] = [[0; 256]; 256];
 
     for a in 0..FIELD_SIZE {
@@ -71,8 +69,7 @@ fn gen_mul_table(log_table: &[u8; FIELD_SIZE],
 macro_rules! write_table {
     (1D => $file:ident, $table:ident, $name:expr, $type:expr) => {{
         let len = $table.len();
-        let mut table_str =
-            String::from(format!("pub static {}: [{}; {}] = [", $name, $type, len));
+        let mut table_str = String::from(format!("pub static {}: [{}; {}] = [", $name, $type, len));
 
         for v in $table.iter() {
             let str = format!("{}, ", v);
@@ -86,12 +83,10 @@ macro_rules! write_table {
     (2D => $file:ident, $table:ident, $name:expr, $type:expr) => {{
         let rows = $table.len();
         let cols = $table[0].len();
-        let mut table_str =
-            String::from(format!("pub static {}: [[{}; {}]; {}] = [",
-                                 $name,
-                                 $type,
-                                 cols,
-                                 rows));
+        let mut table_str = String::from(format!(
+            "pub static {}: [[{}; {}]; {}] = [",
+            $name, $type, cols, rows
+        ));
 
         for a in $table.iter() {
             table_str.push_str("[");
@@ -105,7 +100,7 @@ macro_rules! write_table {
         table_str.push_str("];\n");
 
         $file.write_all(table_str.as_bytes()).unwrap();
-    }}
+    }};
 }
 
 fn write_tables() {

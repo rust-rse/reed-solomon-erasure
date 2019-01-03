@@ -27,19 +27,19 @@ use smallvec::SmallVec;
 #[macro_use]
 mod macros;
 
-mod misc_utils;
-mod galois_8;
-mod matrix;
-mod inversion_tree;
-mod lib_tests;
 mod errors;
 mod errors_tests;
+mod galois_8;
+mod inversion_tree;
+mod lib_tests;
+mod matrix;
+mod misc_utils;
 
 pub use errors::Error;
 pub use errors::SBSError;
 
-use matrix::Matrix;
 use inversion_tree::InversionTree;
+use matrix::Matrix;
 
 /// Something which might hold a shard.
 ///
@@ -68,7 +68,9 @@ impl<T: AsRef<[u8]> + AsMut<[u8]> + FromIterator<u8>> ReconstructShard for Optio
 
     fn get_or_initialize(&mut self, len: usize) -> Result<&mut [u8], Result<&mut [u8], Error>> {
         let is_some = self.is_some();
-        let x = self.get_or_insert_with(|| iter::repeat(0).take(len).collect()).as_mut();
+        let x = self
+            .get_or_insert_with(|| iter::repeat(0).take(len).collect())
+            .as_mut();
 
         if is_some {
             Ok(x)
@@ -99,7 +101,7 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> ReconstructShard for (T, bool) {
         let x = self.0.as_mut();
         if x.len() == len {
             if self.1 {
-                Ok(x) 
+                Ok(x)
             } else {
                 Err(Ok(x))
             }
@@ -226,7 +228,7 @@ pub struct ReedSolomon {
     total_shard_count: usize,
     matrix: Matrix,
     tree: InversionTree,
-    pparam: ParallelParam
+    pparam: ParallelParam,
 }
 
 /// Parameters for parallelism.
@@ -314,7 +316,7 @@ impl<'a> ShardByShard<'a> {
     pub fn new(codec: &'a ReedSolomon) -> ShardByShard<'a> {
         ShardByShard {
             codec,
-            cur_input: 0
+            cur_input: 0,
         }
     }
 
@@ -330,10 +332,8 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `SBSError::LeftoverShards` when there are shards encoded
     /// but parity shards are not ready to use.
-    pub fn reset(&mut self) -> Result<(), SBSError>{
-        if self.cur_input > 0
-            && !self.parity_ready()
-        {
+    pub fn reset(&mut self) -> Result<(), SBSError> {
+        if self.cur_input > 0 && !self.parity_ready() {
             return Err(SBSError::LeftoverShards);
         }
 
@@ -357,10 +357,10 @@ impl<'a> ShardByShard<'a> {
         Ok(())
     }
 
-    fn sbs_encode_checks<U: AsRef<[u8]> + AsMut<[u8]>>(&mut self,
-                         slices: &mut [U])
-                         -> Result<(), SBSError> {
-
+    fn sbs_encode_checks<U: AsRef<[u8]> + AsMut<[u8]>>(
+        &mut self,
+        slices: &mut [U],
+    ) -> Result<(), SBSError> {
         let internal_checks = |codec: &ReedSolomon, data: &mut [U]| {
             check_piece_count!(all => codec, data);
             check_slices!(multi => data);
@@ -374,14 +374,15 @@ impl<'a> ShardByShard<'a> {
 
         match internal_checks(self.codec, slices) {
             Ok(()) => Ok(()),
-            Err(e) => Err(SBSError::RSError(e))
+            Err(e) => Err(SBSError::RSError(e)),
         }
     }
 
-    fn sbs_encode_sep_checks<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(&mut self,
-                             data: &[T],
-                             parity: &mut [U])
-                             -> Result<(), SBSError> {
+    fn sbs_encode_sep_checks<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(
+        &mut self,
+        data: &[T],
+        parity: &mut [U],
+    ) -> Result<(), SBSError> {
         let internal_checks = |codec: &ReedSolomon, data: &[T], parity: &mut [U]| {
             check_piece_count!(data => codec, data);
             check_piece_count!(parity => codec, parity);
@@ -396,7 +397,7 @@ impl<'a> ShardByShard<'a> {
 
         match internal_checks(self.codec, data, parity) {
             Ok(()) => Ok(()),
-            Err(e) => Err(SBSError::RSError(e))
+            Err(e) => Err(SBSError::RSError(e)),
         }
     }
 
@@ -404,7 +405,8 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode`
-    pub fn encode<T, U>(&mut self, mut shards: T) -> Result<(), SBSError> where 
+    pub fn encode<T, U>(&mut self, mut shards: T) -> Result<(), SBSError>
+    where
         T: AsRef<[U]> + AsMut<[U]>,
         U: AsRef<[u8]> + AsMut<[u8]>,
     {
@@ -427,11 +429,9 @@ impl<'a> ShardByShard<'a> {
     ) -> Result<(), SBSError> {
         self.sbs_encode_sep_checks(data, parity)?;
 
-        self.codec.encode_single_sep(
-            self.cur_input,
-            data[self.cur_input].as_ref(),
-            parity,
-        ).unwrap();
+        self.codec
+            .encode_single_sep(self.cur_input, data[self.cur_input].as_ref(), parity)
+            .unwrap();
 
         self.return_ok_and_incre_cur_input()
     }
@@ -439,9 +439,12 @@ impl<'a> ShardByShard<'a> {
 
 impl Clone for ReedSolomon {
     fn clone(&self) -> ReedSolomon {
-        ReedSolomon::with_pparam(self.data_shard_count,
-                                 self.parity_shard_count,
-                                 self.pparam.clone()).unwrap()
+        ReedSolomon::with_pparam(
+            self.data_shard_count,
+            self.parity_shard_count,
+            self.pparam.clone(),
+        )
+        .unwrap()
     }
 }
 
@@ -507,7 +510,7 @@ impl ReedSolomon {
     //   - check length of `slice_present` matches length of `slices`
 
     fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
-        let mut parity_rows= SmallVec::with_capacity(self.parity_shard_count);
+        let mut parity_rows = SmallVec::with_capacity(self.parity_shard_count);
         let matrix = &self.matrix;
         for i in self.data_shard_count..self.total_shard_count {
             parity_rows.push(matrix.get_row(i));
@@ -531,15 +534,8 @@ impl ReedSolomon {
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
     /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
-    pub fn new(
-        data_shards: usize,
-        parity_shards: usize,
-    ) -> Result<ReedSolomon, Error> {
-        Self::with_pparam(
-            data_shards,
-            parity_shards,
-            Default::default(),
-        )
+    pub fn new(data_shards: usize, parity_shards: usize) -> Result<ReedSolomon, Error> {
+        Self::with_pparam(data_shards, parity_shards, Default::default())
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with custom `ParallelParam`.
@@ -551,10 +547,11 @@ impl ReedSolomon {
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
     /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
-    pub fn with_pparam(data_shards: usize,
-                       parity_shards: usize,
-                       mut pparam: ParallelParam)
-                       -> Result<ReedSolomon, Error> {
+    pub fn with_pparam(
+        data_shards: usize,
+        parity_shards: usize,
+        mut pparam: ParallelParam,
+    ) -> Result<ReedSolomon, Error> {
         if data_shards == 0 {
             return Err(Error::TooFewDataShards);
         }
@@ -579,7 +576,7 @@ impl ReedSolomon {
             total_shard_count: total_shards,
             matrix,
             tree: InversionTree::new(data_shards, parity_shards),
-            pparam
+            pparam,
         })
     }
 
@@ -602,12 +599,7 @@ impl ReedSolomon {
         outputs: &mut [U],
     ) {
         for i_input in 0..self.data_shard_count {
-            self.code_single_slice(
-                matrix_rows,
-                i_input,
-                inputs[i_input].as_ref(),
-                outputs,
-            );
+            self.code_single_slice(matrix_rows, i_input, inputs[i_input].as_ref(), outputs);
         }
     }
 
@@ -618,47 +610,44 @@ impl ReedSolomon {
         input: &[u8],
         outputs: &mut [U],
     ) {
-        outputs
-            .iter_mut()
-            .enumerate()
-            .for_each(|(i_row, output)| {
-                let matrix_row_to_use = matrix_rows[i_row][i_input];
-                let output = output.as_mut();
+        outputs.iter_mut().enumerate().for_each(|(i_row, output)| {
+            let matrix_row_to_use = matrix_rows[i_row][i_input];
+            let output = output.as_mut();
 
-                if i_input == 0 {
-                    if output.len() <= self.pparam.bytes_per_encode {
-                        galois_8::mul_slice(matrix_row_to_use,
-                                          input,
-                                          output);
-                    } else {
-                        output.par_chunks_mut(self.pparam.bytes_per_encode)
-                            .enumerate()
-                            .for_each(|(i, output)| {
-                                let start =
-                                    i * self.pparam.bytes_per_encode;
-                                galois_8::mul_slice(matrix_row_to_use,
-                                                  &input[start..start + output.len()],
-                                                  output);
-                            })
-                    }
+            if i_input == 0 {
+                if output.len() <= self.pparam.bytes_per_encode {
+                    galois_8::mul_slice(matrix_row_to_use, input, output);
                 } else {
-                    if output.len() <= self.pparam.bytes_per_encode {
-                        galois_8::mul_slice_xor(matrix_row_to_use,
-                                              input,
-                                              output);
-                    } else {
-                        output.par_chunks_mut(self.pparam.bytes_per_encode)
-                            .enumerate()
-                            .for_each(|(i, output)| {
-                                let start =
-                                    i * self.pparam.bytes_per_encode;
-                                galois_8::mul_slice_xor(matrix_row_to_use,
-                                                      &input[start..start + output.len()],
-                                                      output);
-                            })
-                    }
+                    output
+                        .par_chunks_mut(self.pparam.bytes_per_encode)
+                        .enumerate()
+                        .for_each(|(i, output)| {
+                            let start = i * self.pparam.bytes_per_encode;
+                            galois_8::mul_slice(
+                                matrix_row_to_use,
+                                &input[start..start + output.len()],
+                                output,
+                            );
+                        })
                 }
-            })
+            } else {
+                if output.len() <= self.pparam.bytes_per_encode {
+                    galois_8::mul_slice_xor(matrix_row_to_use, input, output);
+                } else {
+                    output
+                        .par_chunks_mut(self.pparam.bytes_per_encode)
+                        .enumerate()
+                        .for_each(|(i, output)| {
+                            let start = i * self.pparam.bytes_per_encode;
+                            galois_8::mul_slice_xor(
+                                matrix_row_to_use,
+                                &input[start..start + output.len()],
+                                output,
+                            );
+                        })
+                }
+            }
+        })
     }
 
     fn check_some_slices_with_buffer<T, U>(
@@ -666,15 +655,13 @@ impl ReedSolomon {
         matrix_rows: &[&[u8]],
         inputs: &[T],
         to_check: &[T],
-        buffer: &mut [U]
-    ) -> bool 
-        where T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]> 
+        buffer: &mut [U],
+    ) -> bool
+    where
+        T: AsRef<[u8]>,
+        U: AsRef<[u8]> + AsMut<[u8]>,
     {
-        self.code_some_slices(
-            matrix_rows,
-            inputs,
-            buffer,
-        );
+        self.code_some_slices(matrix_rows, inputs, buffer);
 
         // AUDIT
         //
@@ -689,10 +676,10 @@ impl ReedSolomon {
                 misc_utils::par_slices_are_equal(
                     expected_parity_shard.as_ref(),
                     to_check[i].as_ref(),
-                    self.pparam.bytes_per_encode
+                    self.pparam.bytes_per_encode,
                 )
             })
-            .any(|x| !x);  // find the first false (some slice is different from the expected one)
+            .any(|x| !x); // find the first false (some slice is different from the expected one)
         !at_least_one_mismatch_present
     }
 
@@ -707,7 +694,8 @@ impl ReedSolomon {
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
-    pub fn encode_single<T, U>(&self, i_data: usize, mut shards: T) -> Result<(), Error> where 
+    pub fn encode_single<T, U>(&self, i_data: usize, mut shards: T) -> Result<(), Error>
+    where
         T: AsRef<[U]> + AsMut<[U]>,
         U: AsRef<[u8]> + AsMut<[u8]>,
     {
@@ -718,8 +706,7 @@ impl ReedSolomon {
         check_slices!(multi => slices);
 
         // Get the slice of output buffers.
-        let (mut_input, output) =
-            slices.split_at_mut(self.data_shard_count);
+        let (mut_input, output) = slices.split_at_mut(self.data_shard_count);
 
         let input = mut_input[i_data].as_ref();
 
@@ -751,10 +738,7 @@ impl ReedSolomon {
         let parity_rows = self.get_parity_rows();
 
         // Do the coding.
-        self.code_single_slice(&parity_rows,
-                               i_data,
-                               single_data,
-                               parity);
+        self.code_single_slice(&parity_rows, i_data, single_data, parity);
 
         Ok(())
     }
@@ -762,7 +746,8 @@ impl ReedSolomon {
     /// Constructs the parity shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
-    pub fn encode<T, U>(&self, mut shards: T) -> Result<(), Error> where 
+    pub fn encode<T, U>(&self, mut shards: T) -> Result<(), Error>
+    where
         T: AsRef<[U]> + AsMut<[U]>,
         U: AsRef<[u8]> + AsMut<[u8]>,
     {
@@ -772,13 +757,12 @@ impl ReedSolomon {
         check_slices!(multi => slices);
 
         // Get the slice of output buffers.
-        let (input, output) =
-            slices.split_at_mut(self.data_shard_count);
+        let (input, output) = slices.split_at_mut(self.data_shard_count);
 
         self.encode_sep(&*input, output)
     }
 
-    /// Constructs the parity shards using a read-only view into the 
+    /// Constructs the parity shards using a read-only view into the
     /// data shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
@@ -794,9 +778,7 @@ impl ReedSolomon {
         let parity_rows = self.get_parity_rows();
 
         // Do the coding.
-        self.code_some_slices(&parity_rows,
-                              data,
-                              parity);
+        self.code_some_slices(&parity_rows, data, parity);
 
         Ok(())
     }
@@ -810,8 +792,7 @@ impl ReedSolomon {
 
         let slice_len = slices[0].as_ref().len();
 
-        let mut buffer: SmallVec<[Vec<u8>; 32]> =
-            SmallVec::with_capacity(self.parity_shard_count);
+        let mut buffer: SmallVec<[Vec<u8>; 32]> = SmallVec::with_capacity(self.parity_shard_count);
 
         for _ in 0..self.parity_shard_count {
             buffer.push(vec![0; slice_len]);
@@ -821,8 +802,10 @@ impl ReedSolomon {
     }
 
     /// Checks if the parity shards are correct.
-    pub fn verify_with_buffer<T, U>(&self, slices: &[T], buffer: &mut [U]) -> Result<bool, Error> 
-        where T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>
+    pub fn verify_with_buffer<T, U>(&self, slices: &[T], buffer: &mut [U]) -> Result<bool, Error>
+    where
+        T: AsRef<[u8]>,
+        U: AsRef<[u8]> + AsMut<[u8]>,
     {
         check_piece_count!(all => self, slices);
         check_piece_count!(parity_buf => self, buffer);
@@ -833,10 +816,7 @@ impl ReedSolomon {
 
         let parity_rows = self.get_parity_rows();
 
-        Ok(self.check_some_slices_with_buffer(&parity_rows,
-                                              data,
-                                              to_check,
-                                              buffer))
+        Ok(self.check_some_slices_with_buffer(&parity_rows, data, to_check, buffer))
     }
 
     /// Reconstructs all shards.
@@ -848,14 +828,8 @@ impl ReedSolomon {
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
-    pub fn reconstruct<T: ReconstructShard>(
-        &self,
-        slices: &mut [T],
-    ) -> Result<(), Error> {
-        self.reconstruct_internal(
-            slices,
-            false,
-        )
+    pub fn reconstruct<T: ReconstructShard>(&self, slices: &mut [T]) -> Result<(), Error> {
+        self.reconstruct_internal(slices, false)
     }
 
     /// Reconstructs only the data shards.
@@ -867,20 +841,15 @@ impl ReedSolomon {
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
-    pub fn reconstruct_data<T: ReconstructShard>(
-        &self,
-        slices: &mut [T],
-    ) -> Result<(), Error> {
-        self.reconstruct_internal(
-            slices,
-            true,
-        )
+    pub fn reconstruct_data<T: ReconstructShard>(&self, slices: &mut [T]) -> Result<(), Error> {
+        self.reconstruct_internal(slices, true)
     }
 
-    fn get_data_decode_matrix(&self,
-                              valid_indices: &[usize],
-                              invalid_indices: &[usize])
-                              -> Arc<Matrix> {
+    fn get_data_decode_matrix(
+        &self,
+        valid_indices: &[usize],
+        invalid_indices: &[usize],
+    ) -> Arc<Matrix> {
         // Attempt to get the cached inverted matrix out of the tree
         // based on the indices of the invalid rows.
         match self.tree.get_inverted_matrix(&invalid_indices) {
@@ -892,15 +861,10 @@ impl ReedSolomon {
                 // shards that we have and build a square matrix.  This
                 // matrix could be used to generate the shards that we have
                 // from the original data.
-                let mut sub_matrix =
-                    Matrix::new(self.data_shard_count,
-                                self.data_shard_count);
-                for (sub_matrix_row, &valid_index) in
-                    valid_indices.into_iter().enumerate()
-                {
+                let mut sub_matrix = Matrix::new(self.data_shard_count, self.data_shard_count);
+                for (sub_matrix_row, &valid_index) in valid_indices.into_iter().enumerate() {
                     for c in 0..self.data_shard_count {
-                        sub_matrix.set(sub_matrix_row, c,
-                                       self.matrix.get(valid_index, c));
+                        sub_matrix.set(sub_matrix_row, c, self.matrix.get(valid_index, c));
                     }
                 }
                 // Invert the matrix, so we can go from the encoded shards
@@ -912,20 +876,21 @@ impl ReedSolomon {
 
                 // Cache the inverted matrix in the tree for future use keyed on the
                 // indices of the invalid rows.
-                self.tree.insert_inverted_matrix(&invalid_indices,
-                                                 &data_decode_matrix).unwrap();
+                self.tree
+                    .insert_inverted_matrix(&invalid_indices, &data_decode_matrix)
+                    .unwrap();
 
                 data_decode_matrix
-            },
-            Some(m) => {
-                m
             }
+            Some(m) => m,
         }
     }
 
-    fn reconstruct_internal<T: ReconstructShard>(&self,
-                            shards: &mut [T],
-                            data_only: bool) -> Result<(), Error> {
+    fn reconstruct_internal<T: ReconstructShard>(
+        &self,
+        shards: &mut [T],
+        data_only: bool,
+    ) -> Result<(), Error> {
         check_piece_count!(all => self, shards);
 
         let data_shard_count = self.data_shard_count;
@@ -942,7 +907,6 @@ impl ReedSolomon {
                 }
                 number_present += 1;
                 if let Some(old_len) = shard_len {
-
                     if len != old_len {
                         // mismatch between shards.
                         return Err(Error::IncorrectShardSize);
@@ -955,12 +919,12 @@ impl ReedSolomon {
         if number_present == self.total_shard_count {
             // Cool.  All of the shards are there.  We don't
             // need to do anything.
-            return Ok(())
+            return Ok(());
         }
 
         // More complete sanity check
         if number_present < data_shard_count {
-            return Err(Error::TooFewShardsPresent)
+            return Err(Error::TooFewShardsPresent);
         }
 
         let shard_len = shard_len.expect("at least one shard present; qed");
@@ -981,16 +945,13 @@ impl ReedSolomon {
         // as the data decode matrix is a N x N matrix, thus only needs
         // N valid indices for determining the N rows to pick from
         // `self.matrix`.
-        let mut sub_shards: SmallVec<[&[u8]; 32]> =
-            SmallVec::with_capacity(data_shard_count);
+        let mut sub_shards: SmallVec<[&[u8]; 32]> = SmallVec::with_capacity(data_shard_count);
         let mut missing_data_slices: SmallVec<[&mut [u8]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
         let mut missing_parity_slices: SmallVec<[&mut [u8]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
-        let mut valid_indices: SmallVec<[usize; 32]> =
-            SmallVec::with_capacity(data_shard_count);
-        let mut invalid_indices: SmallVec<[usize; 32]> =
-            SmallVec::with_capacity(data_shard_count);
+        let mut valid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
+        let mut invalid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
 
         // Separate the shards into groups
         for (matrix_row, shard) in shards.into_iter().enumerate() {
@@ -1020,8 +981,9 @@ impl ReedSolomon {
                     // the shard data is not meant to be initialized here,
                     // but we should still note it missing.
                     invalid_indices.push(matrix_row);
-                } 
-                Err(Some(x)) => { // initialized missing shard data.
+                }
+                Err(Some(x)) => {
+                    // initialized missing shard data.
                     let shard = x?;
                     if matrix_row < data_shard_count {
                         missing_data_slices.push(shard);
@@ -1034,9 +996,7 @@ impl ReedSolomon {
             }
         }
 
-        let data_decode_matrix =
-            self.get_data_decode_matrix(&valid_indices,
-                                        &invalid_indices);
+        let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
 
         // Re-create any data shards that were missing.
         //
@@ -1046,13 +1006,15 @@ impl ReedSolomon {
         let mut matrix_rows: SmallVec<[&[u8]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
 
-        for i_slice in invalid_indices.iter().cloned().take_while(|i| i < &data_shard_count) {
+        for i_slice in invalid_indices
+            .iter()
+            .cloned()
+            .take_while(|i| i < &data_shard_count)
+        {
             matrix_rows.push(data_decode_matrix.get_row(i_slice));
         }
 
-        self.code_some_slices(&matrix_rows,
-                              &sub_shards,
-                              &mut missing_data_slices);
+        self.code_some_slices(&matrix_rows, &sub_shards, &mut missing_data_slices);
 
         if data_only {
             Ok(())
@@ -1072,9 +1034,7 @@ impl ReedSolomon {
                 .cloned()
                 .skip_while(|i| i < &data_shard_count)
             {
-                matrix_rows.push(
-                    parity_rows[i_slice - data_shard_count]
-                );
+                matrix_rows.push(parity_rows[i_slice - data_shard_count]);
             }
             {
                 // Gather up all the data shards.
@@ -1101,9 +1061,9 @@ impl ReedSolomon {
                 for i_slice in invalid_indices
                     .iter()
                     .cloned()
-                    .take_while(|i| i < &data_shard_count) 
+                    .take_while(|i| i < &data_shard_count)
                 {
-                    push_good_up_to(&mut all_data_slices, i_slice);   
+                    push_good_up_to(&mut all_data_slices, i_slice);
                     all_data_slices.push(missing_data_slices[i_new_data_slice]);
                     i_new_data_slice += 1;
                 }
@@ -1111,9 +1071,7 @@ impl ReedSolomon {
 
                 // Now do the actual computation for the missing
                 // parity shards
-                self.code_some_slices(&matrix_rows,
-                                      &all_data_slices,
-                                      &mut missing_parity_slices);
+                self.code_some_slices(&matrix_rows, &all_data_slices, &mut missing_parity_slices);
             }
 
             Ok(())
