@@ -357,14 +357,13 @@ impl<'a> ShardByShard<'a> {
         Ok(())
     }
 
-    fn sbs_encode_checks(&mut self,
-                         slices: &mut [&mut [u8]])
+    fn sbs_encode_checks<U: AsRef<[u8]> + AsMut<[u8]>>(&mut self,
+                         slices: &mut [U])
                          -> Result<(), SBSError> {
-        fn internal_checks (codec: &ReedSolomon,
-                            slices: &mut [&mut [u8]])
-                            -> Result<(), Error> {
-            check_piece_count!(all => codec, slices);
-            check_slices!(multi => slices);
+
+        let internal_checks = |codec: &ReedSolomon, data: &mut [U]| {
+            check_piece_count!(all => codec, data);
+            check_slices!(multi => data);
 
             Ok(())
         };
@@ -379,14 +378,11 @@ impl<'a> ShardByShard<'a> {
         }
     }
 
-    fn sbs_encode_sep_checks(&mut self,
-                             data: &[&[u8]],
-                             parity: &mut [&mut [u8]])
+    fn sbs_encode_sep_checks<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(&mut self,
+                             data: &[T],
+                             parity: &mut [U])
                              -> Result<(), SBSError> {
-        fn internal_checks (codec: &ReedSolomon,
-                            data: &[&[u8]],
-                            parity: &mut [&mut [u8]])
-                            -> Result<(), Error> {
+        let internal_checks = |codec: &ReedSolomon, data: &[T], parity: &mut [U]| {
             check_piece_count!(data => codec, data);
             check_piece_count!(parity => codec, parity);
             check_slices!(multi => data, multi => parity);
@@ -408,13 +404,14 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode`
-    pub fn encode(&mut self,
-                  slices: &mut [&mut [u8]])
-                  -> Result<(), SBSError> {
-        self.sbs_encode_checks(slices)?;
+    pub fn encode<T, U>(&mut self, mut shards: T) -> Result<(), SBSError> where 
+        T: AsRef<[U]> + AsMut<[U]>,
+        U: AsRef<[u8]> + AsMut<[u8]>,
+    {
+        let shards = shards.as_mut();
+        self.sbs_encode_checks(shards)?;
 
-        self.codec.encode_single(self.cur_input,
-                                 slices).unwrap();
+        self.codec.encode_single(self.cur_input, shards).unwrap();
 
         self.return_ok_and_incre_cur_input()
     }
@@ -423,15 +420,18 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode`
-    pub fn encode_sep(&mut self,
-                      data: &[&[u8]],
-                      parity: &mut [&mut[u8]])
-                      -> Result<(), SBSError> {
+    pub fn encode_sep<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(
+        &mut self,
+        data: &[T],
+        parity: &mut [U],
+    ) -> Result<(), SBSError> {
         self.sbs_encode_sep_checks(data, parity)?;
 
-        self.codec.encode_single_sep(self.cur_input,
-                                     &data[self.cur_input],
-                                     parity).unwrap();
+        self.codec.encode_single_sep(
+            self.cur_input,
+            data[self.cur_input].as_ref(),
+            parity,
+        ).unwrap();
 
         self.return_ok_and_incre_cur_input()
     }
