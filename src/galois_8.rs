@@ -8,6 +8,7 @@ pub fn add(a: u8, b: u8) -> u8 {
 }
 
 /// Subtract `b` from `a`.
+#[cfg(test)]
 pub fn sub(a: u8, b: u8) -> u8 {
     a ^ b
 }
@@ -145,6 +146,7 @@ pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
      */
 }
 
+#[cfg(test)]
 pub fn slice_xor(input: &[u8], out: &mut [u8]) {
     assert_eq!(input.len(), out.len());
 

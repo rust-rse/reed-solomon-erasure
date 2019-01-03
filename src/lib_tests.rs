@@ -222,574 +222,582 @@ fn test_reconstruct_shards() {
                Error::TooFewShardsPresent);
 }
 
-// #[test]
-// fn test_reconstruct() {
-//     let r = ReedSolomon::new(2, 2).unwrap();
+#[test]
+fn test_reconstruct() {
+    let r = ReedSolomon::new(2, 2).unwrap();
 
-//     let mut shards: [[u8; 3]; 4] = [[0, 1, 2],
-//                                      [3, 4, 5],
-//                                      [200, 201, 203],
-//                                      [100, 101, 102]];
+    let mut shards: [[u8; 3]; 4] = [[0, 1, 2],
+                                     [3, 4, 5],
+                                     [200, 201, 203],
+                                     [100, 101, 102]];
 
-//     {
-//         {
-//             let mut shard_refs: Vec<&mut [u8]> =
-//                 Vec::with_capacity(3);
+    {
+        {
+            let mut shard_refs: Vec<&mut [u8]> =
+                Vec::with_capacity(3);
 
-//             for shard in shards.iter_mut() {
-//                 shard_refs.push(shard);
-//             }
+            for shard in shards.iter_mut() {
+                shard_refs.push(shard);
+            }
 
-//             r.encode(&mut shard_refs).unwrap();
-//         }
+            r.encode(&mut shard_refs).unwrap();
+        }
 
-//         let shard_refs =
-//             convert_2D_slices!(shards =>to_vec &[u8]);
-
-//         assert!(r.verify(&shard_refs).unwrap());
-//     }
-
-//     {
-//         {
-//             let mut shard_refs =
-//                 convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
-
-//             shard_refs[0][0] = 101;
-//             shard_refs[0][1] = 102;
-//             shard_refs[0][2] = 103;
-
-//             let shards_present = [false, true, true, true];
-
-//             r.reconstruct(&mut shard_refs, &shards_present).unwrap();
-//         }
+        let shard_refs: Vec<_> = shards.iter().map(|i| &i[..]).collect();
+        assert!(r.verify(&shard_refs).unwrap());
+    }
 
-//         let shard_refs =
-//             convert_2D_slices!(shards =>to_vec &[u8]);
+    {
+        {
+            let mut shard_refs = 
+                convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
+
+            shard_refs[0][0] = 101;
+            shard_refs[0][1] = 102;
+            shard_refs[0][2] = 103;
+
+            let shards_present = [false, true, true, true];
+
+            let mut shards = shard_refs.into_iter()
+                .zip(shards_present.iter().cloned())
+                .collect::<Vec<_>>();
+
+            r.reconstruct(&mut shards[..]).unwrap();
+        }
+
+        let shard_refs: Vec<_> = shards.iter().map(|i| &i[..]).collect();
+        assert!(r.verify(&shard_refs).unwrap());
+    }
+
+    let expect: [[u8; 3]; 4] = [[0, 1, 2],
+                                 [3, 4, 5],
+                                 [6, 11, 12],
+                                 [5, 14, 11]];
+    assert_eq!(expect, shards);
 
-//         assert!(r.verify(&shard_refs).unwrap());
-//     }
+    {
+        {
+            let mut shard_refs =
+                convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
+
+            shard_refs[0][0] = 201;
+            shard_refs[0][1] = 202;
+            shard_refs[0][2] = 203;
 
-//     let expect: [[u8; 3]; 4] = [[0, 1, 2],
-//                                  [3, 4, 5],
-//                                  [6, 11, 12],
-//                                  [5, 14, 11]];
-//     assert_eq!(expect, shards);
+            shard_refs[2][0] = 101;
+            shard_refs[2][1] = 102;
+            shard_refs[2][2] = 103;
 
-//     {
-//         {
-//             let mut shard_refs =
-//                 convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
+            let shards_present = [false, true, false, true];
 
-//             shard_refs[0][0] = 201;
-//             shard_refs[0][1] = 202;
-//             shard_refs[0][2] = 203;
+            let mut shards = shard_refs.into_iter()
+                .zip(shards_present.iter().cloned())
+                .collect::<Vec<_>>();
 
-//             shard_refs[2][0] = 101;
-//             shard_refs[2][1] = 102;
-//             shard_refs[2][2] = 103;
+            r.reconstruct_data(&mut shards[..]).unwrap();
+        }
+
+        let shard_refs =
+            convert_2D_slices!(shards =>to_vec &[u8]);
+
+        assert!(!r.verify(&shard_refs).unwrap());
+    }
+
+    let expect: [[u8; 3]; 4] = [[0, 1, 2],
+                                 [3, 4, 5],
+                                 [101, 102, 103],
+                                 [5, 14, 11]];
+    assert_eq!(expect, shards);
+
+    {
+        {
+            let mut shard_refs =
+                convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
+
+            shard_refs[2][0] = 101;
+            shard_refs[2][1] = 102;
+            shard_refs[2][2] = 103;
+
+            shard_refs[3][0] = 201;
+            shard_refs[3][1] = 202;
+            shard_refs[3][2] = 203;
+
+            let shards_present = [true, true, false, false];
+
+            let mut shards = shard_refs.into_iter()
+                .zip(shards_present.iter().cloned())
+                .collect::<Vec<_>>();
+
+            r.reconstruct_data(&mut shards[..]).unwrap();
+        }
+
+        let shard_refs =
+            convert_2D_slices!(shards =>to_vec &[u8]);
+
+        assert!(!r.verify(&shard_refs).unwrap());
+    }
+
+    let expect: [[u8; 3]; 4] = [[0, 1, 2],
+                                 [3, 4, 5],
+                                 [101, 102, 103],
+                                 [201, 202, 203]];
+    assert_eq!(expect, shards);
+}
+
+quickcheck! {
+    fn qc_encode_verify_reconstruct_verify(data: usize,
+                                           parity: usize,
+                                           corrupt: usize,
+                                           size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//             let shards_present = [false, true, false, true];
+        let corrupt = corrupt % (parity + 1);
+
+        let mut corrupt_pos_s = Vec::with_capacity(corrupt);
+        for _ in 0..corrupt {
+            let mut pos = rand::random::<usize>() % (data + parity);
+
+            while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
+                pos = rand::random::<usize>() % (data + parity);
+            }
 
-//             r.reconstruct_data(&mut shard_refs,
-//                                &shards_present).unwrap();
-//         }
+            corrupt_pos_s.push(pos);
+        }
+
+        let size = 1 + size % 1_000_000;
 
-//         let shard_refs =
-//             convert_2D_slices!(shards =>to_vec &[u8]);
+        let r = ReedSolomon::new(data, parity).unwrap();
+
+        let mut expect = make_random_shards!(size, data + parity);
+        {
+            let mut refs =
+                convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
+
+            r.encode(&mut refs).unwrap();
+        }
+
+        let expect = expect;
+
+        let mut shards = expect.clone();
+
+        // corrupt shards
+        for &p in corrupt_pos_s.iter() {
+            fill_random(&mut shards[p]);
+        }
+        let mut slice_present = vec![true; data + parity];
+        for &p in corrupt_pos_s.iter() {
+            slice_present[p] = false;
+        }
+
+        // reconstruct
+        {
+            let mut refs: Vec<_> = shards.iter_mut()
+                .map(|i| &mut i[..])
+                .zip(slice_present.iter().cloned())
+                .collect();
+
+            r.reconstruct(&mut refs[..]).unwrap();
+        }
 
-//         assert!(!r.verify(&shard_refs).unwrap());
-//     }
+        ({
+            let refs =
+                convert_2D_slices!(expect =>to_vec &[u8]);
 
-//     let expect: [[u8; 3]; 4] = [[0, 1, 2],
-//                                  [3, 4, 5],
-//                                  [101, 102, 103],
-//                                  [5, 14, 11]];
-//     assert_eq!(expect, shards);
-
-//     {
-//         {
-//             let mut shard_refs =
-//                 convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
-
-//             shard_refs[2][0] = 101;
-//             shard_refs[2][1] = 102;
-//             shard_refs[2][2] = 103;
-
-//             shard_refs[3][0] = 201;
-//             shard_refs[3][1] = 202;
-//             shard_refs[3][2] = 203;
-
-//             let shards_present = [true, true, false, false];
-
-//             r.reconstruct_data(&mut shard_refs,
-//                                &shards_present).unwrap();
-//         }
-
-//         let shard_refs =
-//             convert_2D_slices!(shards =>to_vec &[u8]);
-
-//         assert!(!r.verify(&shard_refs).unwrap());
-//     }
-
-//     let expect: [[u8; 3]; 4] = [[0, 1, 2],
-//                                  [3, 4, 5],
-//                                  [101, 102, 103],
-//                                  [201, 202, 203]];
-//     assert_eq!(expect, shards);
-// }
-
-// quickcheck! {
-//     fn qc_encode_verify_reconstruct_verify(data: usize,
-//                                            parity: usize,
-//                                            corrupt: usize,
-//                                            size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
-
-//         let corrupt = corrupt % (parity + 1);
-
-//         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
-//         for _ in 0..corrupt {
-//             let mut pos = rand::random::<usize>() % (data + parity);
+            r.verify(&refs).unwrap()
+        })
+            &&
+            expect == shards
+            &&
+            ({
+                let refs =
+                    convert_2D_slices!(shards =>to_vec &[u8]);
 
-//             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-//                 pos = rand::random::<usize>() % (data + parity);
-//             }
+                r.verify(&refs).unwrap()
+            })
+    }
 
-//             corrupt_pos_s.push(pos);
-//         }
+    fn qc_encode_verify_reconstruct_verify_shards(data: usize,
+                                                  parity: usize,
+                                                  corrupt: usize,
+                                                  size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
+
+        let corrupt = corrupt % (parity + 1);
+
+        let mut corrupt_pos_s = Vec::with_capacity(corrupt);
+        for _ in 0..corrupt {
+            let mut pos = rand::random::<usize>() % (data + parity);
+
+            while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
+                pos = rand::random::<usize>() % (data + parity);
+            }
+
+            corrupt_pos_s.push(pos);
+        }
+
+        let size = 1 + size % 1_000_000;
+
+        let r = ReedSolomon::new(data, parity).unwrap();
+
+        let mut expect = make_random_shards!(size, data + parity);
+        r.encode(&mut expect).unwrap();
+
+        let expect = expect;
+
+        let mut shards = shards_into_option_shards(expect.clone());
+
+        // corrupt shards
+        for &p in corrupt_pos_s.iter() {
+            shards[p] = None;
+        }
+
+        // reconstruct
+        r.reconstruct(&mut shards).unwrap();
+
+        let shards = option_shards_into_shards(shards);
+
+        r.verify(&expect).unwrap()
+            && expect == shards
+            && r.verify(&shards).unwrap()
+    }
 
-//         let size = 1 + size % 1_000_000;
-
-//         let r = ReedSolomon::new(data, parity).unwrap();
-
-//         let mut expect = make_random_shards!(size, data + parity);
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
-
-//             r.encode(&mut refs).unwrap();
-//         }
-
-//         let expect = expect;
-
-//         let mut shards = expect.clone();
-
-//         // corrupt shards
-//         for &p in corrupt_pos_s.iter() {
-//             fill_random(&mut shards[p]);
-//         }
-//         let mut slice_present = vec![true; data + parity];
-//         for &p in corrupt_pos_s.iter() {
-//             slice_present[p] = false;
-//         }
+    fn qc_verify(data: usize,
+                 parity: usize,
+                 corrupt: usize,
+                 size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
+
+        let corrupt = corrupt % (parity + 1);
+
+        let mut corrupt_pos_s = Vec::with_capacity(corrupt);
+        for _ in 0..corrupt {
+            let mut pos = rand::random::<usize>() % (data + parity);
+
+            while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
+                pos = rand::random::<usize>() % (data + parity);
+            }
+
+            corrupt_pos_s.push(pos);
+        }
+
+        let size = 1 + size % 1_000_000;
+
+        let r = ReedSolomon::new(data, parity).unwrap();
+
+        let mut expect = make_random_shards!(size, data + parity);
+        {
+            let mut refs =
+                convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
+
+            r.encode(&mut refs).unwrap();
+        }
+
+        let expect = expect;
 
-//         // reconstruct
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
-
-//             r.reconstruct(&mut refs, &slice_present).unwrap();
-//         }
+        let mut shards = expect.clone();
+
+        // corrupt shards
+        for &p in corrupt_pos_s.iter() {
+            fill_random(&mut shards[p]);
+        }
 
-//         ({
-//             let refs =
-//                 convert_2D_slices!(expect =>to_vec &[u8]);
+        ({
+            let refs =
+                convert_2D_slices!(expect =>to_vec &[u8]);
 
-//             r.verify(&refs).unwrap()
-//         })
-//             &&
-//             expect == shards
-//             &&
-//             ({
-//                 let refs =
-//                     convert_2D_slices!(shards =>to_vec &[u8]);
+            r.verify(&refs).unwrap()
+        })
+            &&
+            ((corrupt > 0 && expect != shards)
+             || (corrupt == 0 && expect == shards))
+            &&
+            ({
+                let refs =
+                    convert_2D_slices!(shards =>to_vec &[u8]);
 
-//                 r.verify(&refs).unwrap()
-//             })
-//     }
+                (corrupt > 0 && !r.verify(&refs).unwrap())
+                    || (corrupt == 0 && r.verify(&refs).unwrap())
+            })
+    }
 
-//     fn qc_encode_verify_reconstruct_verify_shards(data: usize,
-//                                                   parity: usize,
-//                                                   corrupt: usize,
-//                                                   size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
-
-//         let corrupt = corrupt % (parity + 1);
-
-//         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
-//         for _ in 0..corrupt {
-//             let mut pos = rand::random::<usize>() % (data + parity);
-
-//             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-//                 pos = rand::random::<usize>() % (data + parity);
-//             }
-
-//             corrupt_pos_s.push(pos);
-//         }
-
-//         let size = 1 + size % 1_000_000;
-
-//         let r = ReedSolomon::new(data, parity).unwrap();
-
-//         let mut expect = make_random_shards!(size, data + parity);
-//         r.encode_shards(&mut expect).unwrap();
-
-//         let expect = expect;
-
-//         let mut shards = shards_into_option_shards(expect.clone());
-
-//         // corrupt shards
-//         for &p in corrupt_pos_s.iter() {
-//             shards[p] = None;
-//         }
-
-//         // reconstruct
-//         r.reconstruct_shards(&mut shards).unwrap();
-
-//         let shards = option_shards_into_shards(shards);
-
-//         r.verify_shards(&expect).unwrap()
-//             && expect == shards
-//             && r.verify_shards(&shards).unwrap()
-//     }
+    fn qc_verify_shards(data: usize,
+                        parity: usize,
+                        corrupt: usize,
+                        size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//     fn qc_verify(data: usize,
-//                  parity: usize,
-//                  corrupt: usize,
-//                  size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
-
-//         let corrupt = corrupt % (parity + 1);
-
-//         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
-//         for _ in 0..corrupt {
-//             let mut pos = rand::random::<usize>() % (data + parity);
-
-//             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-//                 pos = rand::random::<usize>() % (data + parity);
-//             }
-
-//             corrupt_pos_s.push(pos);
-//         }
-
-//         let size = 1 + size % 1_000_000;
-
-//         let r = ReedSolomon::new(data, parity).unwrap();
-
-//         let mut expect = make_random_shards!(size, data + parity);
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
-
-//             r.encode(&mut refs).unwrap();
-//         }
-
-//         let expect = expect;
+        let corrupt = corrupt % (parity + 1);
 
-//         let mut shards = expect.clone();
-
-//         // corrupt shards
-//         for &p in corrupt_pos_s.iter() {
-//             fill_random(&mut shards[p]);
-//         }
+        let mut corrupt_pos_s = Vec::with_capacity(corrupt);
+        for _ in 0..corrupt {
+            let mut pos = rand::random::<usize>() % (data + parity);
 
-//         ({
-//             let refs =
-//                 convert_2D_slices!(expect =>to_vec &[u8]);
+            while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
+                pos = rand::random::<usize>() % (data + parity);
+            }
 
-//             r.verify(&refs).unwrap()
-//         })
-//             &&
-//             ((corrupt > 0 && expect != shards)
-//              || (corrupt == 0 && expect == shards))
-//             &&
-//             ({
-//                 let refs =
-//                     convert_2D_slices!(shards =>to_vec &[u8]);
+            corrupt_pos_s.push(pos);
+        }
 
-//                 (corrupt > 0 && !r.verify(&refs).unwrap())
-//                     || (corrupt == 0 && r.verify(&refs).unwrap())
-//             })
-//     }
+        let size = 1 + size % 1_000_000;
 
-//     fn qc_verify_shards(data: usize,
-//                         parity: usize,
-//                         corrupt: usize,
-//                         size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//         let corrupt = corrupt % (parity + 1);
+        let mut expect = make_random_shards!(size, data + parity);
+        r.encode(&mut expect).unwrap();
 
-//         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
-//         for _ in 0..corrupt {
-//             let mut pos = rand::random::<usize>() % (data + parity);
+        let expect = expect;
 
-//             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-//                 pos = rand::random::<usize>() % (data + parity);
-//             }
+        let mut shards = expect.clone();
 
-//             corrupt_pos_s.push(pos);
-//         }
+        // corrupt shards
+        for &p in corrupt_pos_s.iter() {
+            fill_random(&mut shards[p]);
+        }
 
-//         let size = 1 + size % 1_000_000;
+        r.verify(&expect).unwrap()
+            &&
+            ((corrupt > 0 && expect != shards)
+             || (corrupt == 0 && expect == shards))
+            &&
+            ((corrupt > 0 && !r.verify(&shards).unwrap())
+             || (corrupt == 0 && r.verify(&shards).unwrap()))
+    }
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+    fn qc_encode_sep_same_as_encode(data: usize,
+                                    parity: usize,
+                                    size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         r.encode_shards(&mut expect).unwrap();
+        let size = 1 + size % 1_000_000;
 
-//         let expect = expect;
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//         let mut shards = expect.clone();
+        let mut expect = make_random_shards!(size, data + parity);
+        let mut shards = expect.clone();
 
-//         // corrupt shards
-//         for &p in corrupt_pos_s.iter() {
-//             fill_random(&mut shards[p]);
-//         }
+        {
+            let mut refs =
+                convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
 
-//         r.verify_shards(&expect).unwrap()
-//             &&
-//             ((corrupt > 0 && expect != shards)
-//              || (corrupt == 0 && expect == shards))
-//             &&
-//             ((corrupt > 0 && !r.verify_shards(&shards).unwrap())
-//              || (corrupt == 0 && r.verify_shards(&shards).unwrap()))
-//     }
+            r.encode(&mut refs).unwrap();
+        }
 
-//     fn qc_encode_sep_same_as_encode(data: usize,
-//                                     parity: usize,
-//                                     size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        let expect = expect;
 
-//         let size = 1 + size % 1_000_000;
+        {
+            let (data, parity) = shards.split_at_mut(data);
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+            let data_refs =
+                convert_2D_slices!(data =>to_mut_vec &[u8]);
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         let mut shards = expect.clone();
+            let mut parity_refs =
+                convert_2D_slices!(parity =>to_mut_vec &mut [u8]);
 
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
+            r.encode_sep(&data_refs, &mut parity_refs).unwrap();
+        }
 
-//             r.encode(&mut refs).unwrap();
-//         }
+        let shards = shards;
 
-//         let expect = expect;
+        expect == shards
+    }
 
-//         {
-//             let (data, parity) = shards.split_at_mut(data);
+    fn qc_encode_sep_same_as_encode_shards(data: usize,
+                                           parity: usize,
+                                           size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//             let data_refs =
-//                 convert_2D_slices!(data =>to_mut_vec &[u8]);
+        let size = 1 + size % 1_000_000;
 
-//             let mut parity_refs =
-//                 convert_2D_slices!(parity =>to_mut_vec &mut [u8]);
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//             r.encode_sep(&data_refs, &mut parity_refs).unwrap();
-//         }
+        let mut expect = make_random_shards!(size, data + parity);
+        let mut shards = expect.clone();
 
-//         let shards = shards;
+        r.encode(&mut expect).unwrap();
 
-//         expect == shards
-//     }
+        let expect = expect;
 
-//     fn qc_encode_sep_same_as_encode_shards(data: usize,
-//                                            parity: usize,
-//                                            size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        {
+            let (data, parity) = shards.split_at_mut(data);
 
-//         let size = 1 + size % 1_000_000;
+            r.encode_sep(data, parity).unwrap();
+        }
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+        let shards = shards;
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         let mut shards = expect.clone();
+        expect == shards
+    }
 
-//         r.encode_shards(&mut expect).unwrap();
+    fn qc_encode_single_same_as_encode(data: usize,
+                                       parity: usize,
+                                       size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//         let expect = expect;
+        let size = 1 + size % 1_000_000;
 
-//         {
-//             let (data, parity) = shards.split_at_mut(data);
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//             r.encode_shards_sep(data, parity).unwrap();
-//         }
+        let mut expect = make_random_shards!(size, data + parity);
+        let mut shards = expect.clone();
 
-//         let shards = shards;
+        {
+            let mut refs =
+                convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
 
-//         expect == shards
-//     }
+            r.encode(&mut refs).unwrap();
+        }
 
-//     fn qc_encode_single_same_as_encode(data: usize,
-//                                        parity: usize,
-//                                        size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        let expect = expect;
 
-//         let size = 1 + size % 1_000_000;
+        {
+            let mut refs =
+                convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+            for i in 0..data {
+                r.encode_single(i, &mut refs).unwrap();
+            }
+        }
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         let mut shards = expect.clone();
+        let shards = shards;
 
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
+        expect == shards
+    }
 
-//             r.encode(&mut refs).unwrap();
-//         }
+    fn qc_encode_single_same_as_encode_shards(data: usize,
+                                              parity: usize,
+                                              size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//         let expect = expect;
+        let size = 1 + size % 1_000_000;
 
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(shards =>to_mut_vec &mut [u8]);
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//             for i in 0..data {
-//                 r.encode_single(i, &mut refs).unwrap();
-//             }
-//         }
+        let mut expect = make_random_shards!(size, data + parity);
+        let mut shards = expect.clone();
 
-//         let shards = shards;
+        r.encode(&mut expect).unwrap();
 
-//         expect == shards
-//     }
+        let expect = expect;
 
-//     fn qc_encode_single_same_as_encode_shards(data: usize,
-//                                               parity: usize,
-//                                               size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        for i in 0..data {
+            r.encode_single(i, &mut shards).unwrap();
+        }
 
-//         let size = 1 + size % 1_000_000;
+        let shards = shards;
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+        expect == shards
+    }
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         let mut shards = expect.clone();
+    fn qc_encode_single_sep_same_as_encode(data: usize,
+                                           parity: usize,
+                                           size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//         r.encode_shards(&mut expect).unwrap();
+        let size = 1 + size % 1_000_000;
 
-//         let expect = expect;
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//         for i in 0..data {
-//             r.encode_single_shard(i, &mut shards).unwrap();
-//         }
+        let mut expect = make_random_shards!(size, data + parity);
+        let mut shards = expect.clone();
 
-//         let shards = shards;
+        {
+            let mut refs =
+                convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
 
-//         expect == shards
-//     }
+            r.encode(&mut refs).unwrap();
+        }
 
-//     fn qc_encode_single_sep_same_as_encode(data: usize,
-//                                            parity: usize,
-//                                            size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        let expect = expect;
 
-//         let size = 1 + size % 1_000_000;
+        {
+            let (data_shards, parity_shards) = shards.split_at_mut(data);
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+            let data_refs =
+                convert_2D_slices!(data_shards =>to_mut_vec &[u8]);
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         let mut shards = expect.clone();
+            let mut parity_refs =
+                convert_2D_slices!(parity_shards =>to_mut_vec &mut [u8]);
 
-//         {
-//             let mut refs =
-//                 convert_2D_slices!(expect =>to_mut_vec &mut [u8]);
+            for i in 0..data {
+                r.encode_single_sep(i, data_refs[i], &mut parity_refs).unwrap();
+            }
+        }
 
-//             r.encode(&mut refs).unwrap();
-//         }
+        let shards = shards;
 
-//         let expect = expect;
+        expect == shards
+    }
 
-//         {
-//             let (data_shards, parity_shards) = shards.split_at_mut(data);
+    fn qc_encode_single_sep_same_as_encode_shards(data: usize,
+                                                  parity: usize,
+                                                  size: usize) -> bool {
+        let data = 1 + data % 255;
+        let mut parity = 1 + parity % 255;
+        if data + parity > 256 {
+            parity -= data + parity - 256;
+        }
 
-//             let data_refs =
-//                 convert_2D_slices!(data_shards =>to_mut_vec &[u8]);
+        let size = 1 + size % 1_000_000;
 
-//             let mut parity_refs =
-//                 convert_2D_slices!(parity_shards =>to_mut_vec &mut [u8]);
+        let r = ReedSolomon::new(data, parity).unwrap();
 
-//             for i in 0..data {
-//                 r.encode_single_sep(i, data_refs[i], &mut parity_refs).unwrap();
-//             }
-//         }
+        let mut expect = make_random_shards!(size, data + parity);
+        let mut shards = expect.clone();
 
-//         let shards = shards;
+        r.encode(&mut expect).unwrap();
 
-//         expect == shards
-//     }
+        let expect = expect;
 
-//     fn qc_encode_single_sep_same_as_encode_shards(data: usize,
-//                                                   parity: usize,
-//                                                   size: usize) -> bool {
-//         let data = 1 + data % 255;
-//         let mut parity = 1 + parity % 255;
-//         if data + parity > 256 {
-//             parity -= data + parity - 256;
-//         }
+        {
+            let (data_shards, parity_shards) = shards.split_at_mut(data);
 
-//         let size = 1 + size % 1_000_000;
+            for i in 0..data {
+                r.encode_single_sep(i, &data_shards[i], parity_shards).unwrap();
+            }
+        }
 
-//         let r = ReedSolomon::new(data, parity).unwrap();
+        let shards = shards;
 
-//         let mut expect = make_random_shards!(size, data + parity);
-//         let mut shards = expect.clone();
-
-//         r.encode_shards(&mut expect).unwrap();
-
-//         let expect = expect;
-
-//         {
-//             let (data_shards, parity_shards) = shards.split_at_mut(data);
-
-//             for i in 0..data {
-//                 r.encode_single_shard_sep(i, &data_shards[i], parity_shards).unwrap();
-//             }
-//         }
-
-//         let shards = shards;
-
-//         expect == shards
-//     }
-// }
+        expect == shards
+    }
+}
 
 // #[test]
 // fn test_reconstruct_error_handling() {

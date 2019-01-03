@@ -98,7 +98,11 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> ReconstructShard for (T, bool) {
     fn get_or_initialize(&mut self, len: usize) -> Result<&mut [u8], Result<&mut [u8], Error>> {
         let x = self.0.as_mut();
         if x.len() == len {
-            Ok(x)
+            if self.1 {
+                Ok(x) 
+            } else {
+                Err(Ok(x))
+            }
         } else {
             Err(Err(Error::IncorrectShardSize))
         }
@@ -996,18 +1000,24 @@ impl ReedSolomon {
             };
 
             match shard_data {
-                Ok(shard) => if sub_shards.len() < data_shard_count {
-                    sub_shards.push(shard);
-                    valid_indices.push(matrix_row);
-                } else {
-                    // Already have enough shards in `sub_shards`
-                    // as we only need N shards, where N = `data_shard_count`,
-                    // for the data decode matrix
-                    //
-                    // So nothing to do here
-                },
-                Err(None) => {} // the shard data is not meant to be initialized here.
-                Err(Some(x)) => { // initialized shard data.
+                Ok(shard) => {
+                    if sub_shards.len() < data_shard_count {
+                        sub_shards.push(shard);
+                        valid_indices.push(matrix_row);
+                    } else {
+                        // Already have enough shards in `sub_shards`
+                        // as we only need N shards, where N = `data_shard_count`,
+                        // for the data decode matrix
+                        //
+                        // So nothing to do here
+                    }
+                }
+                Err(None) => {
+                    // the shard data is not meant to be initialized here,
+                    // but we should still note it missing.
+                    invalid_indices.push(matrix_row);
+                } 
+                Err(Some(x)) => { // initialized missing shard data.
                     let shard = x?;
                     if matrix_row < data_shard_count {
                         missing_data_slices.push(shard);
