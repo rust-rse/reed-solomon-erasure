@@ -1,3 +1,7 @@
+//! Polynomial arithmetics over GF(256)
+//!
+//! adapted from https://github.com/mersinvald/reed-solomon-rs
+
 use std::cmp::max;
 use poly::Polynom;
 use galois_8;

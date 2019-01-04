@@ -1,3 +1,7 @@
+//! Polynomial over GF(256)
+//!
+//! adapted from https://github.com/mersinvald/reed-solomon-rs
+
 use std::ops::{Deref, DerefMut};
 use std::fmt;
 
