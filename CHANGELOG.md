@@ -1,3 +1,8 @@
+## 4.0.0
+- Major API restructure: removed `Shard` type in favor of generic functions.
+- The SIMD acceleration feature is now activated with the `simd-accel` Cargo feature. Pure-rust behavior is default.
+- Ran rustfmt
+
 ## 3.1.2
 - Doc fix
   - Added space before parantheses in code comments and documentation
