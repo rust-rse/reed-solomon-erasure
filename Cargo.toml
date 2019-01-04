@@ -4,9 +4,6 @@ version = "3.1.2"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 build = "build.rs"
 exclude = [
-    "BackBlaze_JavaReedSolomon/*",
-    "KlausPost_reedsolomon/*",
-    "NicolasT_reedsolomon/*",
     "appveyor.yml",
     ".travis.yml"
 ]
@@ -25,6 +22,10 @@ categories= ["encoding"]
 
 license = "MIT"
 
+[features]
+default = [] # simd off by default
+simd-accel = ["cc", "libc"]
+
 [badges]
 travis-ci = { repository = "darrenldl/reed-solomon-erasure" }
 appveyor= { repository = "darrenldl/reed-solomon-erasure" }
@@ -34,10 +35,11 @@ coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 [dependencies]
 rayon= "1.0"
 smallvec = "0.6"
+libc = { version = "0.2", optional = true }
 
 [dev-dependencies]
 rand = "0.5.4"
 quickcheck = "0.7"
 
 [build-dependencies]
-cc = "1.0"
+cc = { version = "1.0", optional = true }

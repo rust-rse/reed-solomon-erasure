@@ -24,6 +24,9 @@ use std::sync::Arc;
 
 use smallvec::SmallVec;
 
+#[cfg(feature = "simd-accel")]
+extern crate libc;
+
 #[macro_use]
 mod macros;
 

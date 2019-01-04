@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+#[cfg(feature = "simd-accel")]
 extern crate cc;
 
 const FIELD_SIZE: usize = 256;
@@ -66,6 +67,33 @@ fn gen_mul_table(
     result
 }
 
+fn gen_mul_table_half(log_table : &[u8; FIELD_SIZE],
+                      exp_table : &[u8; EXP_TABLE_SIZE])
+                      -> ([[u8; 16]; FIELD_SIZE],
+                          [[u8; 16]; FIELD_SIZE])
+{
+    let mut low  : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
+    let mut high : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
+
+    for a in 0..low.len() {
+        for b in 0..low.len() {
+            let mut result = 0;
+            if !(a == 0 || b == 0) {
+                let log_a = log_table[a];
+                let log_b = log_table[b];
+                result = exp_table[log_a as usize + log_b as usize];
+            }
+            if (b & 0x0F) == b {
+                low[a][b] = result;
+            }
+            if (b & 0xF0) == b {
+                high[a][b>>4] = result;
+            }
+        }
+    }
+    (low, high)
+}
+
 macro_rules! write_table {
     (1D => $file:ident, $table:ident, $name:expr, $type:expr) => {{
         let len = $table.len();
@@ -115,8 +143,43 @@ fn write_tables() {
     write_table!(1D => f, log_table,      "LOG_TABLE",      "u8");
     write_table!(1D => f, exp_table,      "EXP_TABLE",      "u8");
     write_table!(2D => f, mul_table,      "MUL_TABLE",      "u8");
+
+    if cfg!(feature = "simd-accel") {
+        let (mul_table_low, mul_table_high) = gen_mul_table_half(&log_table, &exp_table);
+        
+        write_table!(2D => f, mul_table_low,  "MUL_TABLE_LOW",  "u8");
+        write_table!(2D => f, mul_table_high, "MUL_TABLE_HIGH", "u8");
+    }
 }
 
+#[cfg(
+    all(
+        feature = "simd-accel",
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(any(target_os="android", target_os="ios"))
+    )
+)]
+fn compile_simd_c() {
+    cc::Build::new()
+        .opt_level(3)
+        .flag("-march=native")
+        .flag("-std=c11")
+        .file("simd_c/reedsolomon.c")
+        .compile("reedsolomon");
+}
+
+#[cfg(
+    not(
+        all(
+            feature = "simd-accel",
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            not(any(target_os="android", target_os="ios"))
+        )
+    )
+)]
+fn compile_simd_c() {}
+
 fn main() {
+    compile_simd_c();
     write_tables();
 }

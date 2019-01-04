@@ -26,7 +26,7 @@ reed-solomon-erasure = "3.1"
 or the following for the pure rust version
 ```toml
 [dependencies]
-reed-solomon-erasure = { version = "3.1", features = ["pure-rust"] }
+reed-solomon-erasure = { version = "3.1", default-features = false }
 ```
 and the following to your crate root
 ```rust
