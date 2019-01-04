@@ -33,7 +33,7 @@ codecov = { repository = "darrenldl/reed-solomon-erasure" }
 coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
-rayon= "1.0"
+rayon = "1.0"
 smallvec = "0.6"
 libc = { version = "0.2", optional = true }
 

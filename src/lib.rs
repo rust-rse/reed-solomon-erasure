@@ -31,10 +31,9 @@ extern crate libc;
 mod macros;
 
 mod errors;
-mod errors_tests;
 mod galois_8;
 mod inversion_tree;
-mod lib_tests;
+mod tests;
 mod matrix;
 mod misc_utils;
 
