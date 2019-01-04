@@ -26,7 +26,7 @@ reed-solomon-erasure = "3.1"
 or the following for the pure rust version
 ```toml
 [dependencies]
-reed-solomon-erasure = { version = "3.1", features = ["pure-rust"] }
+reed-solomon-erasure = { version = "3.1", default-features = false }
 ```
 and the following to your crate root
 ```rust
@@ -43,37 +43,39 @@ use reed_solomon_erasure::*;
 fn main () {
     let r = ReedSolomon::new(3, 2).unwrap(); // 3 data shards, 2 parity shards
 
-    let mut master_copy = shards!([0, 1,  2,  3],
-                                  [4, 5,  6,  7],
-                                  [8, 9, 10, 11],
-                                  [0, 0,  0,  0], // last 2 rows are parity shards
-                                  [0, 0,  0,  0]);
+    let mut master_copy = shards!(
+      [0, 1,  2,  3],
+      [4, 5,  6,  7],
+      [8, 9, 10, 11],
+      [0, 0,  0,  0], // last 2 rows are parity hards
+      [0, 0,  0,  0]
+    );
 
     // Construct the parity shards
-    r.encode_shards(&mut master_copy).unwrap();
+    r.encode(&mut master_copy).unwrap();
 
     // Make a copy and transform it into option shards arrangement
     // for feeding into reconstruct_shards
-    let mut shards = shards_into_option_shards(master_copy.clone());
+    let mut shards: Vec<_> = master_copy.into_iter().map(Some).collect();
 
     // We can remove up to 2 shards, which may be data or parity shards
     shards[0] = None;
     shards[4] = None;
 
     // Try to reconstruct missing shards
-    r.reconstruct_shards(&mut shards).unwrap();
+    r.reconstruct(&mut shards).unwrap();
 
     // Convert back to normal shard arrangement
-    let result = option_shards_into_shards(shards);
+    let result: Vec<_> = shards.into_iter().filter_map(|x| x).collect();
 
-    assert!(r.verify_shards(&result).unwrap());
+    assert!(r.verify(&result).unwrap());
     assert_eq!(master_copy, result);
 }
 ```
 
 ## Benchmark it yourself
 You can test performance under different configurations quickly(e.g. data parity shards ratio, parallel parameters)
-by cloning this repo : https://github.com/darrenldl/rse-benchmark
+by cloning this repo: https://github.com/darrenldl/rse-benchmark
 
 `rse-benchmark` contains a copy of this library(usually a fully functional dev version), so you only need to adjust `main.rs`
 then do `cargo run --release` to start the benchmark.
@@ -83,7 +85,7 @@ Version `1.X.X`, `2.0.0` do not utilise SIMD.
 
 Version `2.1.0` onward uses Nicolas's C files for SIMD operations.
 
-Machine : laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
+Machine: laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 Cores 4 Threads`
 
 Below shows the result of one of the test configurations, other configurations show similar results in terms of ratio.
 
@@ -100,9 +102,9 @@ Contributions are welcome. Note that by submitting contributions, you agree to l
 ## Credits
 Many thanks to the following people for testing and benchmarking on various platforms
 
-  - [lnicola](https://github.com/lnicola/) (platforms : (Linux, Intel))
+  - [lnicola](https://github.com/lnicola/) (platforms: (Linux, Intel))
 
-  - [hexjelly](https://github.com/hexjelly) (platforms : (Windows, AMD))
+  - [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
 
 Polished version of the results will be published later.
 
