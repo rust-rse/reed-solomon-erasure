@@ -33,9 +33,9 @@ mod macros;
 mod errors;
 mod galois_8;
 mod inversion_tree;
-mod tests;
 mod matrix;
 mod misc_utils;
+mod tests;
 
 pub use errors::Error;
 pub use errors::SBSError;

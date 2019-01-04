@@ -63,65 +63,57 @@ macro_rules! return_if_empty {
     };
 }
 
-#[cfg(
-    not(
-        all(
-            feature = "simd-accel",
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="ios"))
-        )
-    )
-)]
-pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
+#[cfg(not(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+)))]
+pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
     mul_slice_pure_rust(c, input, out);
 }
 
-#[cfg(
-    not(
-        all(
-            feature = "simd-accel",
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="ios"))
-        )
-    )
-)]
-pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
+#[cfg(not(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+)))]
+pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
     mul_slice_xor_pure_rust(c, input, out);
 }
 
-fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
-    let mt                 = &MUL_TABLE[c as usize];
-    let mt_ptr : *const u8 = &mt[0];
+fn mul_slice_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
+    let mt = &MUL_TABLE[c as usize];
+    let mt_ptr: *const u8 = &mt[0];
 
     assert_eq!(input.len(), out.len());
 
-    let len : isize = input.len() as isize;
+    let len: isize = input.len() as isize;
     return_if_empty!(len);
 
-    let mut input_ptr : *const u8 = &input[0];
-    let mut out_ptr   : *mut   u8 = &mut out[0];
+    let mut input_ptr: *const u8 = &input[0];
+    let mut out_ptr: *mut u8 = &mut out[0];
 
-    let mut n : isize = 0;
+    let mut n: isize = 0;
     unsafe {
         assert_eq!(4, PURE_RUST_UNROLL);
         if len > PURE_RUST_UNROLL {
             let len_minus_unroll = len - PURE_RUST_UNROLL;
             while n < len_minus_unroll {
-                *out_ptr           = *mt_ptr.offset(*input_ptr           as isize);
+                *out_ptr = *mt_ptr.offset(*input_ptr as isize);
                 *out_ptr.offset(1) = *mt_ptr.offset(*input_ptr.offset(1) as isize);
                 *out_ptr.offset(2) = *mt_ptr.offset(*input_ptr.offset(2) as isize);
                 *out_ptr.offset(3) = *mt_ptr.offset(*input_ptr.offset(3) as isize);
 
                 input_ptr = input_ptr.offset(PURE_RUST_UNROLL);
-                out_ptr   =   out_ptr.offset(PURE_RUST_UNROLL);
-                n        += PURE_RUST_UNROLL;
+                out_ptr = out_ptr.offset(PURE_RUST_UNROLL);
+                n += PURE_RUST_UNROLL;
             }
         }
         while n < len {
-            *out_ptr  = *mt_ptr.offset(*input_ptr as isize);
+            *out_ptr = *mt_ptr.offset(*input_ptr as isize);
 
             input_ptr = input_ptr.offset(1);
-            out_ptr   =   out_ptr.offset(1);
+            out_ptr = out_ptr.offset(1);
             n += 1;
         }
     }
@@ -131,40 +123,40 @@ fn mul_slice_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
      */
 }
 
-fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
-    let mt                 = &MUL_TABLE[c as usize];
-    let mt_ptr : *const u8 = &mt[0];
+fn mul_slice_xor_pure_rust(c: u8, input: &[u8], out: &mut [u8]) {
+    let mt = &MUL_TABLE[c as usize];
+    let mt_ptr: *const u8 = &mt[0];
 
     assert_eq!(input.len(), out.len());
 
-    let len : isize = input.len() as isize;
+    let len: isize = input.len() as isize;
     return_if_empty!(len);
 
-    let mut input_ptr : *const u8 = &input[0];
-    let mut out_ptr   : *mut   u8 = &mut out[0];
+    let mut input_ptr: *const u8 = &input[0];
+    let mut out_ptr: *mut u8 = &mut out[0];
 
-    let mut n : isize = 0;
+    let mut n: isize = 0;
     unsafe {
         assert_eq!(4, PURE_RUST_UNROLL);
         if len > PURE_RUST_UNROLL {
             let len_minus_unroll = len - PURE_RUST_UNROLL;
             while n < len_minus_unroll {
-                *out_ptr           ^= *mt_ptr.offset(*input_ptr           as isize);
+                *out_ptr ^= *mt_ptr.offset(*input_ptr as isize);
                 *out_ptr.offset(1) ^= *mt_ptr.offset(*input_ptr.offset(1) as isize);
                 *out_ptr.offset(2) ^= *mt_ptr.offset(*input_ptr.offset(2) as isize);
                 *out_ptr.offset(3) ^= *mt_ptr.offset(*input_ptr.offset(3) as isize);
 
                 input_ptr = input_ptr.offset(PURE_RUST_UNROLL);
-                out_ptr   =   out_ptr.offset(PURE_RUST_UNROLL);
-                n        += PURE_RUST_UNROLL;
+                out_ptr = out_ptr.offset(PURE_RUST_UNROLL);
+                n += PURE_RUST_UNROLL;
             }
         }
         while n < len {
             *out_ptr ^= *mt_ptr.offset(*input_ptr as isize);
 
             input_ptr = input_ptr.offset(1);
-            out_ptr   =   out_ptr.offset(1);
-            n        += 1;
+            out_ptr = out_ptr.offset(1);
+            n += 1;
         }
     }
     /* for n in 0..input.len() {
@@ -174,37 +166,37 @@ fn mul_slice_xor_pure_rust(c : u8, input : &[u8], out : &mut [u8]) {
 }
 
 #[cfg(test)]
-fn slice_xor(input : &[u8], out : &mut [u8]) {
+fn slice_xor(input: &[u8], out: &mut [u8]) {
     assert_eq!(input.len(), out.len());
 
-    let len   : isize = input.len() as isize;
+    let len: isize = input.len() as isize;
     return_if_empty!(len);
 
-    let mut input_ptr : *const u8 = &input[0];
-    let mut out_ptr   : *mut   u8 = &mut out[0];
+    let mut input_ptr: *const u8 = &input[0];
+    let mut out_ptr: *mut u8 = &mut out[0];
 
-    let mut n : isize = 0;
+    let mut n: isize = 0;
     unsafe {
         assert_eq!(4, PURE_RUST_UNROLL);
         if len > PURE_RUST_UNROLL {
             let len_minus_unroll = len - PURE_RUST_UNROLL;
             while n < len_minus_unroll {
-                *out_ptr           ^= *input_ptr;
+                *out_ptr ^= *input_ptr;
                 *out_ptr.offset(1) ^= *input_ptr.offset(1);
                 *out_ptr.offset(2) ^= *input_ptr.offset(2);
                 *out_ptr.offset(3) ^= *input_ptr.offset(3);
 
                 input_ptr = input_ptr.offset(PURE_RUST_UNROLL);
-                out_ptr   =   out_ptr.offset(PURE_RUST_UNROLL);
-                n        += PURE_RUST_UNROLL;
+                out_ptr = out_ptr.offset(PURE_RUST_UNROLL);
+                n += PURE_RUST_UNROLL;
             }
         }
         while n < len {
             *out_ptr ^= *input_ptr;
 
             input_ptr = input_ptr.offset(1);
-            out_ptr   =   out_ptr.offset(1);
-            n        += 1;
+            out_ptr = out_ptr.offset(1);
+            n += 1;
         }
     }
     /* for n in 0..input.len() {
@@ -213,79 +205,69 @@ fn slice_xor(input : &[u8], out : &mut [u8]) {
      */
 }
 
-#[cfg(
-    all(
-        feature = "simd-accel",
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
-extern {
-    fn reedsolomon_gal_mul(low   : *const libc::uint8_t,
-                           high  : *const libc::uint8_t,
-                           input : *const libc::uint8_t,
-                           out   : *mut   libc::uint8_t,
-                           len   : libc::size_t)
-                           -> libc::size_t;
+#[cfg(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+))]
+extern "C" {
+    fn reedsolomon_gal_mul(
+        low: *const libc::uint8_t,
+        high: *const libc::uint8_t,
+        input: *const libc::uint8_t,
+        out: *mut libc::uint8_t,
+        len: libc::size_t,
+    ) -> libc::size_t;
 
-    fn reedsolomon_gal_mul_xor(low   : *const libc::uint8_t,
-                               high  : *const libc::uint8_t,
-                               input : *const libc::uint8_t,
-                               out   : *mut   libc::uint8_t,
-                               len   : libc::size_t)
-                               -> libc::size_t;
+    fn reedsolomon_gal_mul_xor(
+        low: *const libc::uint8_t,
+        high: *const libc::uint8_t,
+        input: *const libc::uint8_t,
+        out: *mut libc::uint8_t,
+        len: libc::size_t,
+    ) -> libc::size_t;
 }
 
-#[cfg(
-    all(
-        feature = "simd-accel",
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
-pub fn mul_slice(c : u8, input : &[u8], out : &mut [u8]) {
-    let low  : *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
-    let high : *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
+#[cfg(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+))]
+pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
+    let low: *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
+    let high: *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
 
     assert_eq!(input.len(), out.len());
 
-    let input_ptr : *const libc::uint8_t = &input[0];
-    let out_ptr   : *mut   libc::uint8_t = &mut out[0];
-    let size      : libc::size_t         = input.len();
+    let input_ptr: *const libc::uint8_t = &input[0];
+    let out_ptr: *mut libc::uint8_t = &mut out[0];
+    let size: libc::size_t = input.len();
 
-    let bytes_done : usize = unsafe {
-        reedsolomon_gal_mul(low, high, input_ptr, out_ptr, size) as usize
-    };
+    let bytes_done: usize =
+        unsafe { reedsolomon_gal_mul(low, high, input_ptr, out_ptr, size) as usize };
 
-    mul_slice_pure_rust(c,
-                        &input[bytes_done..],
-                        &mut out[bytes_done..]);
+    mul_slice_pure_rust(c, &input[bytes_done..], &mut out[bytes_done..]);
 }
 
-#[cfg(
-    all(
-        feature = "simd-accel",
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
-pub fn mul_slice_xor(c : u8, input : &[u8], out : &mut [u8]) {
-    let low  : *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
-    let high : *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
+#[cfg(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+))]
+pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
+    let low: *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
+    let high: *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
 
     assert_eq!(input.len(), out.len());
 
-    let input_ptr : *const libc::uint8_t = &input[0];
-    let out_ptr   : *mut   libc::uint8_t = &mut out[0];
-    let size      : libc::size_t         = input.len();
+    let input_ptr: *const libc::uint8_t = &input[0];
+    let out_ptr: *mut libc::uint8_t = &mut out[0];
+    let size: libc::size_t = input.len();
 
-    let bytes_done : usize = unsafe {
-        reedsolomon_gal_mul_xor(low, high, input_ptr, out_ptr, size) as usize
-    };
+    let bytes_done: usize =
+        unsafe { reedsolomon_gal_mul_xor(low, high, input_ptr, out_ptr, size) as usize };
 
-    mul_slice_xor_pure_rust(c,
-                            &input[bytes_done..],
-                            &mut out[bytes_done..]);
+    mul_slice_xor_pure_rust(c, &input[bytes_done..], &mut out[bytes_done..]);
 }
 #[cfg(test)]
 mod tests {

@@ -153,15 +153,13 @@ impl InversionNode {
 mod tests {
     use rand;
 
-    use std::sync::Arc;
     use std::collections::HashMap;
+    use std::sync::Arc;
 
-    use matrix::Matrix;
     use inversion_tree::*;
+    use matrix::Matrix;
 
-    use quickcheck::{QuickCheck,
-                    Gen,
-                    Arbitrary};
+    use quickcheck::{Arbitrary, Gen, QuickCheck};
 
     macro_rules! matrix {
         (
@@ -181,9 +179,7 @@ mod tests {
         let children = tree.root.lock().unwrap().children.len();
         assert_eq!(5, children);
 
-        let expect = matrix!([1, 0, 0],
-                            [0, 1, 0],
-                            [0, 0, 1]);
+        let expect = matrix!([1, 0, 0], [0, 1, 0], [0, 0, 1]);
         assert_eq!(expect, *tree.get_inverted_matrix(&[]).unwrap());
     }
 
@@ -193,9 +189,7 @@ mod tests {
 
         let matrix = &*tree.get_inverted_matrix(&[]).unwrap();
 
-        let expect = matrix!([1, 0, 0],
-                            [0, 1, 0],
-                            [0, 0, 1]);
+        let expect = matrix!([1, 0, 0], [0, 1, 0], [0, 0, 1]);
 
         assert_eq!(expect, *matrix);
 
@@ -207,7 +201,8 @@ mod tests {
 
         let matrix = Matrix::new(3, 3);
         let matrix_copy = matrix.clone();
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix)).unwrap();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix))
+            .unwrap();
 
         let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
         assert_eq!(matrix_copy, *cached_matrix);
@@ -220,14 +215,18 @@ mod tests {
         let matrix = Matrix::new(3, 3);
         let matrix_copy = matrix.clone();
 
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix)).unwrap();
-        tree.insert_inverted_matrix(&[], &Arc::new(matrix_copy)).unwrap_err();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix))
+            .unwrap();
+        tree.insert_inverted_matrix(&[], &Arc::new(matrix_copy))
+            .unwrap_err();
 
         let matrix = Matrix::new(3, 2);
-        tree.insert_inverted_matrix(&[2], &Arc::new(matrix)).unwrap_err();
+        tree.insert_inverted_matrix(&[2], &Arc::new(matrix))
+            .unwrap_err();
 
         let matrix = Matrix::new(3, 3);
-        tree.insert_inverted_matrix(&[0, 1], &Arc::new(matrix)).unwrap();
+        tree.insert_inverted_matrix(&[0, 1], &Arc::new(matrix))
+            .unwrap();
     }
 
     #[test]
@@ -240,8 +239,10 @@ mod tests {
         let matrix_copy1 = matrix1.clone();
         let matrix_copy2 = matrix2.clone();
 
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy1)).unwrap();
-        tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy2)).unwrap();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy1))
+            .unwrap();
+        tree.insert_inverted_matrix(&[1], &Arc::new(matrix_copy2))
+            .unwrap();
 
         let cached_matrix = tree.get_inverted_matrix(&[1]).unwrap();
         assert_eq!(matrix2, *cached_matrix);
@@ -252,45 +253,51 @@ mod tests {
         let tree = InversionTree::new(10, 3);
         let matrix = Matrix::new(10, 10);
         let matrix_copy = matrix.clone();
-        let matrix2 = matrix!([0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let matrix2 = matrix!(
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        );
         let matrix2_copy = matrix2.clone();
-        let matrix3 = matrix!([9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
-                            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
-                            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
-                            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
-                            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 0],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        let matrix3 = matrix!(
+            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+            [9, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 0],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        );
         let matrix3_copy = matrix3.clone();
 
-        tree.insert_inverted_matrix(&[1, 2], &Arc::new(matrix)).unwrap();
+        tree.insert_inverted_matrix(&[1, 2], &Arc::new(matrix))
+            .unwrap();
 
         let result = tree.get_inverted_matrix(&[1, 2]).unwrap();
         assert_eq!(matrix_copy, *result);
 
-        tree.insert_inverted_matrix(&[1, 2, 5, 12], &Arc::new(matrix2)).unwrap();
+        tree.insert_inverted_matrix(&[1, 2, 5, 12], &Arc::new(matrix2))
+            .unwrap();
         let result = tree.get_inverted_matrix(&[1, 2, 5, 12]).unwrap();
         assert_eq!(matrix2_copy, *result);
 
-        tree.insert_inverted_matrix(&[0, 3, 4, 11], &Arc::new(matrix3)).unwrap();
+        tree.insert_inverted_matrix(&[0, 3, 4, 11], &Arc::new(matrix3))
+            .unwrap();
         let result = tree.get_inverted_matrix(&[0, 3, 4, 11]).unwrap();
         assert_eq!(matrix3_copy, *result);
     }
 
-    fn make_random_invalid_indices(data_shards: usize,
-                                parity_shards: usize) -> Vec<usize> {
+    fn make_random_invalid_indices(data_shards: usize, parity_shards: usize) -> Vec<usize> {
         let mut invalid_count = 0;
         let mut res = Vec::new();
         for i in 0..data_shards + parity_shards {
@@ -338,32 +345,28 @@ mod tests {
             .min_tests_passed(10_000)
             .tests(11_000)
             .max_tests(100_000)
-            .quickcheck(
-                qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> bool);
+            .quickcheck(qc_tree_same_as_hash_map_prop as fn(QCTreeTestParam) -> bool);
     }
 
     // inversion tree is functionally the same as a map
     // but more efficient
-    fn qc_tree_same_as_hash_map_prop(param: QCTreeTestParam)
-                                    -> bool {
-        let tree = InversionTree::new(param.data_shards,
-                                    param.parity_shards);
+    fn qc_tree_same_as_hash_map_prop(param: QCTreeTestParam) -> bool {
+        let tree = InversionTree::new(param.data_shards, param.parity_shards);
         let mut map = HashMap::with_capacity(param.matrix_count);
 
         let mut invalid_indices_set = Vec::with_capacity(param.matrix_count);
 
         for _ in 0..param.matrix_count {
-            let invalid_indices = make_random_invalid_indices(param.data_shards,
-                                                            param.parity_shards);
+            let invalid_indices =
+                make_random_invalid_indices(param.data_shards, param.parity_shards);
             let matrix = Matrix::make_random(param.data_shards);
-            match tree.insert_inverted_matrix(&invalid_indices,
-                                            &Arc::new(matrix.clone())) {
+            match tree.insert_inverted_matrix(&invalid_indices, &Arc::new(matrix.clone())) {
                 Ok(()) => {
                     map.insert(invalid_indices.clone(), matrix);
                     invalid_indices_set.push(invalid_indices);
-                },
-                Err(Error::AlreadySet) => {},
-                Err(Error::NotSquare)=> panic!(),
+                }
+                Err(Error::AlreadySet) => {}
+                Err(Error::NotSquare) => panic!(),
             }
         }
 
@@ -375,10 +378,8 @@ mod tests {
 
                     let invalid_indices = &invalid_indices_set[i];
 
-                    let matrix_in_tree =
-                        tree.get_inverted_matrix(invalid_indices).unwrap();
-                    let matrix_in_map =
-                        map.get(invalid_indices).unwrap();
+                    let matrix_in_tree = tree.get_inverted_matrix(invalid_indices).unwrap();
+                    let matrix_in_map = map.get(invalid_indices).unwrap();
                     if matrix_in_tree.as_ref() != matrix_in_map {
                         return false;
                     }
@@ -387,20 +388,16 @@ mod tests {
 
             // iterate through the insertion order
             for ref invalid_indices in invalid_indices_set.iter() {
-                let matrix_in_tree =
-                    tree.get_inverted_matrix(invalid_indices).unwrap();
-                let matrix_in_map =
-                    map.get(*invalid_indices).unwrap();
+                let matrix_in_tree = tree.get_inverted_matrix(invalid_indices).unwrap();
+                let matrix_in_map = map.get(*invalid_indices).unwrap();
                 if matrix_in_tree.as_ref() != matrix_in_map {
                     return false;
                 }
             }
 
             // iterate through the map's order
-            for (ref invalid_indices,
-                ref matrix_in_map) in map.iter() {
-                let matrix_in_tree =
-                    tree.get_inverted_matrix(invalid_indices).unwrap();
+            for (ref invalid_indices, ref matrix_in_map) in map.iter() {
+                let matrix_in_tree = tree.get_inverted_matrix(invalid_indices).unwrap();
                 if matrix_in_tree.as_ref() != *matrix_in_map {
                     return false;
                 }

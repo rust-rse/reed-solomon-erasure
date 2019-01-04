@@ -67,13 +67,12 @@ fn gen_mul_table(
     result
 }
 
-fn gen_mul_table_half(log_table : &[u8; FIELD_SIZE],
-                      exp_table : &[u8; EXP_TABLE_SIZE])
-                      -> ([[u8; 16]; FIELD_SIZE],
-                          [[u8; 16]; FIELD_SIZE])
-{
-    let mut low  : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
-    let mut high : [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
+fn gen_mul_table_half(
+    log_table: &[u8; FIELD_SIZE],
+    exp_table: &[u8; EXP_TABLE_SIZE],
+) -> ([[u8; 16]; FIELD_SIZE], [[u8; 16]; FIELD_SIZE]) {
+    let mut low: [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
+    let mut high: [[u8; 16]; FIELD_SIZE] = [[0; 16]; FIELD_SIZE];
 
     for a in 0..low.len() {
         for b in 0..low.len() {
@@ -87,7 +86,7 @@ fn gen_mul_table_half(log_table : &[u8; FIELD_SIZE],
                 low[a][b] = result;
             }
             if (b & 0xF0) == b {
-                high[a][b>>4] = result;
+                high[a][b >> 4] = result;
             }
         }
     }
@@ -146,19 +145,17 @@ fn write_tables() {
 
     if cfg!(feature = "simd-accel") {
         let (mul_table_low, mul_table_high) = gen_mul_table_half(&log_table, &exp_table);
-        
+
         write_table!(2D => f, mul_table_low,  "MUL_TABLE_LOW",  "u8");
         write_table!(2D => f, mul_table_high, "MUL_TABLE_HIGH", "u8");
     }
 }
 
-#[cfg(
-    all(
-        feature = "simd-accel",
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        not(any(target_os="android", target_os="ios"))
-    )
-)]
+#[cfg(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+))]
 fn compile_simd_c() {
     cc::Build::new()
         .opt_level(3)
@@ -168,15 +165,11 @@ fn compile_simd_c() {
         .compile("reedsolomon");
 }
 
-#[cfg(
-    not(
-        all(
-            feature = "simd-accel",
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            not(any(target_os="android", target_os="ios"))
-        )
-    )
-)]
+#[cfg(not(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(any(target_os = "android", target_os = "ios"))
+)))]
 fn compile_simd_c() {}
 
 fn main() {
