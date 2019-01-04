@@ -15,17 +15,15 @@ extern crate quickcheck;
 #[cfg(test)]
 extern crate rand;
 
-extern crate rayon;
 extern crate smallvec;
 
-use rayon::prelude::*;
+#[cfg(feature = "simd-accel")]
+extern crate libc;
+
 use std::iter::{self, FromIterator};
 use std::sync::Arc;
 
 use smallvec::SmallVec;
-
-#[cfg(feature = "simd-accel")]
-extern crate libc;
 
 #[macro_use]
 mod macros;
@@ -111,126 +109,6 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> ReconstructShard for (T, bool) {
             Err(Err(Error::IncorrectShardSize))
         }
     }
-}
-
-/// Reed-Solomon erasure code encoder/decoder.
-///
-/// # Common error handling
-///
-/// ## For `encode`, `encode_shards`, `verify`, `verify_shards`, `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
-///
-/// Return `Error::TooFewShards` or `Error::TooManyShards`
-/// when the number of provided shards
-/// does not match the codec's one.
-///
-/// Return `Error::EmptyShard` when the first shard provided is
-/// of zero length.
-///
-/// Return `Error::IncorrectShardSize` when the provided shards
-/// are of different lengths.
-///
-/// ## For `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
-///
-/// Return `Error::TooFewShardsPresent` when there are not
-/// enough shards for reconstruction.
-///
-/// Return `Error::InvalidShardFlags` when the number of flags does not match
-/// the total number of shards.
-///
-/// # Variants of encoding methods
-///
-/// ## `sep`
-///
-/// Methods ending in `_sep` takes an immutable reference to data shards,
-/// and a mutable reference to parity shards.
-///
-/// They are useful as they do not need to borrow the data shards mutably,
-/// and other work that only needs read-only access to data shards can be done
-/// in parallel/concurrently during the encoding.
-///
-/// Following is a table of all the `sep` variants
-///
-/// | not `sep` | `sep` |
-/// | --- | --- |
-/// | `encode_single` | `encode_single_sep` |
-/// | `encode`        | `encode_sep` |
-///
-/// The `sep` variants do similar checks on the provided data shards and
-/// parity shards.
-///
-/// Return `Error::TooFewDataShards`, `Error::TooManyDataShards`,
-/// `Error::TooFewParityShards`, or `Error::TooManyParityShards` when applicable.
-///
-/// ## `single`
-///
-/// Methods containing `single` facilitate shard by shard encoding, where
-/// the parity shards are partially constructed using one data shard at a time.
-/// See `ShardByShard` struct for more details on how shard by shard encoding
-/// can be useful.
-///
-/// They are prone to **misuse**, and it is recommended to use the `ShardByShard`
-/// bookkeeping struct instead for shard by shard encoding.
-///
-/// The ones that are also `sep` are **ESPECIALLY** prone to **misuse**.
-/// Only use them when you actually need the flexibility.
-///
-/// Following is a table of all the shard by shard variants
-///
-/// | all shards at once | shard by shard |
-/// | --- | --- |
-/// | `encode` | `encode_single` |
-/// | `encode_sep` | `encode_single_sep` |
-///
-/// The `single` variants do similar checks on the provided data shards and parity shards,
-/// and also do index check on `i_data`.
-///
-/// Return `Error::InvalidIndex` if `i_data >= data_shard_count`.
-///
-/// # Encoding behaviour
-/// ## For `encode`
-///
-/// You do not need to clear the parity shards beforehand, as the methods
-/// will overwrite them completely.
-///
-/// ## For `encode_single`, `encode_single_sep`
-///
-/// Calling them with `i_data` being `0` will overwrite the parity shards
-/// completely. If you are using the methods correctly, then you do not need
-/// to clear the parity shards beforehand.
-///
-/// # Variants of verifying methods
-///
-/// `verify` allocate sa buffer on the heap of the same size
-/// as the parity shards, and encode the input once using the buffer to store
-/// the computed parity shards, then check if the provided parity shards
-/// match the computed ones.
-///
-/// `verify_with_buffer`, allows you to provide
-/// the buffer to avoid making heap allocation(s) for the buffer in every call.
-///
-/// The `with_buffer` variants also guarantee that the buffer contains the correct
-/// parity shards if the result is `Ok(_)` (i.e. it does not matter whether the
-/// verification passed or not, as long as the result is not an error, the buffer
-/// will contain the correct parity shards after the call).
-///
-/// Following is a table of all the `with_buffer` variants
-///
-/// | not `with_buffer` | `with_buffer` |
-/// | --- | --- |
-/// | `verify` | `verify_with_buffer` |
-///
-/// The `with_buffer` variants also check the dimensions of the buffer and return
-/// `Error::TooFewBufferShards`, `Error::TooManyBufferShards`, `Error::EmptyShard`,
-/// or `Error::IncorrectShardSize` when applicable.
-///
-#[derive(Debug)]
-pub struct ReedSolomon {
-    data_shard_count: usize,
-    parity_shard_count: usize,
-    total_shard_count: usize,
-    matrix: Matrix,
-    tree: InversionTree,
-    pparam: ParallelParam,
 }
 
 /// Parameters for parallelism.
@@ -439,14 +317,132 @@ impl<'a> ShardByShard<'a> {
     }
 }
 
+/// Reed-Solomon erasure code encoder/decoder.
+///
+/// # Common error handling
+///
+/// ## For `encode`, `encode_shards`, `verify`, `verify_shards`, `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
+///
+/// Return `Error::TooFewShards` or `Error::TooManyShards`
+/// when the number of provided shards
+/// does not match the codec's one.
+///
+/// Return `Error::EmptyShard` when the first shard provided is
+/// of zero length.
+///
+/// Return `Error::IncorrectShardSize` when the provided shards
+/// are of different lengths.
+///
+/// ## For `reconstruct`, `reconstruct_data`, `reconstruct_shards`, `reconstruct_data_shards`
+///
+/// Return `Error::TooFewShardsPresent` when there are not
+/// enough shards for reconstruction.
+///
+/// Return `Error::InvalidShardFlags` when the number of flags does not match
+/// the total number of shards.
+///
+/// # Variants of encoding methods
+///
+/// ## `sep`
+///
+/// Methods ending in `_sep` takes an immutable reference to data shards,
+/// and a mutable reference to parity shards.
+///
+/// They are useful as they do not need to borrow the data shards mutably,
+/// and other work that only needs read-only access to data shards can be done
+/// in parallel/concurrently during the encoding.
+///
+/// Following is a table of all the `sep` variants
+///
+/// | not `sep` | `sep` |
+/// | --- | --- |
+/// | `encode_single` | `encode_single_sep` |
+/// | `encode`        | `encode_sep` |
+///
+/// The `sep` variants do similar checks on the provided data shards and
+/// parity shards.
+///
+/// Return `Error::TooFewDataShards`, `Error::TooManyDataShards`,
+/// `Error::TooFewParityShards`, or `Error::TooManyParityShards` when applicable.
+///
+/// ## `single`
+///
+/// Methods containing `single` facilitate shard by shard encoding, where
+/// the parity shards are partially constructed using one data shard at a time.
+/// See `ShardByShard` struct for more details on how shard by shard encoding
+/// can be useful.
+///
+/// They are prone to **misuse**, and it is recommended to use the `ShardByShard`
+/// bookkeeping struct instead for shard by shard encoding.
+///
+/// The ones that are also `sep` are **ESPECIALLY** prone to **misuse**.
+/// Only use them when you actually need the flexibility.
+///
+/// Following is a table of all the shard by shard variants
+///
+/// | all shards at once | shard by shard |
+/// | --- | --- |
+/// | `encode` | `encode_single` |
+/// | `encode_sep` | `encode_single_sep` |
+///
+/// The `single` variants do similar checks on the provided data shards and parity shards,
+/// and also do index check on `i_data`.
+///
+/// Return `Error::InvalidIndex` if `i_data >= data_shard_count`.
+///
+/// # Encoding behaviour
+/// ## For `encode`
+///
+/// You do not need to clear the parity shards beforehand, as the methods
+/// will overwrite them completely.
+///
+/// ## For `encode_single`, `encode_single_sep`
+///
+/// Calling them with `i_data` being `0` will overwrite the parity shards
+/// completely. If you are using the methods correctly, then you do not need
+/// to clear the parity shards beforehand.
+///
+/// # Variants of verifying methods
+///
+/// `verify` allocate sa buffer on the heap of the same size
+/// as the parity shards, and encode the input once using the buffer to store
+/// the computed parity shards, then check if the provided parity shards
+/// match the computed ones.
+///
+/// `verify_with_buffer`, allows you to provide
+/// the buffer to avoid making heap allocation(s) for the buffer in every call.
+///
+/// The `with_buffer` variants also guarantee that the buffer contains the correct
+/// parity shards if the result is `Ok(_)` (i.e. it does not matter whether the
+/// verification passed or not, as long as the result is not an error, the buffer
+/// will contain the correct parity shards after the call).
+///
+/// Following is a table of all the `with_buffer` variants
+///
+/// | not `with_buffer` | `with_buffer` |
+/// | --- | --- |
+/// | `verify` | `verify_with_buffer` |
+///
+/// The `with_buffer` variants also check the dimensions of the buffer and return
+/// `Error::TooFewBufferShards`, `Error::TooManyBufferShards`, `Error::EmptyShard`,
+/// or `Error::IncorrectShardSize` when applicable.
+///
+#[derive(Debug)]
+pub struct ReedSolomon {
+    data_shard_count: usize,
+    parity_shard_count: usize,
+    total_shard_count: usize,
+    matrix: Matrix,
+    tree: InversionTree,
+}
+
 impl Clone for ReedSolomon {
     fn clone(&self) -> ReedSolomon {
-        ReedSolomon::with_pparam(
+        ReedSolomon::new(
             self.data_shard_count,
             self.parity_shard_count,
-            self.pparam.clone(),
         )
-        .unwrap()
+        .expect("basic checks already passed as precondition of existence of self")
     }
 }
 
@@ -537,23 +533,6 @@ impl ReedSolomon {
     ///
     /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
     pub fn new(data_shards: usize, parity_shards: usize) -> Result<ReedSolomon, Error> {
-        Self::with_pparam(data_shards, parity_shards, Default::default())
-    }
-
-    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with custom `ParallelParam`.
-    ///
-    /// If `pparam.bytes_per_encode == 0`, it will be set to `1`.
-    ///
-    /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
-    ///
-    /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
-    ///
-    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
-    pub fn with_pparam(
-        data_shards: usize,
-        parity_shards: usize,
-        mut pparam: ParallelParam,
-    ) -> Result<ReedSolomon, Error> {
         if data_shards == 0 {
             return Err(Error::TooFewDataShards);
         }
@@ -568,17 +547,12 @@ impl ReedSolomon {
 
         let matrix = Self::build_matrix(data_shards, total_shards);
 
-        if pparam.bytes_per_encode == 0 {
-            pparam.bytes_per_encode = 1;
-        }
-
         Ok(ReedSolomon {
             data_shard_count: data_shards,
             parity_shard_count: parity_shards,
             total_shard_count: total_shards,
             matrix,
             tree: InversionTree::new(data_shards, parity_shards),
-            pparam,
         })
     }
 
@@ -617,37 +591,9 @@ impl ReedSolomon {
             let output = output.as_mut();
 
             if i_input == 0 {
-                if output.len() <= self.pparam.bytes_per_encode {
-                    galois_8::mul_slice(matrix_row_to_use, input, output);
-                } else {
-                    output
-                        .par_chunks_mut(self.pparam.bytes_per_encode)
-                        .enumerate()
-                        .for_each(|(i, output)| {
-                            let start = i * self.pparam.bytes_per_encode;
-                            galois_8::mul_slice(
-                                matrix_row_to_use,
-                                &input[start..start + output.len()],
-                                output,
-                            );
-                        })
-                }
+                galois_8::mul_slice(matrix_row_to_use, input, output);
             } else {
-                if output.len() <= self.pparam.bytes_per_encode {
-                    galois_8::mul_slice_xor(matrix_row_to_use, input, output);
-                } else {
-                    output
-                        .par_chunks_mut(self.pparam.bytes_per_encode)
-                        .enumerate()
-                        .for_each(|(i, output)| {
-                            let start = i * self.pparam.bytes_per_encode;
-                            galois_8::mul_slice_xor(
-                                matrix_row_to_use,
-                                &input[start..start + output.len()],
-                                output,
-                            );
-                        })
-                }
+                galois_8::mul_slice_xor(matrix_row_to_use, input, output);
             }
         })
     }
@@ -665,22 +611,12 @@ impl ReedSolomon {
     {
         self.code_some_slices(matrix_rows, inputs, buffer);
 
-        // AUDIT
-        //
-        // `misc_utils::par_slices_are_equal` uses the same short-circuiting logic
-        // as the following code
-        //
-        // The logic is detailed in the AUDIT notes in that function
         let at_least_one_mismatch_present = buffer
             .iter_mut()
             .enumerate()
-            .map(|(i, expected_parity_shard)| {
-                misc_utils::par_slices_are_equal(
-                    expected_parity_shard.as_ref(),
-                    to_check[i].as_ref(),
-                    self.pparam.bytes_per_encode,
-                )
-            })
+            .map(|(i, expected_parity_shard)|
+                expected_parity_shard.as_ref() == to_check[i].as_ref()
+            )
             .any(|x| !x); // find the first false (some slice is different from the expected one)
         !at_least_one_mismatch_present
     }
