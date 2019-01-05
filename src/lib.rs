@@ -34,7 +34,6 @@ mod galois_8;
 mod galois_ext;
 mod inversion_tree;
 mod matrix;
-mod poly_math;
 mod poly;
 
 #[cfg(test)]

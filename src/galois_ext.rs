@@ -1,5 +1,5 @@
 use poly::Polynom;
-use poly_math::*;
+use poly::*;
 use std::fmt;
 
 pub struct ExtendedFieldElement {
@@ -92,8 +92,7 @@ pub fn div(x: ExtendedFieldElement, y: ExtendedFieldElement) -> ExtendedFieldEle
 
 #[cfg(test)]
 mod tests {
-    use poly_math::*;
-    use galois_ext::*;
+    use super::*;
 
     #[test]
     fn test_add_random_elements () {
