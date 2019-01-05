@@ -1,4 +1,3 @@
-#![cfg(test)]
 #![allow(dead_code)]
 
 use super::*;
@@ -30,7 +29,7 @@ where
     }
 }
 
-fn fill_random(arr: &mut [u8]) {
+pub fn fill_random(arr: &mut [u8]) {
     for a in arr.iter_mut() {
         *a = rand::random::<u8>();
     }

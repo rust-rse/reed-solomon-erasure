@@ -34,10 +34,10 @@ mod galois_8;
 mod galois_ext;
 mod inversion_tree;
 mod matrix;
-mod misc_utils;
 mod poly_math;
 mod poly;
 
+#[cfg(test)]
 mod tests;
 
 pub use crate::errors::Error;
