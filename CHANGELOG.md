@@ -3,7 +3,7 @@
 - The SIMD acceleration feature is now activated with the `simd-accel` Cargo feature. Pure-rust behavior is default.
 - Ran rustfmt
 
-## 3.1.2
+## 3.1.2 (not published)
 - Doc fix
   - Added space before parantheses in code comments and documentation
 - Disabled SIMD C code for Android and iOS targets entirely
