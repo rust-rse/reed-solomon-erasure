@@ -69,7 +69,7 @@ impl Polynom {
     /// If the polynomial is zero.
     #[inline]
     pub fn is_zero(&self) -> bool {
-        self.length == 1 && self[0] == 0
+        self.is_empty() || self.length == 1 && self[0] == 0
     }
 
     /// Run the extended eucidean algorithm with self and `rhs`.
