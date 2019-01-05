@@ -1,5 +1,4 @@
 use poly::Polynom;
-use poly::*;
 use std::fmt;
 
 pub struct ExtendedFieldElement {
@@ -16,47 +15,45 @@ impl ExtendedFieldElement {
     }
 
     pub fn reduce(&mut self) {
-        let (_, reduced_rep_polynom) = self.rep_polynom.div(&EXT_POLY!());
+        let (_, reduced_rep_polynom) = &self.rep_polynom / &EXT_POLY!();
         self.rep_polynom = reduced_rep_polynom;
     }
 
-    pub fn from(original_rep_polynom: &Polynom) -> ExtendedFieldElement {
-        
-        let mut ext_field_elm :  ExtendedFieldElement = ExtendedFieldElement::new();
-        ext_field_elm.rep_polynom = original_rep_polynom.clone();
-        
-        ext_field_elm.reduce();
 
-        ext_field_elm
-    }
-
-
-    pub fn is_zero(self: &Self)-> bool {
+    pub fn is_zero(&self)-> bool {
         self.rep_polynom.is_zero()
     }
 
-    pub fn inverse(self: &Self) -> ExtendedFieldElement {
+    /// Convert the inverse of this field element. Panics if zero.
+    pub fn inverse(&self) -> ExtendedFieldElement {
         if !self.is_zero() {
             let (gcd, x, _) = self.rep_polynom.egcd(&EXT_POLY!());
-            //we still need to normilze it by divinig by the gcd
+            // we still need to normalize it by dividig by the gcd
             if !gcd.is_zero() {
-                let _normalizer = ::galois_8::div(1, gcd[gcd.len()-1]);
-                let normal_x = x.mul(&[_normalizer]);
+                let normalizer = ::galois_8::div(1, gcd[gcd.len()-1]);
+                let normal_x = &x * normalizer;
                 let inverted_element = ExtendedFieldElement::from(&normal_x);
                 return inverted_element;
             }
         }
-        //either self is zero polynomial or is equivalent to 0
+        // either self is zero polynomial or is equivalent to 0
         panic!("0 is not invertable");
+    }
+}
+
+impl From<Polynom> for ExtendedFieldElement {
+    fn from(polynom: Polynom) -> ExtendedFieldElement {
+        let mut field_element = ExtendedFieldElement::new();
+        field_element.rep_polynom = polynom;
+        field_element.reduce();
+        field_element
     }
 }
 
 impl<'a> From<&'a Polynom> for ExtendedFieldElement {
     #[inline]
     fn from(polynom: &'a Polynom) -> ExtendedFieldElement {
-        let mut field_element = ExtendedFieldElement::new();
-        field_element.rep_polynom = polynom.clone();
-        field_element
+        ExtendedFieldElement::from(polynom.clone())
     }
 }
 
@@ -73,19 +70,19 @@ impl fmt::Debug for ExtendedFieldElement {
 }
 
 pub fn add(x: ExtendedFieldElement, y: ExtendedFieldElement) -> ExtendedFieldElement {
-    let mut addition_result = ExtendedFieldElement::from(&x.rep_polynom.add(&y.rep_polynom));
+    let mut addition_result = ExtendedFieldElement::from(&x.rep_polynom + &y.rep_polynom);
     addition_result.reduce();
     addition_result
 }
 
 pub fn mul(x: ExtendedFieldElement, y: ExtendedFieldElement) -> ExtendedFieldElement {
-    let mut mul_result = ExtendedFieldElement::from(&x.rep_polynom.mul(&y.rep_polynom));
+    let mut mul_result = ExtendedFieldElement::from(&x.rep_polynom * &y.rep_polynom);
     mul_result.reduce();
     mul_result
 }
 
 pub fn div(x: ExtendedFieldElement, y: ExtendedFieldElement) -> ExtendedFieldElement {
-    let mut div_result = ExtendedFieldElement::from(&x.rep_polynom.mul(&y.inverse().rep_polynom));
+    let mut div_result = ExtendedFieldElement::from(&x.rep_polynom * &y.inverse().rep_polynom);
     div_result.reduce();
     div_result
 }
@@ -131,10 +128,10 @@ mod tests {
 
     #[test]
     fn test_base_poly_divid_by_no_monic_div () {
-        let px = [5, 10];
-        let py = [3, 9, 17, 24, 75];
+        let px = polynom![5, 10];
+        let py = polynom![3, 9, 17, 24, 75];
 
-        let (q, r) = py.div(&px);
+        let (q, r) = &py / &px;
         let exp_q = polynom![128+64+32+16+4, 3,3, 128+64+32+16+4+1];
         let exp_r = polynom![71];
         assert_eq!(q , exp_q);

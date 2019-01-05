@@ -260,6 +260,6 @@ macro_rules! EXT_POLY {
     //print R.irreducible_element(2,algorithm="first_lexicographic" )
     //x^2 + a*x + a^7
     //hopefully it is a fast polynomial
-    () => {polynom![1,2,128]}
+    () => { polynom![1,2,128] }
 }
 
