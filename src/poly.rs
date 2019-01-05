@@ -9,7 +9,7 @@ use galois_8;
 
 const POLYNOMIAL_MAX_LENGTH: usize = 256;
 
-/// A polynomial with coefficients in GF(8).
+/// A polynomial with coefficients in GF(2^8).
 /// The most significant coefficient is at the front and is never zero.
 #[derive(Clone)]
 pub struct Polynom {
@@ -191,14 +191,11 @@ impl<'a> Mul<u8> for &'a Polynom {
 
 impl MulAssign<u8> for Polynom {
     fn mul_assign(&mut self, x: u8) {
-        print!("{:?} * {} = ", self, x);
         for px in self.array[..self.length].iter_mut() {
             *px = galois_8::mul(*px, x);
         }
 
-        print!("{:?}", self);
         self.minimize();
-        println!(" (minimized {:?})", self)
     }
 }
 
@@ -209,8 +206,7 @@ impl<'a> Mul<&'a Polynom> for &'a Polynom {
     fn mul(self, rhs: Self) -> Polynom {
         let mut poly = Polynom::new();
 
-        // REVIEW: is this correct? a deg-1 * deg-1 -> deg-2 poly
-        poly.length = self.len() + rhs.len();
+        poly.length = self.len() + rhs.len() - 1;
 
         for (j, rhs_x) in rhs.iter().enumerate() {
             for (i, self_x) in self.iter().enumerate() {
@@ -227,11 +223,10 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
     type Output = (Polynom, Polynom);
 
     fn div(self, rhs: Self) -> (Polynom, Polynom) {
-        println!("{:?} / {:?}", self, rhs);
         if rhs.is_zero() {
             panic!("Divisor is 0")
         }
-            
+
         let mut poly = self.clone();
 
         // If divisor's degree (len-1) is bigger, all dividend is a remainder
@@ -240,12 +235,9 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
             return (Polynom::new(), poly);
         }
 
-        // after this point, we know self has degree at least `divisor_degree`.
-
         let leading_mul_inv = galois_8::div(1,rhs[0]);
 
         let monictized = rhs * leading_mul_inv;
-        println!("Monic RHS: {:?}", monictized);
 
         for i in 0..(self.len() - divisor_degree) {
             let coef = poly[i];
@@ -262,11 +254,16 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
 
         // Quotient is after separator
         let remainder = Polynom::from(&poly[separator..]);
-        println!("Remainder: {:?}", remainder);
 
         // And reminder is before separator, so just shrink to it
         poly.set_length(separator);
         poly *= leading_mul_inv;
+
+        if cfg!(debug_assertions) {
+            // check result in debug mode.
+            let res = &(&poly * rhs) + &remainder;
+            assert_eq!(&res, self);
+        }
 
         (poly, remainder)
     }
@@ -274,8 +271,6 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    
     #[test]
     fn set_length() {
         let mut poly = polynom![1; 8];
@@ -324,13 +319,13 @@ mod tests {
     fn mul() {
         let px = polynom![0, 5, 10, 15, 20];
         let py = polynom![3, 9, 17, 24, 75];
-        assert_eq!([0, 15, 51, 30, 153, 193, 53, 115, 245], *(&px * &py));
+        assert_eq!([15, 51, 30, 153, 193, 53, 115, 245], *(&px * &py));
 
         let px = polynom![0, 5, 10];
         let py = polynom![3, 9, 17, 24, 75];
 
-        assert_eq!([0, 15, 51, 15, 210, 138, 244], *(&px * &py));
-        assert_eq!([0, 15, 51, 15, 210, 138, 244], *(&py * &px));
+        assert_eq!([15, 51, 15, 210, 138, 244], *(&px * &py));
+        assert_eq!([15, 51, 15, 210, 138, 244], *(&py * &px));
     }
 
 
@@ -346,8 +341,8 @@ mod tests {
         assert_eq!([5, 10, 15, 20], *r);
 
         let (q, r) = &py / &px;
-        assert_eq!([3], *q);
-        assert_eq!([6, 15, 9, 119], *r);
+        assert_eq!([244, 3], *q);
+        assert_eq!([10, 5, 119], *r);
 
         let px = polynom![0, 5, 10];
         let py = polynom![3, 9, 17, 24, 75];
@@ -358,8 +353,8 @@ mod tests {
         assert_eq!([5, 10], *r);
 
         let (q, r) = &py / &px;
-        assert_eq!([3, 6, 17], *q);
-        assert_eq!([113, 225], *r);
+        assert_eq!([244, 3, 3, 245], *q);
+        assert_eq!([71], *r);
     }
 
     #[test]
