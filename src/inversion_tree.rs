@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use matrix::Matrix;
+use crate::matrix::Matrix;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Error {
@@ -156,8 +156,8 @@ mod tests {
     use std::collections::HashMap;
     use std::sync::Arc;
 
-    use inversion_tree::*;
-    use matrix::Matrix;
+    use crate::inversion_tree::*;
+    use crate::matrix::Matrix;
 
     use quickcheck::{Arbitrary, Gen, QuickCheck};
 

@@ -81,8 +81,8 @@ impl std::error::Error for SBSError {
 
 #[cfg(test)]
 mod tests {
-    use errors::Error;
-    use errors::SBSError;
+    use crate::errors::Error;
+    use crate::errors::SBSError;
 
     #[test]
     fn test_error_to_string_is_okay() {

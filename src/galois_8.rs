@@ -272,7 +272,7 @@ pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use misc_utils::fill_random;
+    use crate::misc_utils::fill_random;
     use rand;
 
     static BACKBLAZE_LOG_TABLE: [u8; 256] = [

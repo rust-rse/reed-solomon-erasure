@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use galois_8;
+use crate::galois_8;
 use smallvec::SmallVec;
 
 #[derive(Debug)]
@@ -78,7 +78,7 @@ impl Matrix {
     pub fn make_random(size: usize) -> Matrix {
         let mut vec: Vec<Vec<u8>> = vec![vec![0; size]; size];
         for v in vec.iter_mut() {
-            ::misc_utils::fill_random(v);
+            crate::misc_utils::fill_random(v);
         }
 
         Matrix::new_with_data(vec)

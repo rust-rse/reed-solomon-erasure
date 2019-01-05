@@ -35,11 +35,11 @@ mod matrix;
 mod misc_utils;
 mod tests;
 
-pub use errors::Error;
-pub use errors::SBSError;
+pub use crate::errors::Error;
+pub use crate::errors::SBSError;
 
-use inversion_tree::InversionTree;
-use matrix::Matrix;
+use crate::inversion_tree::InversionTree;
+use crate::matrix::Matrix;
 
 /// Something which might hold a shard.
 ///
