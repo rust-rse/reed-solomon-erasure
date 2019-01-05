@@ -256,30 +256,6 @@ macro_rules! polynom {
     }};
 }
 
-macro_rules! uncheck {
-    ($array:ident[$index:expr]) => {
-        if cfg!(feature = "unsafe_indexing") {
-            unsafe {
-                *$array.get_unchecked($index)
-            }
-        } else {
-            $array[$index]
-        }
-    }
-}
-
-macro_rules! uncheck_mut {
-    ($array:ident[$index:expr]) => {
-        * if cfg!(feature = "unsafe_indexing") {
-            unsafe {
-                $array.get_unchecked_mut($index)
-            }
-        } else {
-            &mut $array[$index]
-        }
-    }
-}
-
 macro_rules! EXT_POLY {
     //print R.irreducible_element(2,algorithm="first_lexicographic" )
     //x^2 + a*x + a^7
