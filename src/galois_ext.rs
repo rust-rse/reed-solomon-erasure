@@ -1,4 +1,4 @@
-use poly::Polynom;
+use crate::poly::Polynom;
 use std::fmt;
 
 pub struct ExtendedFieldElement {
@@ -30,7 +30,7 @@ impl ExtendedFieldElement {
             let (gcd, x, _) = self.rep_polynom.egcd(&EXT_POLY!());
             // we still need to normalize it by dividig by the gcd
             if !gcd.is_zero() {
-                let normalizer = ::galois_8::div(1, gcd[gcd.len()-1]);
+                let normalizer = crate::galois_8::div(1, gcd[gcd.len()-1]);
                 let normal_x = &x * normalizer;
                 let inverted_element = ExtendedFieldElement::from(&normal_x);
                 return inverted_element;

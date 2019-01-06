@@ -5,7 +5,7 @@
 use std::cmp;
 use std::ops::{Add, Div, Mul, MulAssign, Deref};
 use std::fmt;
-use galois_8;
+use crate::galois_8;
 
 const POLYNOMIAL_MAX_LENGTH: usize = 256;
 
