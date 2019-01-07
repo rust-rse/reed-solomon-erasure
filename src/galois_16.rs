@@ -59,33 +59,6 @@ impl Element {
         }
     }
 
-    // compute extended euclidean algorithm against an element of self,
-    // where the GCD is known to be constant.
-    fn const_egcd(self, rhs: EgcdRhs) -> (u8, Element, Element) {
-        let x = if self.is_zero() {
-            let rhs = match rhs {
-                EgcdRhs::Element(elem) => elem,
-                EgcdRhs::ExtPoly => panic!("const_egcd invoked with divisible"),
-            };
-            println!("self 0. RHS = {:?}", rhs);
-            (rhs.0[1], Element::constant(0), Element::constant(1))
-        } else {
-            let (cur_quotient, cur_remainder) = match rhs {
-                EgcdRhs::Element(rhs) => rhs.polynom_div(self),
-                EgcdRhs::ExtPoly => Element::div_ext_by(self),
-            };
-
-            println!("{:?} / {:?} = {:?}", rhs, self, (cur_quotient, cur_remainder));
-
-            // GCD is constant because EXT_POLY is irreducible
-            let (g, x, y) = cur_remainder.const_egcd(EgcdRhs::Element(self));
-            (g, y + (cur_quotient * x), x)
-        };
-
-        println!("{:?}", x);
-        x
-    }
-
     // divide EXT_POLY by self.
     fn div_ext_by(rhs: Self) -> (Element, Element) {
         let divisor_degree = rhs.degree();
@@ -163,62 +136,11 @@ impl Element {
         use crate::poly::Polynom;
 
         if !self.is_zero() {
-            println!("{:?} EGCD EXT_POLY", self);
-
-            // UNDER CONSTRUCTION: all in this file.
-            {
-                println!("OUR METHOD");
-                // first step of extended euclidean algorithm.
-                // done here because EXT_POLY is outside the scope of `Element`.
-                // divide self by EXT_POLY.
-                let (gcd, x, y) = {
-                    let remainder = self; // EXT_POLY, self = (0, self)
-                    println!("{:?} / {:?} = {:?}", self, EXT_POLY, (0, self));
-
-                    // GCD is constant because EXT_POLY is irreducible
-                    let (g, x, y) = remainder.const_egcd(EgcdRhs::ExtPoly);
-
-                    let foo = (g, y, x);
-                    println!("{:?}", foo);
-                    foo
-                };
-
-                // we still need to normalize it by dividing by the gcd
-                if gcd != 0 {
-                    // EXT_POLY is irreducible so the GCD will always be constant.
-                    // EXT_POLY*x + self*y = gcd
-                    // self*y = gcd - EXT_POLY*x
-                    //
-                    // EXT_POLY*x is representative of the equivalence class of 0.
-                    let normalizer = galois_8::div(1, gcd);
-                    let _ = y * normalizer;
-                }
-            }
-
-            println!("GEN METHOD");
             let rep_polynom = Polynom::from(&self.0[..]);
             let ext_poly = Polynom::from(&EXT_POLY[..]);
             
-            let (gcd, _, y) = ext_poly.egcd(&rep_polynom);
+            let (gcd, x, _) = rep_polynom.egcd(&ext_poly);
             
-            // // we still need to normalize it by dividing by the gcd
-            // if !gcd.is_zero() {
-            //     // EXT_POLY is irreducible so the GCD will always be constant.
-            //     // self*x = gcd - EXT_POLY*y 
-            //     // self*x/gcd = 1 - EXT_POLY*y
-            //     //
-            //     // EXT_POLY*y is representative of the equivalence class of 0.
-            //     let normalizer = crate::galois_8::div(1, gcd[gcd.len()-1]);
-            //     let normal_x = &x * normalizer;
-
-            //     assert!(normal_x.len() <= 2);
-
-            //     let mut coeffs = [0; 2];
-            //     let poly_len = normal_x.len();
-            //     coeffs[(2 - poly_len) ..][.. poly_len].copy_from_slice(&normal_x[..]);
-            //     return Element(coeffs)
-            // }
-
             // we still need to normalize it by dividing by the gcd
             if !gcd.is_zero() {
                 // EXT_POLY is irreducible so the GCD will always be constant.
@@ -227,13 +149,13 @@ impl Element {
                 //
                 // EXT_POLY*y is representative of the equivalence class of 0.
                 let normalizer = crate::galois_8::div(1, gcd[gcd.len()-1]);
-                let normal_y = &y * normalizer;
+                let normal_x = &x * normalizer;
 
-                assert!(normal_y.len() <= 2);
+                assert!(normal_x.len() <= 2);
 
                 let mut coeffs = [0; 2];
-                let poly_len = normal_y.len();
-                coeffs[(2 - poly_len) ..][.. poly_len].copy_from_slice(&normal_y[..]);
+                let poly_len = normal_x.len();
+                coeffs[(2 - poly_len) ..][.. poly_len].copy_from_slice(&normal_x[..]);
                 return Element(coeffs)
             }
         }

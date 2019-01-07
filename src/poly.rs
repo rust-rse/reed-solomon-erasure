@@ -87,18 +87,13 @@ impl Polynom {
 
     /// Run the extended eucidean algorithm with self and `rhs`.
     pub fn egcd(&self, rhs: &Polynom) -> (Polynom, Polynom, Polynom) {
-        let x = if self.is_zero() {
-            println!("self 0. RHS = {:?}", rhs);
+        if self.is_zero() {
             (rhs.clone(), polynom![0], polynom![1])
         } else {
             let (cur_quotient, cur_remainder) = rhs.div(self);
-            println!("{:?} / {:?} = {:?}", rhs, self, (&cur_quotient, &cur_remainder));
             let (g, x, y) = cur_remainder.egcd(self);
             (g, &y + &(&cur_quotient * &x), x)
-        };
-
-        println!("{:?}", x);
-        x
+        }
     }
 
     fn minimize(&mut self) {
