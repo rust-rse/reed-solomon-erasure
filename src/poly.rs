@@ -9,6 +9,19 @@ use crate::galois_8;
 
 const POLYNOMIAL_MAX_LENGTH: usize = 256;
 
+// create polynomial with given big-endian coefficients
+macro_rules! polynom {
+    [$value:expr; $count:expr] => {{
+        let array = [$value; $count];
+        $crate::poly::Polynom::from(&array[..])
+    }}; 
+
+    [$( $value:expr ),* ] => {{
+        let array = [$($value, )*];
+        $crate::poly::Polynom::from(&array[..])
+    }};
+}
+
 /// A polynomial with coefficients in GF(2^8).
 /// The most significant coefficient is at the front and is never zero.
 #[derive(Clone)]
@@ -74,13 +87,18 @@ impl Polynom {
 
     /// Run the extended eucidean algorithm with self and `rhs`.
     pub fn egcd(&self, rhs: &Polynom) -> (Polynom, Polynom, Polynom) {
-        if self.is_zero() {
+        let x = if self.is_zero() {
+            println!("self 0. RHS = {:?}", rhs);
             (rhs.clone(), polynom![0], polynom![1])
         } else {
             let (cur_quotient, cur_remainder) = rhs.div(self);
+            println!("{:?} / {:?} = {:?}", rhs, self, (&cur_quotient, &cur_remainder));
             let (g, x, y) = cur_remainder.egcd(self);
             (g, &y + &(&cur_quotient * &x), x)
-        }
+        };
+
+        println!("{:?}", x);
+        x
     }
 
     fn minimize(&mut self) {
@@ -236,7 +254,6 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
         }
 
         let leading_mul_inv = galois_8::div(1,rhs[0]);
-
         let monictized = rhs * leading_mul_inv;
 
         for i in 0..(self.len() - divisor_degree) {
@@ -252,10 +269,10 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
 
         let separator = self.len().saturating_sub(divisor_degree);
 
-        // Quotient is after separator
+        // Remainder is after separator
         let remainder = Polynom::from(&poly[separator..]);
 
-        // And reminder is before separator, so just shrink to it
+        // And quotient is before separator, so just shrink to it
         poly.set_length(separator);
         poly *= leading_mul_inv;
 
