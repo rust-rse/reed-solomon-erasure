@@ -243,23 +243,3 @@ macro_rules! check_piece_count {
         }
     }};
 }
-
-macro_rules! polynom {
-    [$value:expr; $count:expr] => {{
-        let array = [$value; $count];
-        $crate::poly::Polynom::from(&array[..])
-    }}; 
-
-    [$( $value:expr ),* ] => {{
-        let array = [$($value, )*];
-        $crate::poly::Polynom::from(&array[..])
-    }};
-}
-
-macro_rules! EXT_POLY {
-    //print R.irreducible_element(2,algorithm="first_lexicographic" )
-    //x^2 + a*x + a^7
-    //hopefully it is a fast polynomial
-    () => { polynom![1,2,128] }
-}
-

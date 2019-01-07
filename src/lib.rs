@@ -31,10 +31,10 @@ mod macros;
 
 mod errors;
 mod galois_8;
-mod galois_ext;
+mod galois_16;
 mod inversion_tree;
 mod matrix;
-mod poly;
+//mod poly;
 
 #[cfg(test)]
 mod tests;
