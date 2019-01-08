@@ -49,6 +49,12 @@ impl crate::Field for Field {
     }
 }
 
+/// Type alias of ReedSolomon over GF(2^8).
+pub type ReedSolomon = crate::ReedSolomon<Field>;
+
+/// Type alias of ShardByShard over GF(2^8).
+pub type ShardByShard<'a> = crate::ShardByShard<'a, Field>;
+
 /// Add two elements.
 pub fn add(a: u8, b: u8) -> u8 {
     a ^ b
