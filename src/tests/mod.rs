@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 
-use super::*;
+use super::{galois_8, Error, SBSError};
 use rand::{thread_rng, Rng};
+
+type ReedSolomon = crate::ReedSolomon<galois_8::Field>;
+type ShardByShard<'a> = crate::ShardByShard<'a, galois_8::Field>;
 
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{

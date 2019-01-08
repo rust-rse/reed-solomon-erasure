@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use crate::galois_8;
+use crate::Field;
 use smallvec::SmallVec;
 
 #[derive(Debug)]
@@ -26,10 +26,10 @@ pub fn flatten<T>(m: Vec<Vec<T>>) -> Vec<T> {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub struct Matrix {
+pub struct Matrix<F: Field> {
     row_count: usize,
     col_count: usize,
-    data: SmallVec<[u8; 1024]>, // store in flattened structure
+    data: SmallVec<[F::Elem; 1024]>, // store in flattened structure
                                 // the smallvec can hold a matrix of size up to 32x32 in stack
 }
 
@@ -40,13 +40,13 @@ fn calc_matrix_row_start_end(col_count: usize, row: usize) -> (usize, usize) {
     (start, end)
 }
 
-impl Matrix {
+impl<F: Field> Matrix<F> {
     fn calc_row_start_end(&self, row: usize) -> (usize, usize) {
         calc_matrix_row_start_end(self.col_count, row)
     }
 
-    pub fn new(rows: usize, cols: usize) -> Matrix {
-        let data = SmallVec::from_vec(vec![0; rows * cols]);
+    pub fn new(rows: usize, cols: usize) -> Matrix<F> {
+        let data = SmallVec::from_vec(vec![F::zero(); rows * cols]);
 
         Matrix {
             row_count: rows,
@@ -55,7 +55,7 @@ impl Matrix {
         }
     }
 
-    pub fn new_with_data(init_data: Vec<Vec<u8>>) -> Matrix {
+    pub fn new_with_data(init_data: Vec<Vec<F::Elem>>) -> Matrix<F> {
         let rows = init_data.len();
         let cols = init_data[0].len();
 
@@ -75,8 +75,10 @@ impl Matrix {
     }
 
     #[cfg(test)]
-    pub fn make_random(size: usize) -> Matrix {
-        let mut vec: Vec<Vec<u8>> = vec![vec![0; size]; size];
+    pub fn make_random(size: usize) -> Matrix<F> 
+        where rand::distributions::Standard: rand::distributions::Distribution<F::Elem>
+    {
+        let mut vec: Vec<Vec<F::Elem>> = vec![vec![Default::default(); size]; size];
         for v in vec.iter_mut() {
             crate::tests::fill_random(v);
         }
@@ -84,10 +86,10 @@ impl Matrix {
         Matrix::new_with_data(vec)
     }
 
-    pub fn identity(size: usize) -> Matrix {
+    pub fn identity(size: usize) -> Matrix<F> {
         let mut result = Self::new(size, size);
         for i in 0..size {
-            acc!(result, i, i) = 1;
+            acc!(result, i, i) = F::one();
         }
         result
     }
@@ -100,15 +102,15 @@ impl Matrix {
         self.row_count
     }
 
-    pub fn get(&self, r: usize, c: usize) -> u8 {
-        acc!(self, r, c)
+    pub fn get(&self, r: usize, c: usize) -> F::Elem {
+        acc!(self, r, c).clone()
     }
 
-    pub fn set(&mut self, r: usize, c: usize, val: u8) {
+    pub fn set(&mut self, r: usize, c: usize, val: F::Elem) {
         acc!(self, r, c) = val;
     }
 
-    pub fn multiply(&self, rhs: &Matrix) -> Matrix {
+    pub fn multiply(&self, rhs: &Matrix<F>) -> Matrix<F> {
         if self.col_count != rhs.row_count {
             panic!(
                 "Colomn count on left is different from row count on right, lhs: {}, rhs: {}",
@@ -118,11 +120,14 @@ impl Matrix {
         let mut result = Self::new(self.row_count, rhs.col_count);
         for r in 0..self.row_count {
             for c in 0..rhs.col_count {
-                let mut val = 0;
+                let mut val = F::zero();
                 for i in 0..self.col_count {
-                    let mul = galois_8::mul(acc!(self, r, i), acc!(rhs, i, c));
+                    let mul = F::mul(
+                        acc!(self, r, i).clone(),
+                        acc!(rhs, i, c).clone()
+                    );
 
-                    val = galois_8::add(val, mul);
+                    val = F::add(val, mul);
                 }
                 acc!(result, r, c) = val;
             }
@@ -130,7 +135,7 @@ impl Matrix {
         result
     }
 
-    pub fn augment(&self, rhs: &Matrix) -> Matrix {
+    pub fn augment(&self, rhs: &Matrix<F>) -> Matrix<F> {
         if self.row_count != rhs.row_count {
             panic!(
                 "Matrices do not have the same row count, lhs: {}, rhs: {}",
@@ -140,28 +145,28 @@ impl Matrix {
         let mut result = Self::new(self.row_count, self.col_count + rhs.col_count);
         for r in 0..self.row_count {
             for c in 0..self.col_count {
-                acc!(result, r, c) = acc!(self, r, c);
+                acc!(result, r, c) = acc!(self, r, c).clone();
             }
             let self_column_count = self.col_count;
             for c in 0..rhs.col_count {
-                acc!(result, r, self_column_count + c) = acc!(rhs, r, c);
+                acc!(result, r, self_column_count + c) = acc!(rhs, r, c).clone();
             }
         }
 
         result
     }
 
-    pub fn sub_matrix(&self, rmin: usize, cmin: usize, rmax: usize, cmax: usize) -> Matrix {
+    pub fn sub_matrix(&self, rmin: usize, cmin: usize, rmax: usize, cmax: usize) -> Matrix<F> {
         let mut result = Self::new(rmax - rmin, cmax - cmin);
         for r in rmin..rmax {
             for c in cmin..cmax {
-                acc!(result, r - rmin, c - cmin) = acc!(self, r, c);
+                acc!(result, r - rmin, c - cmin) = acc!(self, r, c).clone();
             }
         }
         result
     }
 
-    pub fn get_row(&self, row: usize) -> &[u8] {
+    pub fn get_row(&self, row: usize) -> &[F::Elem] {
         let (start, end) = self.calc_row_start_end(row);
 
         &self.data[start..end]
@@ -174,11 +179,8 @@ impl Matrix {
         if r1 == r2 {
             return;
         } else {
-            let mut tmp;
             for i in 0..self.col_count {
-                tmp = self.data[r1_s + i];
-                self.data[r1_s + i] = self.data[r2_s + i];
-                self.data[r2_s + i] = tmp;
+                self.data.swap(r1_s + i, r2_s + i);
             }
         }
     }
@@ -189,35 +191,35 @@ impl Matrix {
 
     pub fn gaussian_elim(&mut self) -> Result<(), Error> {
         for r in 0..self.row_count {
-            if acc!(self, r, r) == 0 {
+            if acc!(self, r, r) == F::zero() {
                 for r_below in r + 1..self.row_count {
-                    if acc!(self, r_below, r) != 0 {
+                    if acc!(self, r_below, r) != F::zero() {
                         self.swap_rows(r, r_below);
                         break;
                     }
                 }
             }
             // If we couldn't find one, the matrix is singular.
-            if acc!(self, r, r) == 0 {
+            if acc!(self, r, r) == F::zero() {
                 return Err(Error::SingularMatrix);
             }
             // Scale to 1.
-            if acc!(self, r, r) != 1 {
-                let scale = galois_8::div(1, acc!(self, r, r));
+            if acc!(self, r, r) != F::one() {
+                let scale = F::div(F::one(), acc!(self, r, r).clone());
                 for c in 0..self.col_count {
-                    acc!(self, r, c) = galois_8::mul(acc!(self, r, c), scale);
+                    acc!(self, r, c) = F::mul(scale, acc!(self, r, c).clone());
                 }
             }
             // Make everything below the 1 be a 0 by subtracting
             // a multiple of it.  (Subtraction and addition are
             // both exclusive or in the Galois field.)
             for r_below in r + 1..self.row_count {
-                if acc!(self, r_below, r) != 0 {
-                    let scale = acc!(self, r_below, r);
+                if acc!(self, r_below, r) != F::zero() {
+                    let scale = acc!(self, r_below, r).clone();
                     for c in 0..self.col_count {
-                        acc!(self, r_below, c) = galois_8::add(
-                            acc!(self, r_below, c),
-                            galois_8::mul(scale, acc!(self, r, c)),
+                        acc!(self, r_below, c) = F::add(
+                            acc!(self, r_below, c).clone(),
+                            F::mul(scale, acc!(self, r, c).clone())
                         );
                     }
                 }
@@ -227,12 +229,12 @@ impl Matrix {
         // Now clear the part above the main diagonal.
         for d in 0..self.row_count {
             for r_above in 0..d {
-                if acc!(self, r_above, d) != 0 {
-                    let scale = acc!(self, r_above, d);
+                if acc!(self, r_above, d) != F::zero() {
+                    let scale = acc!(self, r_above, d).clone();
                     for c in 0..self.col_count {
-                        acc!(self, r_above, c) = galois_8::add(
-                            acc!(self, r_above, c),
-                            galois_8::mul(scale, acc!(self, d, c)),
+                        acc!(self, r_above, c) = F::add(
+                            acc!(self, r_above, c).clone(),
+                            F::mul(scale, acc!(self, d, c).clone())
                         );
                     }
                 }
@@ -241,7 +243,7 @@ impl Matrix {
         Ok(())
     }
 
-    pub fn invert(&self) -> Result<Matrix, Error> {
+    pub fn invert(&self) -> Result<Matrix<F>, Error> {
         if !self.is_square() {
             panic!("Trying to invert a non-square matrix")
         }
@@ -250,18 +252,20 @@ impl Matrix {
         let col_count = self.col_count;
 
         let mut work = self.augment(&Self::identity(row_count));
-
         work.gaussian_elim()?;
 
         Ok(work.sub_matrix(0, row_count, col_count, col_count * 2))
     }
 
-    pub fn vandermonde(rows: usize, cols: usize) -> Matrix {
+    pub fn vandermonde(rows: usize, cols: usize) -> Matrix<F> {
         let mut result = Self::new(rows, cols);
 
         for r in 0..rows {
+            // doesn't matter what `r_a` is as long as it's unique.
+            // then the vandermonde matrix is invertible.
+            let r_a = F::nth(r);
             for c in 0..cols {
-                acc!(result, r, c) = galois_8::exp(r as u8, c);
+                acc!(result, r, c) = F::exp(r_a, c);
             }
         }
         result
@@ -271,6 +275,7 @@ impl Matrix {
 #[cfg(test)]
 mod tests {
     use super::Matrix;
+    use crate::galois_8;
 
     macro_rules! matrix {
         (
@@ -278,7 +283,7 @@ mod tests {
                 [ $( $x:expr ),+ ]
             ),*
         ) => (
-            Matrix::new_with_data(vec![ $( vec![$( $x ),*] ),* ])
+            Matrix::<galois_8::Field>::new_with_data(vec![ $( vec![$( $x ),*] ),* ])
         );
         ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
     }
@@ -287,7 +292,7 @@ mod tests {
     fn test_matrix_col_count() {
         let m1 = matrix!([1, 0, 0]);
         let m2 = matrix!([0, 0, 0], [0, 0, 0]);
-        let m3 = Matrix::new(1, 4);
+        let m3: Matrix<galois_8::Field> = Matrix::new(1, 4);
 
         assert_eq!(3, m1.col_count());
         assert_eq!(3, m2.col_count());
@@ -298,7 +303,7 @@ mod tests {
     fn test_matrix_row_count() {
         let m1 = matrix!([1, 0, 0]);
         let m2 = matrix!([0, 0, 0], [0, 0, 0]);
-        let m3 = Matrix::new(1, 4);
+        let m3: Matrix<galois_8::Field> = Matrix::new(1, 4);
 
         assert_eq!(1, m1.row_count());
         assert_eq!(2, m2.row_count());

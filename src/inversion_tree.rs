@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use crate::matrix::Matrix;
+use crate::Field;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Error {
@@ -10,19 +11,19 @@ pub enum Error {
 }
 
 #[derive(Debug)]
-pub struct InversionTree {
-    pub root: Mutex<InversionNode>,
+pub struct InversionTree<F: Field> {
+    pub root: Mutex<InversionNode<F>>,
     total_shards: usize,
 }
 
 #[derive(Debug)]
-pub struct InversionNode {
-    pub matrix: Option<Arc<Matrix>>,
-    pub children: Vec<Option<InversionNode>>,
+pub struct InversionNode<F: Field> {
+    pub matrix: Option<Arc<Matrix<F>>>,
+    pub children: Vec<Option<InversionNode<F>>>,
 }
 
-impl InversionTree {
-    pub fn new(data_shards: usize, parity_shards: usize) -> InversionTree {
+impl<F: Field> InversionTree<F> {
+    pub fn new(data_shards: usize, parity_shards: usize) -> InversionTree<F> {
         InversionTree {
             root: Mutex::new(InversionNode::new(
                 Some(Arc::new(Matrix::identity(data_shards))),
@@ -32,7 +33,7 @@ impl InversionTree {
         }
     }
 
-    pub fn get_inverted_matrix(&self, invalid_indices: &[usize]) -> Option<Arc<Matrix>> {
+    pub fn get_inverted_matrix(&self, invalid_indices: &[usize]) -> Option<Arc<Matrix<F>>> {
         if invalid_indices.len() == 0 {
             match self.root.lock().unwrap().matrix {
                 None => panic!(),
@@ -49,7 +50,7 @@ impl InversionTree {
     pub fn insert_inverted_matrix(
         &self,
         invalid_indices: &[usize],
-        matrix: &Arc<Matrix>,
+        matrix: &Arc<Matrix<F>>,
     ) -> Result<(), Error> {
         // If no invalid indices were given then we are done because the
         // root node is already set with the identity matrix.
@@ -76,8 +77,8 @@ impl InversionTree {
     }
 }
 
-impl InversionNode {
-    pub fn new(matrix: Option<Arc<Matrix>>, children_count: usize) -> InversionNode {
+impl<F: Field> InversionNode<F> {
+    pub fn new(matrix: Option<Arc<Matrix<F>>>, children_count: usize) -> InversionNode<F> {
         let mut children = Vec::with_capacity(children_count);
         for _ in 0..children_count {
             children.push(None);
@@ -90,7 +91,7 @@ impl InversionNode {
         offset: usize,
         requested_index: usize,
         total_shards: usize,
-    ) -> &'a mut InversionNode {
+    ) -> &'a mut InversionNode<F> {
         let node_index = requested_index - offset;
         {
             let node = &mut self.children[node_index];
@@ -112,7 +113,7 @@ impl InversionNode {
         invalid_indices: &[usize],
         total_shards: usize,
         offset: usize,
-    ) -> Option<Arc<Matrix>> {
+    ) -> Option<Arc<Matrix<F>>> {
         if invalid_indices.len() == 0 {
             match self.matrix {
                 None => None,
@@ -128,7 +129,7 @@ impl InversionNode {
 
     pub fn insert_inverted_matrix(
         &mut self,
-        matrix: &Arc<Matrix>,
+        matrix: &Arc<Matrix<F>>,
         invalid_indices: &[usize],
         total_shards: usize,
         offset: usize,
@@ -158,6 +159,7 @@ mod tests {
 
     use crate::inversion_tree::*;
     use crate::matrix::Matrix;
+    use crate::galois_8;
 
     use quickcheck::{Arbitrary, Gen, QuickCheck};
 
@@ -174,7 +176,7 @@ mod tests {
 
     #[test]
     fn test_new_inversion_tree() {
-        let tree = InversionTree::new(3, 2);
+        let tree: InversionTree<galois_8::Field> = InversionTree::new(3, 2);
 
         let children = tree.root.lock().unwrap().children.len();
         assert_eq!(5, children);
@@ -185,7 +187,7 @@ mod tests {
 
     #[test]
     fn test_get_inverted_matrix() {
-        let tree = InversionTree::new(3, 2);
+        let tree: InversionTree<galois_8::Field> = InversionTree::new(3, 2);
 
         let matrix = &*tree.get_inverted_matrix(&[]).unwrap();
 
@@ -210,7 +212,7 @@ mod tests {
 
     #[test]
     fn test_insert_inverted_matrix() {
-        let tree = InversionTree::new(3, 2);
+        let tree: InversionTree<galois_8::Field> = InversionTree::new(3, 2);
 
         let matrix = Matrix::new(3, 3);
         let matrix_copy = matrix.clone();
@@ -231,7 +233,7 @@ mod tests {
 
     #[test]
     fn test_double_insert_inverted_matrix() {
-        let tree = InversionTree::new(3, 2);
+        let tree: InversionTree<galois_8::Field> = InversionTree::new(3, 2);
 
         let matrix1 = Matrix::make_random(3);
         let matrix2 = Matrix::make_random(3);
@@ -250,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_extended_inverted_matrix() {
-        let tree = InversionTree::new(10, 3);
+        let tree: InversionTree<galois_8::Field> = InversionTree::new(10, 3);
         let matrix = Matrix::new(10, 10);
         let matrix_copy = matrix.clone();
         let matrix2 = matrix!(
@@ -351,7 +353,7 @@ mod tests {
     // inversion tree is functionally the same as a map
     // but more efficient
     fn qc_tree_same_as_hash_map_prop(param: QCTreeTestParam) -> bool {
-        let tree = InversionTree::new(param.data_shards, param.parity_shards);
+        let tree: InversionTree<galois_8::Field> = InversionTree::new(param.data_shards, param.parity_shards);
         let mut map = HashMap::with_capacity(param.matrix_count);
 
         let mut invalid_indices_set = Vec::with_capacity(param.matrix_count);

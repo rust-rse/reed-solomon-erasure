@@ -2,6 +2,53 @@
 
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
+/// The field GF(2^8).
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct Field;
+
+impl crate::Field for Field {
+    const ORDER: usize = 256;
+    type Elem = u8;
+
+    fn add(a: u8, b: u8) -> u8 {
+        add(a, b)
+    }
+
+    fn mul(a: u8, b: u8) -> u8 {
+        mul(a, b)
+    }
+
+    fn div(a: u8, b: u8) -> u8 {
+        div(a, b)
+    }
+
+    fn exp(elem: u8, n: usize) -> u8 {
+        exp(elem, n)
+    }
+
+    fn zero() -> u8 {
+        0
+    }
+
+    fn one() -> u8 {
+        1
+    }
+
+    fn nth(n: usize) -> u8 {
+        if n >= Self::ORDER { panic!("{} out of bounds for GF(2^8) member", n) }
+
+        n as u8
+    }
+
+    fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
+        mul_slice(c, input, out)
+    }
+
+    fn mul_slice_add(c: u8, input: &[u8], out: &mut [u8]) {
+        mul_slice_xor(c, input, out)
+    }
+}
+
 /// Add two elements.
 pub fn add(a: u8, b: u8) -> u8 {
     a ^ b

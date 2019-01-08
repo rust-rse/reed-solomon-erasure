@@ -5,7 +5,7 @@
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # use reed_solomon_erasure::*;
 /// # fn main () {
-/// let shards = shards!([1, 2, 3],
+/// let shards: Vec<Vec<u8>> = shards!([1, 2, 3],
 ///                      [4, 5, 6]);
 /// # }
 /// ```
