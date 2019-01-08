@@ -30,7 +30,6 @@ use smallvec::SmallVec;
 mod macros;
 
 mod errors;
-mod galois_16;
 mod inversion_tree;
 mod matrix;
 
@@ -38,6 +37,7 @@ mod matrix;
 mod tests;
 
 pub mod galois_8;
+pub mod galois_16;
 
 pub use crate::errors::Error;
 pub use crate::errors::SBSError;

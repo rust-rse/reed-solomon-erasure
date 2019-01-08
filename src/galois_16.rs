@@ -13,22 +13,82 @@ use std::ops::{Add, Sub, Mul, Div};
 // hopefully it is a fast polynomial
 const EXT_POLY: [u8; 3] = [1, 2, 128];
 
+/// The field GF(2^16).
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct Field;
+
+impl crate::Field for Field {
+    const ORDER: usize = 2 << 16;
+    type Elem = [u8; 2];
+
+    fn add(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {
+        (Element(a) + Element(b)).0
+    }
+
+    fn mul(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {
+        (Element(a) * Element(b)).0
+    }
+
+    fn div(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {
+        (Element(a) / Element(b)).0
+    }
+
+    fn exp(elem: [u8; 2], n: usize) -> [u8; 2] {
+        Element(elem).exp(n).0
+    }
+
+    fn zero() -> [u8; 2] {
+        [0; 2]
+    }
+
+    fn one() -> [u8; 2] {
+        [0, 1]
+    }
+
+    fn nth(n: usize) -> [u8; 2] {
+        if n >= Self::ORDER { panic!("{} out of bounds for GF(2^8) member", n) }
+
+        [(n >> 8) as u8, n as u8]
+    }
+}
+
+/// Type alias of ReedSolomon over GF(2^8).
+pub type ReedSolomon = crate::ReedSolomon<Field>;
+
+/// Type alias of ShardByShard over GF(2^8).
+pub type ShardByShard<'a> = crate::ShardByShard<'a, Field>;
+
 /// An element of `GF(2^16)`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Element(pub [u8; 2]);
+struct Element(pub [u8; 2]);
 
 impl Element {
-    /// Create the zero element.
-    pub fn zero() -> Self {
+    // Create the zero element.
+    fn zero() -> Self {
         Element([0, 0])
     }
 
-    /// A constant element evaluating to `n`.
-    pub fn constant(n: u8) -> Element { Element([0, n]) }
+    // A constant element evaluating to `n`.
+    fn constant(n: u8) -> Element { Element([0, n]) }
 
-    /// Whether this is the zero element.
-    pub fn is_zero(&self) -> bool {
+    // Whether this is the zero element.
+    fn is_zero(&self) -> bool {
         self.0 == [0; 2]
+    }
+
+    fn exp(mut self, n: usize) -> Element {
+        if n == 0 {
+            Element::constant(1)
+        } else if self == Element::zero() {
+            Element::zero()
+        } else {
+            let x = self;
+            for _ in 1..n {
+                self = self * x;
+            }
+
+            self
+        }
     }
 
     // reduces from some polynomial with degree <= 2.
@@ -256,22 +316,6 @@ impl Element {
     }
 }
 
-/// Perform exponentiation.
-pub fn exp(mut elem: Element, n: usize) -> Element {
-    if n == 0 {
-        Element::constant(1)
-    } else if elem == Element::zero() {
-        Element::zero()
-    } else {
-        let x = elem;
-        for _ in 1..n {
-            elem = elem * x;
-        }
-
-        elem
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -328,7 +372,7 @@ mod tests {
 
         fn qc_exponent(a: Element, n: u8) -> bool {
             n == 0 || {
-                let mut b = exp(a, n as usize);
+                let mut b = a.exp(n as usize);
                 for _ in 1..n {
                     b = b / a;
                 }
@@ -338,7 +382,7 @@ mod tests {
         }
 
         fn qc_exp_zero_is_one(a: Element) -> bool {
-            exp(a, 0) == Element::constant(1)
+            a.exp(0) == Element::constant(1)
         }
     }
 
@@ -350,6 +394,6 @@ mod tests {
 
     #[test]
     fn zero_to_zero_is_one() {
-        assert_eq!(exp(Element::zero(), 0), Element::constant(1))
+        assert_eq!(Element::zero().exp(0), Element::constant(1))
     }
 }
