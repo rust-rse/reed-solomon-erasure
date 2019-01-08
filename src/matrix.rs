@@ -268,6 +268,7 @@ impl<F: Field> Matrix<F> {
                 acc!(result, r, c) = F::exp(r_a, c);
             }
         }
+
         result
     }
 }

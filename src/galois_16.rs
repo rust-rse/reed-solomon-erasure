@@ -18,7 +18,8 @@ const EXT_POLY: [u8; 3] = [1, 2, 128];
 pub struct Field;
 
 impl crate::Field for Field {
-    const ORDER: usize = 2 << 16;
+    const ORDER: usize = 65536;
+    
     type Elem = [u8; 2];
 
     fn add(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {

@@ -3,6 +3,8 @@
 use super::{galois_8, Error, SBSError};
 use rand::{self, thread_rng, Rng};
 
+mod galois_16;
+
 type ReedSolomon = crate::ReedSolomon<galois_8::Field>;
 type ShardByShard<'a> = crate::ShardByShard<'a, galois_8::Field>;
 
@@ -40,17 +42,17 @@ pub fn fill_random<T>(arr: &mut [T])
     }
 }
 
-fn shards_to_option_shards(shards: &[Vec<u8>]) -> Vec<Option<Vec<u8>>> {
+fn shards_to_option_shards<T: Clone>(shards: &[Vec<T>]) -> Vec<Option<Vec<T>>> {
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.iter() {
-        let inner: Vec<u8> = v.clone();
+        let inner: Vec<T> = v.clone();
         result.push(Some(inner));
     }
     result
 }
 
-fn shards_into_option_shards(shards: Vec<Vec<u8>>) -> Vec<Option<Vec<u8>>> {
+fn shards_into_option_shards<T>(shards: Vec<Vec<T>>) -> Vec<Option<Vec<T>>> {
     let mut result = Vec::with_capacity(shards.len());
 
     for v in shards.into_iter() {
@@ -59,7 +61,7 @@ fn shards_into_option_shards(shards: Vec<Vec<u8>>) -> Vec<Option<Vec<u8>>> {
     result
 }
 
-fn option_shards_to_shards(shards: &[Option<Vec<u8>>]) -> Vec<Vec<u8>> {
+fn option_shards_to_shards<T: Clone>(shards: &[Option<Vec<T>>]) -> Vec<Vec<T>> {
     let mut result = Vec::with_capacity(shards.len());
 
     for i in 0..shards.len() {
@@ -67,13 +69,13 @@ fn option_shards_to_shards(shards: &[Option<Vec<u8>>]) -> Vec<Vec<u8>> {
             Some(ref x) => x,
             None => panic!("Missing shard, index : {}", i),
         };
-        let inner: Vec<u8> = shard.clone();
+        let inner: Vec<T> = shard.clone();
         result.push(inner);
     }
     result
 }
 
-fn option_shards_into_shards(shards: Vec<Option<Vec<u8>>>) -> Vec<Vec<u8>> {
+fn option_shards_into_shards<T>(shards: Vec<Option<Vec<T>>>) -> Vec<Vec<T>> {
     let mut result = Vec::with_capacity(shards.len());
 
     for shard in shards.into_iter() {
