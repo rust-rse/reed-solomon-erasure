@@ -224,47 +224,48 @@ impl Element {
 
     /// Convert the inverse of this field element. Panics if zero.
     fn inverse(self) -> Element {
-        if !self.is_zero() {
-            // first step of extended euclidean algorithm.
-            // done here because EXT_POLY is outside the scope of `Element`.
-            let (gcd, y) = {
-                // self / EXT_POLY = (0, self)
-                let remainder = self; 
-
-                // GCD is constant because EXT_POLY is irreducible
-                let (g, x, _) = remainder.const_egcd(EgcdRhs::ExtPoly);
-
-                (g, x)
-            };
-
-            // we still need to normalize it by dividing by the gcd
-            if gcd != 0 {
-                // EXT_POLY is irreducible so the GCD will always be constant.
-                // EXT_POLY*x + self*y = gcd
-                // self*y = gcd - EXT_POLY*x
-                //
-                // EXT_POLY*x is representative of the equivalence class of 0.
-                let normalizer = galois_8::div(1, gcd);
-                return y * normalizer;
-            }
+        if self.is_zero() {
+            panic!("Cannot invert 0");
         }
-        
-        // either self is zero polynomial or is equivalent to 0
-        panic!("Cannot invert 0");
+
+        // first step of extended euclidean algorithm.
+        // done here because EXT_POLY is outside the scope of `Element`.
+        let (gcd, y) = {
+            // self / EXT_POLY = (0, self)
+            let remainder = self; 
+
+            // GCD is constant because EXT_POLY is irreducible
+            let (g, x, _) = remainder.const_egcd(EgcdRhs::ExtPoly);
+
+            (g, x)
+        };
+
+        // we still need to normalize it by dividing by the gcd
+        if gcd != 0 {
+            // EXT_POLY is irreducible so the GCD will always be constant.
+            // EXT_POLY*x + self*y = gcd
+            // self*y = gcd - EXT_POLY*x
+            //
+            // EXT_POLY*x is representative of the equivalence class of 0.
+            let normalizer = galois_8::div(1, gcd);
+            y * normalizer
+        } else {
+            // self is equivalent to zero.
+            panic!("Cannot invert 0");
+        }
     }
 }
 
 /// Perform exponentiation.
 pub fn exp(mut elem: Element, n: usize) -> Element {
-    if elem.0 == [0; 2] {
-        elem
-    } else if n == 0 {
-        Element([0, 1])
-    } else if n == 1 {
-        elem
+    if n == 0 {
+        Element::constant(1)
+    } else if elem == Element::zero() {
+        Element::zero()
     } else {
+        let x = elem;
         for _ in 1..n {
-            elem = elem * elem;
+            elem = elem * x;
         }
 
         elem
@@ -317,11 +318,38 @@ mod tests {
         fn qc_add_distributivity(a: Element, b: Element, c: Element) -> bool {
             a * (b + c) == (a * b) + (a * c)
         }
+
+        fn qc_inverse(a: Element) -> bool {
+            a.is_zero() || {
+                let inv = a.inverse();
+                a * inv == Element::constant(1)
+            }
+        }
+
+        fn qc_exponent(a: Element, n: u8) -> bool {
+            n == 0 || {
+                let mut b = exp(a, n as usize);
+                for _ in 1..n {
+                    b = b / a;
+                }
+
+                a == b
+            }
+        }
+
+        fn qc_exp_zero_is_one(a: Element) -> bool {
+            exp(a, 0) == Element::constant(1)
+        }
     }
 
     #[test]
     #[should_panic]
     fn test_div_b_is_0() {
         let _ = Element([1, 0]) / Element::zero();
+    }
+
+    #[test]
+    fn zero_to_zero_is_one() {
+        assert_eq!(exp(Element::zero(), 0), Element::constant(1))
     }
 }
