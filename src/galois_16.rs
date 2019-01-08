@@ -13,12 +13,6 @@ use std::ops::{Add, Sub, Mul, Div};
 // hopefully it is a fast polynomial
 const EXT_POLY: [u8; 3] = [1, 2, 128];
 
-#[derive(Debug)]
-enum EgcdRhs {
-    Element(Element),
-    ExtPoly,
-}
-
 /// An element of `GF(2^16)`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Element(pub [u8; 2]);
@@ -57,110 +51,6 @@ impl Element {
         } else {
             0
         }
-    }
-
-    // divide EXT_POLY by self.
-    fn div_ext_by(rhs: Self) -> (Element, Element) {
-        let divisor_degree = rhs.degree();
-
-        // ensure divisor is monic.
-        let leading_mul_inv = match divisor_degree {
-            1 => galois_8::div(1, rhs.0[0]),
-            0 => galois_8::div(1, rhs.0[1]),
-            _ => panic!("GF((2^8)^2) elements can be linear at most"),
-        };
-
-        let monictized = rhs * leading_mul_inv;
-        let mut poly = EXT_POLY;
-
-        for i in 0..(3 - divisor_degree) {
-            let coef = poly[i];
-            for j in 1..(divisor_degree + 1) {
-                if rhs.0[j] != 0 {
-                    poly[i + j] ^= galois_8::mul(monictized.0[j], coef);
-                }
-            }
-        }
-
-        let remainder = Element([ poly[1], poly[2] ]);
-        let quotient = Element::constant(poly[0]) * leading_mul_inv;
-
-        (quotient, remainder)
-    }
-
-    fn polynom_div(self, rhs: Self) -> (Element, Element) {
-        let divisor_degree = rhs.degree();
-        if rhs.is_zero() {
-            panic!("divide by 0");
-        } else if self.degree() < divisor_degree {
-            // If divisor's degree (len-1) is bigger, all dividend is a remainder
-            (Element::zero(), self)
-        } else if divisor_degree == 0 {
-            // divide by constant.
-            let invert = galois_8::div(1, rhs.0[1]);
-            let quotient = Element([
-                galois_8::mul(invert, self.0[0]),
-                galois_8::mul(invert, self.0[1]),
-            ]);
-
-            (quotient, Element::zero())
-        } else {
-            // self degree is at least divisor degree, divisor degree not 0.
-            // therefore both are 1. 
-            debug_assert_eq!(self.degree(), divisor_degree);
-            debug_assert_eq!(self.degree(), 1);
-
-            // ensure rhs is constant.
-            let leading_mul_inv = galois_8::div(1, rhs.0[0]);
-            let monic = Element([
-                galois_8::mul(leading_mul_inv, rhs.0[0]),
-                galois_8::mul(leading_mul_inv, rhs.0[1]),
-            ]);
-
-            let leading_coeff = self.0[0];
-            let mut remainder = self.0[1];
-
-            if monic.0[1] != 0 {
-                remainder ^= galois_8::mul(monic.0[1], self.0[0]);
-            }
-
-            (
-                Element::constant(galois_8::mul(leading_mul_inv, leading_coeff)),
-                Element::constant(remainder),
-            )
-        }
-    }
-
-    /// Convert the inverse of this field element. Panics if zero.
-    fn inverse(self) -> Element {
-        use crate::poly::Polynom;
-
-        if !self.is_zero() {
-            let rep_polynom = Polynom::from(&self.0[..]);
-            let ext_poly = Polynom::from(&EXT_POLY[..]);
-            
-            let (gcd, x, _) = rep_polynom.egcd(&ext_poly);
-            
-            // we still need to normalize it by dividing by the gcd
-            if !gcd.is_zero() {
-                // EXT_POLY is irreducible so the GCD will always be constant.
-                // self*x = gcd - EXT_POLY*y 
-                // self*x/gcd = 1 - EXT_POLY*y
-                //
-                // EXT_POLY*y is representative of the equivalence class of 0.
-                let normalizer = crate::galois_8::div(1, gcd[gcd.len()-1]);
-                let normal_x = &x * normalizer;
-
-                assert!(normal_x.len() <= 2);
-
-                let mut coeffs = [0; 2];
-                let poly_len = normal_x.len();
-                coeffs[(2 - poly_len) ..][.. poly_len].copy_from_slice(&normal_x[..]);
-                return Element(coeffs)
-            }
-        }
-        // either self is zero polynomial or is equivalent to 0
-        panic!("Cannot invert 0");
     }
 }
 
@@ -225,6 +115,142 @@ impl Div for Element {
 
     fn div(self, rhs: Self) -> Element {
         self * rhs.inverse()
+    }
+}
+
+// helpers for division.
+
+#[derive(Debug)]
+enum EgcdRhs {
+    Element(Element),
+    ExtPoly,
+}
+
+impl Element {
+    // compute extended euclidean algorithm against an element of self,
+    // where the GCD is known to be constant.
+    fn const_egcd(self, rhs: EgcdRhs) -> (u8, Element, Element) {
+        if self.is_zero() {
+            let rhs = match rhs {
+                EgcdRhs::Element(elem) => elem,
+                EgcdRhs::ExtPoly => panic!("const_egcd invoked with divisible"),
+            };
+            (rhs.0[1], Element::constant(0), Element::constant(1))
+        } else {
+            let (cur_quotient, cur_remainder) = match rhs {
+                EgcdRhs::Element(rhs) => rhs.polynom_div(self),
+                EgcdRhs::ExtPoly => Element::div_ext_by(self),
+            };
+
+            // GCD is constant because EXT_POLY is irreducible
+            let (g, x, y) = cur_remainder.const_egcd(EgcdRhs::Element(self));
+            (g, y + (cur_quotient * x), x)
+        }
+    }
+
+    // divide EXT_POLY by self.
+    fn div_ext_by(rhs: Self) -> (Element, Element) {
+        if rhs.degree() == 0 {
+            // dividing by constant is the same as multiplying by another constant.
+            // and all constant multiples of EXT_POLY are in the equivalence class
+            // of 0.
+            return (Element::zero(), Element::zero())
+        }
+
+        // divisor is ensured linear here.
+        // now ensure divisor is monic.
+        let leading_mul_inv = galois_8::div(1, rhs.0[0]);
+
+        let monictized = rhs * leading_mul_inv;
+        let mut poly = EXT_POLY;
+
+        for i in 0..2 {
+            let coef = poly[i];
+            for j in 1..2 {
+                if rhs.0[j] != 0 {
+                    poly[i + j] ^= galois_8::mul(monictized.0[j], coef);
+                }
+            }
+        }
+
+        let remainder = Element::constant(poly[2]);
+        let quotient = Element([poly[0], poly[1]]) * leading_mul_inv;
+
+        (quotient, remainder)
+    }
+
+    fn polynom_div(self, rhs: Self) -> (Element, Element) {
+        let divisor_degree = rhs.degree();
+        if rhs.is_zero() {
+            panic!("divide by 0");
+        } else if self.degree() < divisor_degree {
+            // If divisor's degree (len-1) is bigger, all dividend is a remainder
+            (Element::zero(), self)
+        } else if divisor_degree == 0 {
+            // divide by constant.
+            let invert = galois_8::div(1, rhs.0[1]);
+            let quotient = Element([
+                galois_8::mul(invert, self.0[0]),
+                galois_8::mul(invert, self.0[1]),
+            ]);
+
+            (quotient, Element::zero())
+        } else {
+            // self degree is at least divisor degree, divisor degree not 0.
+            // therefore both are 1. 
+            debug_assert_eq!(self.degree(), divisor_degree);
+            debug_assert_eq!(self.degree(), 1);
+
+            // ensure rhs is constant.
+            let leading_mul_inv = galois_8::div(1, rhs.0[0]);
+            let monic = Element([
+                galois_8::mul(leading_mul_inv, rhs.0[0]),
+                galois_8::mul(leading_mul_inv, rhs.0[1]),
+            ]);
+
+            let leading_coeff = self.0[0];
+            let mut remainder = self.0[1];
+
+            if monic.0[1] != 0 {
+                remainder ^= galois_8::mul(monic.0[1], self.0[0]);
+            }
+
+            (
+                Element::constant(galois_8::mul(leading_mul_inv, leading_coeff)),
+                Element::constant(remainder),
+            )
+        }
+    }
+
+    /// Convert the inverse of this field element. Panics if zero.
+    fn inverse(self) -> Element {
+        if !self.is_zero() {
+            // first step of extended euclidean algorithm.
+            // done here because EXT_POLY is outside the scope of `Element`.
+            let (gcd, y) = {
+                // self / EXT_POLY = (0, self)
+                let remainder = self; 
+
+                // GCD is constant because EXT_POLY is irreducible
+                let (g, x, _) = remainder.const_egcd(EgcdRhs::ExtPoly);
+
+                (g, x)
+            };
+
+            // we still need to normalize it by dividing by the gcd
+            if gcd != 0 {
+                // EXT_POLY is irreducible so the GCD will always be constant.
+                // EXT_POLY*x + self*y = gcd
+                // self*y = gcd - EXT_POLY*x
+                //
+                // EXT_POLY*x is representative of the equivalence class of 0.
+                let normalizer = galois_8::div(1, gcd);
+                return y * normalizer;
+            }
+        }
+        
+        // either self is zero polynomial or is equivalent to 0
+        panic!("Cannot invert 0");
     }
 }
 
