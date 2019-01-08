@@ -1,7 +1,9 @@
 ## 4.0.0
 - Major API restructure: removed `Shard` type in favor of generic functions.
-- The SIMD acceleration feature is now activated with the `simd-accel` Cargo feature. Pure-rust behavior is default.
+- The logic of this crate is now generic over choice of finite field.
+- The SIMD acceleration feature for GF(2^8) is now activated with the `simd-accel` Cargo feature. Pure-rust behavior is default.
 - Ran rustfmt
+- Adds a GF(2^16) implementation.
 
 ## 3.1.2 (not published)
 - Doc fix
