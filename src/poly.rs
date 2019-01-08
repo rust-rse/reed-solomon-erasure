@@ -219,7 +219,7 @@ impl<'a> Mul<&'a Polynom> for &'a Polynom {
     fn mul(self, rhs: Self) -> Polynom {
         let mut poly = Polynom::new();
 
-        poly.length = self.len() + rhs.len() - 1;
+        poly.length = (self.len() + rhs.len()).saturating_sub(1);
 
         for (j, rhs_x) in rhs.iter().enumerate() {
             for (i, self_x) in self.iter().enumerate() {
@@ -283,6 +283,78 @@ impl<'a> Div<&'a Polynom> for &'a Polynom {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use quickcheck::{Arbitrary, Gen};
+
+    impl Arbitrary for Polynom {
+        fn arbitrary<G: Gen>(gen: &mut G) -> Self {
+            const MAX_TEST_LEN: usize = 32;
+
+            let len = usize::arbitrary(gen) % MAX_TEST_LEN;
+            if len == 0 { return Polynom::new() }
+
+            let leading = loop {
+                let x = u8::arbitrary(gen);
+                if x != 0 { break x }
+            };
+
+            let mut poly = Polynom::new();
+            poly.push(leading);
+
+            for _ in 1..len {
+                poly.push(u8::arbitrary(gen));
+            }
+
+            poly
+        }
+    }
+
+    quickcheck! {
+        fn qc_add_associativity(a: Polynom, b: Polynom, c: Polynom) -> bool {
+            &a + &(&b + &c) == &(&a + &b) + &c
+        }
+
+        fn qc_mul_associativity(a: Polynom, b: Polynom, c: Polynom) -> bool {
+            &a * &(&b * &c) == &(&a * &b) * &c
+        }
+
+        fn qc_multiplicative_identity(a: Polynom) -> bool {
+            a.is_zero() || {
+                let one = polynom![1];
+                let (q, r) = &one / &a;
+                &(&q * &a) + &r == one
+            }
+        }
+
+        fn qc_add_commutativity(a: Polynom, b: Polynom) -> bool {
+            &a + &b == &b + &a
+        }
+
+        fn qc_mul_commutativity(a: Polynom, b: Polynom) -> bool {
+            &a * &b == &b * &a
+        }
+
+        fn qc_add_distributivity(a: Polynom, b: Polynom, c: Polynom) -> bool {
+            &a * &(&b + &c) == &(&a * &b) + &(&a * &c)
+        }
+
+        fn qc_egcd(a: Polynom, b: Polynom) -> bool {
+            let (gcd, x, y) = a.egcd(&b);
+
+            // bezout's identity
+            &(&a * &x) + &(&b * &y) == gcd
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn divide_by_zero() {
+        let p = polynom![1, 2, 3];
+        let zero = polynom![];
+
+        let _ = &p / &zero;
+    }
+
     #[test]
     fn set_length() {
         let mut poly = polynom![1; 8];
