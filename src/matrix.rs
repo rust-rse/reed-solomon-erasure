@@ -78,7 +78,7 @@ impl Matrix {
     pub fn make_random(size: usize) -> Matrix {
         let mut vec: Vec<Vec<u8>> = vec![vec![0; size]; size];
         for v in vec.iter_mut() {
-            crate::misc_utils::fill_random(v);
+            crate::tests::fill_random(v);
         }
 
         Matrix::new_with_data(vec)

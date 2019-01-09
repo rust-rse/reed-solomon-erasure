@@ -7,6 +7,7 @@
 //! You will have to implement error detection separately (e.g. via checksums)
 //! and simply leave out the corrupted shards when attempting to reconstruct
 //! the missing data.
+#![allow(dead_code)]
 
 #[cfg(test)]
 #[macro_use]
@@ -30,9 +31,11 @@ mod macros;
 
 mod errors;
 mod galois_8;
+mod galois_16;
 mod inversion_tree;
 mod matrix;
-mod misc_utils;
+
+#[cfg(test)]
 mod tests;
 
 pub use crate::errors::Error;
