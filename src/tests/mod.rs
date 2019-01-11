@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 
-use super::*;
-use rand::{thread_rng, Rng};
+use super::{galois_8, Error, SBSError};
+use rand::{self, thread_rng, Rng};
+
+type ReedSolomon = crate::ReedSolomon<galois_8::Field>;
+type ShardByShard<'a> = crate::ShardByShard<'a, galois_8::Field>;
 
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{
@@ -29,9 +32,11 @@ where
     }
 }
 
-pub fn fill_random(arr: &mut [u8]) {
+pub fn fill_random<T>(arr: &mut [T]) 
+    where rand::distributions::Standard: rand::distributions::Distribution<T>
+{
     for a in arr.iter_mut() {
-        *a = rand::random::<u8>();
+        *a = rand::random::<T>();
     }
 }
 

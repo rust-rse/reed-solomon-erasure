@@ -30,7 +30,6 @@ use smallvec::SmallVec;
 mod macros;
 
 mod errors;
-mod galois_8;
 mod galois_16;
 mod inversion_tree;
 mod matrix;
@@ -38,41 +37,100 @@ mod matrix;
 #[cfg(test)]
 mod tests;
 
+pub mod galois_8;
+
 pub use crate::errors::Error;
 pub use crate::errors::SBSError;
 
 use crate::inversion_tree::InversionTree;
 use crate::matrix::Matrix;
 
+/// A finite field to perform encoding over.
+pub trait Field: Sized {
+    /// The order of the field. This is a limit on the number of shards
+    /// in an encoding.
+    const ORDER: usize;
+
+    /// The representational type of the field.
+    type Elem: Default + Clone + Copy + PartialEq + std::fmt::Debug;
+
+    /// Add two elements together.
+    fn add(a: Self::Elem, b: Self::Elem) -> Self::Elem;
+
+    /// Multiply two elements together.
+    fn mul(a: Self::Elem, b: Self::Elem) -> Self::Elem;
+
+    /// Divide a by b. Panics is b is zero.
+    fn div(a: Self::Elem, b: Self::Elem) -> Self::Elem;
+
+    /// Raise `a` to the n'th power.
+    fn exp(a: Self::Elem, n: usize) -> Self::Elem;
+
+    /// The "zero" element or additive identity.
+    fn zero() -> Self::Elem;
+
+    /// The "one" element or multiplicative identity.
+    fn one() -> Self::Elem;
+
+    /// Yield the nth element of the field. Panics if n >= ORDER.
+    /// Assignment is arbitrary but must be unique to `n`.
+    fn nth(n: usize) -> Self::Elem;
+
+    /// Multiply a slice of elements by another. Writes into the output slice.
+    ///
+    /// # Panics
+    /// Panics if the output slice does not have equal length to the input.
+    fn mul_slice(elem: Self::Elem, input: &[Self::Elem], out: &mut [Self::Elem]) {
+        assert_eq!(input.len(), out.len());
+
+        for (i, o) in input.iter().zip(out) {
+            *o = Self::mul(elem.clone(), i.clone())
+        }
+    }
+
+    /// Multiply a slice of elements by another, adding each result to the corresponding value in
+    /// `out`.
+    ///
+    /// # Panics
+    /// Panics if the output slice does not have equal length to the input.
+    fn mul_slice_add(elem: Self::Elem, input: &[Self::Elem], out: &mut [Self::Elem]) {
+        assert_eq!(input.len(), out.len());
+
+        for (i, o) in input.iter().zip(out) {
+            *o = Self::add(o.clone(), Self::mul(elem.clone(), i.clone())) 
+        }
+    }
+}
+
 /// Something which might hold a shard.
 ///
 /// This trait is used in reconstruction, where some of the shards
 /// may be unknown.
-pub trait ReconstructShard {
+pub trait ReconstructShard<F: Field> {
     /// The size of the shard data; `None` if empty.
     fn len(&self) -> Option<usize>;
 
     /// Get a mutable reference to the shard data, returning `None` if uninitialized.
-    fn get(&mut self) -> Option<&mut [u8]>;
+    fn get(&mut self) -> Option<&mut [F::Elem]>;
 
     /// Get a mutable reference to the shard data, initializing it to the
     /// given length if it was `None`. Returns an error if initialization fails.
-    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [u8], Result<&mut [u8], Error>>;
+    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>>;
 }
 
-impl<T: AsRef<[u8]> + AsMut<[u8]> + FromIterator<u8>> ReconstructShard for Option<T> {
+impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]> + FromIterator<F::Elem>> ReconstructShard<F> for Option<T> {
     fn len(&self) -> Option<usize> {
         self.as_ref().map(|x| x.as_ref().len())
     }
 
-    fn get(&mut self) -> Option<&mut [u8]> {
+    fn get(&mut self) -> Option<&mut [F::Elem]> {
         self.as_mut().map(|x| x.as_mut())
     }
 
-    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [u8], Result<&mut [u8], Error>> {
+    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
         let is_some = self.is_some();
         let x = self
-            .get_or_insert_with(|| iter::repeat(0).take(len).collect())
+            .get_or_insert_with(|| iter::repeat(F::zero()).take(len).collect())
             .as_mut();
 
         if is_some {
@@ -83,7 +141,7 @@ impl<T: AsRef<[u8]> + AsMut<[u8]> + FromIterator<u8>> ReconstructShard for Optio
     }
 }
 
-impl<T: AsRef<[u8]> + AsMut<[u8]>> ReconstructShard for (T, bool) {
+impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]>> ReconstructShard<F> for (T, bool) {
     fn len(&self) -> Option<usize> {
         if !self.1 {
             None
@@ -92,7 +150,7 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> ReconstructShard for (T, bool) {
         }
     }
 
-    fn get(&mut self) -> Option<&mut [u8]> {
+    fn get(&mut self) -> Option<&mut [F::Elem]> {
         if !self.1 {
             None
         } else {
@@ -100,7 +158,7 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> ReconstructShard for (T, bool) {
         }
     }
 
-    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [u8], Result<&mut [u8], Error>> {
+    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
         let x = self.0.as_mut();
         if x.len() == len {
             if self.1 {
@@ -159,11 +217,12 @@ impl Default for ParallelParam {
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # use reed_solomon_erasure::*;
 /// # fn main () {
-/// let r = ReedSolomon::new(3, 2).unwrap();
+/// use reed_solomon_erasure::galois_8::Field;
+/// let r: ReedSolomon<Field> = ReedSolomon::new(3, 2).unwrap();
 ///
 /// let mut sbs = ShardByShard::new(&r);
 ///
-/// let mut shards = shards!([0,  1,  2,  3,  4],
+/// let mut shards = shards!([0u8,  1,  2,  3,  4],
 ///                          [5,  6,  7,  8,  9],
 ///                          // say we don't have the 3rd data shard yet
 ///                          // and we want to fill it in later
@@ -176,11 +235,11 @@ impl Default for ParallelParam {
 /// sbs.encode(&mut shards).unwrap();
 ///
 /// // fill in 3rd data shard
-/// shards[2][0] = 10;
-/// shards[2][1] = 11;
-/// shards[2][2] = 12;
-/// shards[2][3] = 13;
-/// shards[2][4] = 14;
+/// shards[2][0] = 10.into();
+/// shards[2][1] = 11.into();
+/// shards[2][2] = 12.into();
+/// shards[2][3] = 13.into();
+/// shards[2][4] = 14.into();
 ///
 /// // now do the encoding
 /// sbs.encode(&mut shards).unwrap();
@@ -189,14 +248,14 @@ impl Default for ParallelParam {
 /// # }
 /// ```
 #[derive(PartialEq, Debug)]
-pub struct ShardByShard<'a> {
-    codec: &'a ReedSolomon,
+pub struct ShardByShard<'a, F: 'a + Field> {
+    codec: &'a ReedSolomon<F>,
     cur_input: usize,
 }
 
-impl<'a> ShardByShard<'a> {
+impl<'a, F: 'a + Field> ShardByShard<'a, F> {
     /// Creates a new instance of the bookkeeping struct.
-    pub fn new(codec: &'a ReedSolomon) -> ShardByShard<'a> {
+    pub fn new(codec: &'a ReedSolomon<F>) -> ShardByShard<'a, F> {
         ShardByShard {
             codec,
             cur_input: 0,
@@ -240,11 +299,11 @@ impl<'a> ShardByShard<'a> {
         Ok(())
     }
 
-    fn sbs_encode_checks<U: AsRef<[u8]> + AsMut<[u8]>>(
+    fn sbs_encode_checks<U: AsRef<[F::Elem]> + AsMut<[F::Elem]>>(
         &mut self,
         slices: &mut [U],
     ) -> Result<(), SBSError> {
-        let internal_checks = |codec: &ReedSolomon, data: &mut [U]| {
+        let internal_checks = |codec: &ReedSolomon<F>, data: &mut [U]| {
             check_piece_count!(all => codec, data);
             check_slices!(multi => data);
 
@@ -261,12 +320,12 @@ impl<'a> ShardByShard<'a> {
         }
     }
 
-    fn sbs_encode_sep_checks<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(
+    fn sbs_encode_sep_checks<T: AsRef<[F::Elem]>, U: AsRef<[F::Elem]> + AsMut<[F::Elem]>>(
         &mut self,
         data: &[T],
         parity: &mut [U],
     ) -> Result<(), SBSError> {
-        let internal_checks = |codec: &ReedSolomon, data: &[T], parity: &mut [U]| {
+        let internal_checks = |codec: &ReedSolomon<F>, data: &[T], parity: &mut [U]| {
             check_piece_count!(data => codec, data);
             check_piece_count!(parity => codec, parity);
             check_slices!(multi => data, multi => parity);
@@ -291,7 +350,7 @@ impl<'a> ShardByShard<'a> {
     pub fn encode<T, U>(&mut self, mut shards: T) -> Result<(), SBSError>
     where
         T: AsRef<[U]> + AsMut<[U]>,
-        U: AsRef<[u8]> + AsMut<[u8]>,
+        U: AsRef<[F::Elem]> + AsMut<[F::Elem]>,
     {
         let shards = shards.as_mut();
         self.sbs_encode_checks(shards)?;
@@ -305,7 +364,7 @@ impl<'a> ShardByShard<'a> {
     ///
     /// Returns `SBSError::TooManyCalls` when all input data shards
     /// have already been filled in via `encode`
-    pub fn encode_sep<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(
+    pub fn encode_sep<T: AsRef<[F::Elem]>, U: AsRef<[F::Elem]> + AsMut<[F::Elem]>>(
         &mut self,
         data: &[T],
         parity: &mut [U],
@@ -431,16 +490,16 @@ impl<'a> ShardByShard<'a> {
 /// or `Error::IncorrectShardSize` when applicable.
 ///
 #[derive(Debug)]
-pub struct ReedSolomon {
+pub struct ReedSolomon<F: Field> {
     data_shard_count: usize,
     parity_shard_count: usize,
     total_shard_count: usize,
-    matrix: Matrix,
-    tree: InversionTree,
+    matrix: Matrix<F>,
+    tree: InversionTree<F>,
 }
 
-impl Clone for ReedSolomon {
-    fn clone(&self) -> ReedSolomon {
+impl<F: Field> Clone for ReedSolomon<F> {
+    fn clone(&self) -> ReedSolomon<F> {
         ReedSolomon::new(
             self.data_shard_count,
             self.parity_shard_count,
@@ -449,14 +508,14 @@ impl Clone for ReedSolomon {
     }
 }
 
-impl PartialEq for ReedSolomon {
-    fn eq(&self, rhs: &ReedSolomon) -> bool {
+impl<F: Field> PartialEq for ReedSolomon<F> {
+    fn eq(&self, rhs: &ReedSolomon<F>) -> bool {
         self.data_shard_count == rhs.data_shard_count
             && self.parity_shard_count == rhs.parity_shard_count
     }
 }
 
-impl ReedSolomon {
+impl<F: Field> ReedSolomon<F> {
     // AUDIT
     //
     // Error detection responsibilities
@@ -510,7 +569,7 @@ impl ReedSolomon {
     //   - check consistency of length of individual slices
     //   - check length of `slice_present` matches length of `slices`
 
-    fn get_parity_rows(&self) -> SmallVec<[&[u8]; 32]> {
+    fn get_parity_rows(&self) -> SmallVec<[&[F::Elem]; 32]> {
         let mut parity_rows = SmallVec::with_capacity(self.parity_shard_count);
         let matrix = &self.matrix;
         for i in self.data_shard_count..self.total_shard_count {
@@ -520,7 +579,7 @@ impl ReedSolomon {
         parity_rows
     }
 
-    fn build_matrix(data_shards: usize, total_shards: usize) -> Matrix {
+    fn build_matrix(data_shards: usize, total_shards: usize) -> Matrix<F> {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
 
         let top = vandermonde.sub_matrix(0, 0, data_shards, data_shards);
@@ -534,15 +593,15 @@ impl ReedSolomon {
     ///
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
-    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > 256`.
-    pub fn new(data_shards: usize, parity_shards: usize) -> Result<ReedSolomon, Error> {
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > F::ORDER`.
+    pub fn new(data_shards: usize, parity_shards: usize) -> Result<ReedSolomon<F>, Error> {
         if data_shards == 0 {
             return Err(Error::TooFewDataShards);
         }
         if parity_shards == 0 {
             return Err(Error::TooFewParityShards);
         }
-        if data_shards + parity_shards > 256 {
+        if data_shards + parity_shards > F::ORDER {
             return Err(Error::TooManyShards);
         }
 
@@ -571,9 +630,9 @@ impl ReedSolomon {
         self.total_shard_count
     }
 
-    fn code_some_slices<T: AsRef<[u8]>, U: AsMut<[u8]>>(
+    fn code_some_slices<T: AsRef<[F::Elem]>, U: AsMut<[F::Elem]>>(
         &self,
-        matrix_rows: &[&[u8]],
+        matrix_rows: &[&[F::Elem]],
         inputs: &[T],
         outputs: &mut [U],
     ) {
@@ -582,11 +641,11 @@ impl ReedSolomon {
         }
     }
 
-    fn code_single_slice<U: AsMut<[u8]>>(
+    fn code_single_slice<U: AsMut<[F::Elem]>>(
         &self,
-        matrix_rows: &[&[u8]],
+        matrix_rows: &[&[F::Elem]],
         i_input: usize,
-        input: &[u8],
+        input: &[F::Elem],
         outputs: &mut [U],
     ) {
         outputs.iter_mut().enumerate().for_each(|(i_row, output)| {
@@ -594,23 +653,23 @@ impl ReedSolomon {
             let output = output.as_mut();
 
             if i_input == 0 {
-                galois_8::mul_slice(matrix_row_to_use, input, output);
+                F::mul_slice(matrix_row_to_use, input, output);
             } else {
-                galois_8::mul_slice_xor(matrix_row_to_use, input, output);
+                F::mul_slice_add(matrix_row_to_use, input, output);
             }
         })
     }
 
     fn check_some_slices_with_buffer<T, U>(
         &self,
-        matrix_rows: &[&[u8]],
+        matrix_rows: &[&[F::Elem]],
         inputs: &[T],
         to_check: &[T],
         buffer: &mut [U],
     ) -> bool
     where
-        T: AsRef<[u8]>,
-        U: AsRef<[u8]> + AsMut<[u8]>,
+        T: AsRef<[F::Elem]>,
+        U: AsRef<[F::Elem]> + AsMut<[F::Elem]>,
     {
         self.code_some_slices(matrix_rows, inputs, buffer);
 
@@ -638,7 +697,7 @@ impl ReedSolomon {
     pub fn encode_single<T, U>(&self, i_data: usize, mut shards: T) -> Result<(), Error>
     where
         T: AsRef<[U]> + AsMut<[U]>,
-        U: AsRef<[u8]> + AsMut<[u8]>,
+        U: AsRef<[F::Elem]> + AsMut<[F::Elem]>,
     {
         let slices = shards.as_mut();
 
@@ -666,10 +725,10 @@ impl ReedSolomon {
     /// otherwise the parity shards will be incorrect.
     ///
     /// It is recommended to use the `ShardByShard` bookkeeping struct instead of this method directly.
-    pub fn encode_single_sep<U: AsRef<[u8]> + AsMut<[u8]>>(
+    pub fn encode_single_sep<U: AsRef<[F::Elem]> + AsMut<[F::Elem]>>(
         &self,
         i_data: usize,
-        single_data: &[u8],
+        single_data: &[F::Elem],
         parity: &mut [U],
     ) -> Result<(), Error> {
         check_slice_index!(data => self, i_data);
@@ -690,7 +749,7 @@ impl ReedSolomon {
     pub fn encode<T, U>(&self, mut shards: T) -> Result<(), Error>
     where
         T: AsRef<[U]> + AsMut<[U]>,
-        U: AsRef<[u8]> + AsMut<[u8]>,
+        U: AsRef<[F::Elem]> + AsMut<[F::Elem]>,
     {
         let slices: &mut [U] = shards.as_mut();
 
@@ -707,7 +766,7 @@ impl ReedSolomon {
     /// data shards.
     ///
     /// The slots where the parity shards sit at will be overwritten.
-    pub fn encode_sep<T: AsRef<[u8]>, U: AsRef<[u8]> + AsMut<[u8]>>(
+    pub fn encode_sep<T: AsRef<[F::Elem]>, U: AsRef<[F::Elem]> + AsMut<[F::Elem]>>(
         &self,
         data: &[T],
         parity: &mut [U],
@@ -727,16 +786,16 @@ impl ReedSolomon {
     /// Checks if the parity shards are correct.
     ///
     /// This is a wrapper of `verify_with_buffer`.
-    pub fn verify<T: AsRef<[u8]>>(&self, slices: &[T]) -> Result<bool, Error> {
+    pub fn verify<T: AsRef<[F::Elem]>>(&self, slices: &[T]) -> Result<bool, Error> {
         check_piece_count!(all => self, slices);
         check_slices!(multi => slices);
 
         let slice_len = slices[0].as_ref().len();
 
-        let mut buffer: SmallVec<[Vec<u8>; 32]> = SmallVec::with_capacity(self.parity_shard_count);
+        let mut buffer: SmallVec<[Vec<F::Elem>; 32]> = SmallVec::with_capacity(self.parity_shard_count);
 
         for _ in 0..self.parity_shard_count {
-            buffer.push(vec![0; slice_len]);
+            buffer.push(vec![F::zero(); slice_len]);
         }
 
         self.verify_with_buffer(slices, &mut buffer)
@@ -745,8 +804,8 @@ impl ReedSolomon {
     /// Checks if the parity shards are correct.
     pub fn verify_with_buffer<T, U>(&self, slices: &[T], buffer: &mut [U]) -> Result<bool, Error>
     where
-        T: AsRef<[u8]>,
-        U: AsRef<[u8]> + AsMut<[u8]>,
+        T: AsRef<[F::Elem]>,
+        U: AsRef<[F::Elem]> + AsMut<[F::Elem]>,
     {
         check_piece_count!(all => self, slices);
         check_piece_count!(parity_buf => self, buffer);
@@ -769,7 +828,7 @@ impl ReedSolomon {
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
-    pub fn reconstruct<T: ReconstructShard>(&self, slices: &mut [T]) -> Result<(), Error> {
+    pub fn reconstruct<T: ReconstructShard<F>>(&self, slices: &mut [T]) -> Result<(), Error> {
         self.reconstruct_internal(slices, false)
     }
 
@@ -782,7 +841,7 @@ impl ReedSolomon {
     ///
     /// `reconstruct`, `reconstruct_data`, `reconstruct_shards`,
     /// `reconstruct_data_shards` share the same core code base.
-    pub fn reconstruct_data<T: ReconstructShard>(&self, slices: &mut [T]) -> Result<(), Error> {
+    pub fn reconstruct_data<T: ReconstructShard<F>>(&self, slices: &mut [T]) -> Result<(), Error> {
         self.reconstruct_internal(slices, true)
     }
 
@@ -790,7 +849,7 @@ impl ReedSolomon {
         &self,
         valid_indices: &[usize],
         invalid_indices: &[usize],
-    ) -> Arc<Matrix> {
+    ) -> Arc<Matrix<F>> {
         // Attempt to get the cached inverted matrix out of the tree
         // based on the indices of the invalid rows.
         match self.tree.get_inverted_matrix(&invalid_indices) {
@@ -827,7 +886,7 @@ impl ReedSolomon {
         }
     }
 
-    fn reconstruct_internal<T: ReconstructShard>(
+    fn reconstruct_internal<T: ReconstructShard<F>>(
         &self,
         shards: &mut [T],
         data_only: bool,
@@ -886,10 +945,10 @@ impl ReedSolomon {
         // as the data decode matrix is a N x N matrix, thus only needs
         // N valid indices for determining the N rows to pick from
         // `self.matrix`.
-        let mut sub_shards: SmallVec<[&[u8]; 32]> = SmallVec::with_capacity(data_shard_count);
-        let mut missing_data_slices: SmallVec<[&mut [u8]; 32]> =
+        let mut sub_shards: SmallVec<[&[F::Elem]; 32]> = SmallVec::with_capacity(data_shard_count);
+        let mut missing_data_slices: SmallVec<[&mut [F::Elem]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
-        let mut missing_parity_slices: SmallVec<[&mut [u8]; 32]> =
+        let mut missing_parity_slices: SmallVec<[&mut [F::Elem]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
         let mut valid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
         let mut invalid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
@@ -944,7 +1003,7 @@ impl ReedSolomon {
         // The input to the coding is all of the shards we actually
         // have, and the output is the missing data shards. The computation
         // is done using the special decode matrix we just built.
-        let mut matrix_rows: SmallVec<[&[u8]; 32]> =
+        let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);
 
         for i_slice in invalid_indices
@@ -966,7 +1025,7 @@ impl ReedSolomon {
             // The input to the coding is ALL of the data shards, including
             // any that we just calculated.  The output is whichever of the
             // parity shards were missing.
-            let mut matrix_rows: SmallVec<[&[u8]; 32]> =
+            let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
                 SmallVec::with_capacity(self.parity_shard_count);
             let parity_rows = self.get_parity_rows();
 
@@ -984,7 +1043,7 @@ impl ReedSolomon {
                 let mut i_old_data_slice = 0;
                 let mut i_new_data_slice = 0;
 
-                let mut all_data_slices: SmallVec<[&[u8]; 32]> =
+                let mut all_data_slices: SmallVec<[&[F::Elem]; 32]> =
                     SmallVec::with_capacity(data_shard_count);
 
                 let mut next_maybe_good = 0;
