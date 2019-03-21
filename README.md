@@ -106,8 +106,6 @@ Many thanks to the following people for testing and benchmarking on various plat
 
   - [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
 
-Polished version of the results will be published later.
-
 ## Notes
 #### Code quality review
 If you'd like to evaluate the quality of this library, you may find audit comments helpful.
