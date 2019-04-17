@@ -97,7 +97,7 @@ Below shows the result of one of the test configurations, other configurations s
 [Changelog](CHANGELOG.md)
 
 ## Contributions
-Contributions are welcome. Note that by submitting contributions, you agree to license your work under the same license used by this project (MIT).
+Contributions are welcome. Note that by submitting contributions, you agree to license your work under the same license used by this project as stated in the LICENSE file.
 
 ## Credits
 Many thanks to the following people for testing and benchmarking on various platforms
@@ -105,8 +105,6 @@ Many thanks to the following people for testing and benchmarking on various plat
   - [lnicola](https://github.com/lnicola/) (platforms: (Linux, Intel))
 
   - [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
-
-Polished version of the results will be published later.
 
 ## Notes
 #### Code quality review
