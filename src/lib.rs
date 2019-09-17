@@ -36,8 +36,8 @@ mod matrix;
 #[cfg(test)]
 mod tests;
 
-pub mod galois_8;
 pub mod galois_16;
+pub mod galois_8;
 
 pub use crate::errors::Error;
 pub use crate::errors::SBSError;
@@ -72,9 +72,18 @@ pub trait Field: Sized {
     /// The "one" element or multiplicative identity.
     fn one() -> Self::Elem;
 
+    fn nth_internal(n: usize) -> Self::Elem;
+
     /// Yield the nth element of the field. Panics if n >= ORDER.
     /// Assignment is arbitrary but must be unique to `n`.
-    fn nth(n: usize) -> Self::Elem;
+    fn nth(n: usize) -> Self::Elem {
+        if n >= Self::ORDER {
+            let pow = (Self::ORDER as f32).log(2.0) as usize;
+            panic!("{} out of bounds for GF(2^{}) member", n, pow)
+        }
+
+        Self::nth_internal(n)
+    }
 
     /// Multiply a slice of elements by another. Writes into the output slice.
     ///
@@ -97,7 +106,7 @@ pub trait Field: Sized {
         assert_eq!(input.len(), out.len());
 
         for (i, o) in input.iter().zip(out) {
-            *o = Self::add(o.clone(), Self::mul(elem.clone(), i.clone())) 
+            *o = Self::add(o.clone(), Self::mul(elem.clone(), i.clone()))
         }
     }
 }
@@ -115,10 +124,15 @@ pub trait ReconstructShard<F: Field> {
 
     /// Get a mutable reference to the shard data, initializing it to the
     /// given length if it was `None`. Returns an error if initialization fails.
-    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>>;
+    fn get_or_initialize(
+        &mut self,
+        len: usize,
+    ) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>>;
 }
 
-impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]> + FromIterator<F::Elem>> ReconstructShard<F> for Option<T> {
+impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]> + FromIterator<F::Elem>> ReconstructShard<F>
+    for Option<T>
+{
     fn len(&self) -> Option<usize> {
         self.as_ref().map(|x| x.as_ref().len())
     }
@@ -127,7 +141,10 @@ impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]> + FromIterator<F::Elem>> R
         self.as_mut().map(|x| x.as_mut())
     }
 
-    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
+    fn get_or_initialize(
+        &mut self,
+        len: usize,
+    ) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
         let is_some = self.is_some();
         let x = self
             .get_or_insert_with(|| iter::repeat(F::zero()).take(len).collect())
@@ -158,7 +175,10 @@ impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]>> ReconstructShard<F> for (
         }
     }
 
-    fn get_or_initialize(&mut self, len: usize) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
+    fn get_or_initialize(
+        &mut self,
+        len: usize,
+    ) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
         let x = self.0.as_mut();
         if x.len() == len {
             if self.1 {
@@ -500,11 +520,8 @@ pub struct ReedSolomon<F: Field> {
 
 impl<F: Field> Clone for ReedSolomon<F> {
     fn clone(&self) -> ReedSolomon<F> {
-        ReedSolomon::new(
-            self.data_shard_count,
-            self.parity_shard_count,
-        )
-        .expect("basic checks already passed as precondition of existence of self")
+        ReedSolomon::new(self.data_shard_count, self.parity_shard_count)
+            .expect("basic checks already passed as precondition of existence of self")
     }
 }
 
@@ -676,9 +693,9 @@ impl<F: Field> ReedSolomon<F> {
         let at_least_one_mismatch_present = buffer
             .iter_mut()
             .enumerate()
-            .map(|(i, expected_parity_shard)|
+            .map(|(i, expected_parity_shard)| {
                 expected_parity_shard.as_ref() == to_check[i].as_ref()
-            )
+            })
             .any(|x| !x); // find the first false (some slice is different from the expected one)
         !at_least_one_mismatch_present
     }
@@ -792,7 +809,8 @@ impl<F: Field> ReedSolomon<F> {
 
         let slice_len = slices[0].as_ref().len();
 
-        let mut buffer: SmallVec<[Vec<F::Elem>; 32]> = SmallVec::with_capacity(self.parity_shard_count);
+        let mut buffer: SmallVec<[Vec<F::Elem>; 32]> =
+            SmallVec::with_capacity(self.parity_shard_count);
 
         for _ in 0..self.parity_shard_count {
             buffer.push(vec![F::zero(); slice_len]);

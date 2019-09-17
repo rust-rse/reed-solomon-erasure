@@ -30,7 +30,7 @@ pub struct Matrix<F: Field> {
     row_count: usize,
     col_count: usize,
     data: SmallVec<[F::Elem; 1024]>, // store in flattened structure
-                                // the smallvec can hold a matrix of size up to 32x32 in stack
+                                     // the smallvec can hold a matrix of size up to 32x32 in stack
 }
 
 fn calc_matrix_row_start_end(col_count: usize, row: usize) -> (usize, usize) {
@@ -75,8 +75,9 @@ impl<F: Field> Matrix<F> {
     }
 
     #[cfg(test)]
-    pub fn make_random(size: usize) -> Matrix<F> 
-        where rand::distributions::Standard: rand::distributions::Distribution<F::Elem>
+    pub fn make_random(size: usize) -> Matrix<F>
+    where
+        rand::distributions::Standard: rand::distributions::Distribution<F::Elem>,
     {
         let mut vec: Vec<Vec<F::Elem>> = vec![vec![Default::default(); size]; size];
         for v in vec.iter_mut() {
@@ -122,10 +123,7 @@ impl<F: Field> Matrix<F> {
             for c in 0..rhs.col_count {
                 let mut val = F::zero();
                 for i in 0..self.col_count {
-                    let mul = F::mul(
-                        acc!(self, r, i).clone(),
-                        acc!(rhs, i, c).clone()
-                    );
+                    let mul = F::mul(acc!(self, r, i).clone(), acc!(rhs, i, c).clone());
 
                     val = F::add(val, mul);
                 }
@@ -219,7 +217,7 @@ impl<F: Field> Matrix<F> {
                     for c in 0..self.col_count {
                         acc!(self, r_below, c) = F::add(
                             acc!(self, r_below, c).clone(),
-                            F::mul(scale, acc!(self, r, c).clone())
+                            F::mul(scale, acc!(self, r, c).clone()),
                         );
                     }
                 }
@@ -234,7 +232,7 @@ impl<F: Field> Matrix<F> {
                     for c in 0..self.col_count {
                         acc!(self, r_above, c) = F::add(
                             acc!(self, r_above, c).clone(),
-                            F::mul(scale, acc!(self, d, c).clone())
+                            F::mul(scale, acc!(self, d, c).clone()),
                         );
                     }
                 }

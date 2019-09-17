@@ -157,9 +157,9 @@ mod tests {
     use std::collections::HashMap;
     use std::sync::Arc;
 
+    use crate::galois_8;
     use crate::inversion_tree::*;
     use crate::matrix::Matrix;
-    use crate::galois_8;
 
     use quickcheck::{Arbitrary, Gen, QuickCheck};
 
@@ -353,7 +353,8 @@ mod tests {
     // inversion tree is functionally the same as a map
     // but more efficient
     fn qc_tree_same_as_hash_map_prop(param: QCTreeTestParam) -> bool {
-        let tree: InversionTree<galois_8::Field> = InversionTree::new(param.data_shards, param.parity_shards);
+        let tree: InversionTree<galois_8::Field> =
+            InversionTree::new(param.data_shards, param.parity_shards);
         let mut map = HashMap::with_capacity(param.matrix_count);
 
         let mut invalid_indices_set = Vec::with_capacity(param.matrix_count);
