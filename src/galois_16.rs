@@ -46,11 +46,7 @@ impl crate::Field for Field {
         [0, 1]
     }
 
-    fn nth(n: usize) -> [u8; 2] {
-        if n >= Self::ORDER {
-            panic!("{} out of bounds for GF(2^8) member", n)
-        }
-
+    fn nth_internal(n: usize) -> [u8; 2] {
         [(n >> 8) as u8, n as u8]
     }
 }

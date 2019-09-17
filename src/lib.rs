@@ -74,7 +74,16 @@ pub trait Field: Sized {
 
     /// Yield the nth element of the field. Panics if n >= ORDER.
     /// Assignment is arbitrary but must be unique to `n`.
-    fn nth(n: usize) -> Self::Elem;
+    fn nth_internal(n: usize) -> Self::Elem;
+
+    fn nth(n: usize) -> Self::Elem {
+        if n >= Self::ORDER {
+            let pow = (Self::ORDER as f32).log(2.0) as usize;
+            panic!("{} out of bounds for GF(2^{}) member", n, pow)
+        }
+
+        Self::nth_internal(n)
+    }
 
     /// Multiply a slice of elements by another. Writes into the output slice.
     ///
