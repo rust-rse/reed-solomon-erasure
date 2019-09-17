@@ -370,7 +370,7 @@ mod tests {
         }
 
         fn qc_exponent(a: Element, n: u8) -> bool {
-            n == 0 || {
+            a.is_zero() == 0 || {
                 let mut b = a.exp(n as usize);
                 for _ in 1..n {
                     b = b / a;
