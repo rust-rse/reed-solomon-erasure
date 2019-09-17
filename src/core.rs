@@ -11,28 +11,28 @@ use crate::matrix::Matrix;
 use super::Field;
 use super::ReconstructShard;
 
-/// Parameters for parallelism.
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub struct ParallelParam {
-    /// Number of bytes to split the slices into for computations
-    /// which can be done in parallel.
-    ///
-    /// Default is 32768.
-    pub bytes_per_encode: usize,
-}
+// /// Parameters for parallelism.
+// #[derive(PartialEq, Debug, Clone, Copy)]
+// pub struct ParallelParam {
+//     /// Number of bytes to split the slices into for computations
+//     /// which can be done in parallel.
+//     ///
+//     /// Default is 32768.
+//     pub bytes_per_encode: usize,
+// }
 
-impl ParallelParam {
-    /// Create a new `ParallelParam` with the given split arity.
-    pub fn new(bytes_per_encode: usize) -> ParallelParam {
-        ParallelParam { bytes_per_encode }
-    }
-}
+// impl ParallelParam {
+//     /// Create a new `ParallelParam` with the given split arity.
+//     pub fn new(bytes_per_encode: usize) -> ParallelParam {
+//         ParallelParam { bytes_per_encode }
+//     }
+// }
 
-impl Default for ParallelParam {
-    fn default() -> Self {
-        ParallelParam::new(32768)
-    }
-}
+// impl Default for ParallelParam {
+//     fn default() -> Self {
+//         ParallelParam::new(32768)
+//     }
+// }
 
 /// Bookkeeper for shard by shard encoding.
 ///
