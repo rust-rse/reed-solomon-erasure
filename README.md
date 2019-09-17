@@ -100,6 +100,12 @@ Below shows the result of one of the test configurations, other configurations s
 Contributions are welcome. Note that by submitting contributions, you agree to license your work under the same license used by this project as stated in the LICENSE file.
 
 ## Credits
+#### Galois 16 backend
+Many thanks to the following people for overhaul of the library and introduction of Galois 16 backend
+
+  - 
+
+#### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
 
   - [lnicola](https://github.com/lnicola/) (platforms: (Linux, Intel))
