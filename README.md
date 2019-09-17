@@ -120,20 +120,8 @@ The `1.X.X` implementation mostly copies [BackBlaze's Java implementation](https
 The test suite for all versions copies [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon) as basis.
 
 ## License
-#### BackBlaze's Java Reed-Solomon implementation
-The tables and main functions of ```build.rs``` are translated from [BackBlaze Java Implementation](https://github.com/Backblaze/JavaReedSolomon), and are under the same MIT License as used by the BackBlaze project
-
-The source code copied directly from BackBlaze's project repo are under the MIT License as used by the project, the files are in `BackBlaze_JavaReedSolomon`
-
-#### Klaus Post's Go Reed-Solomon implementation
-The tables and main functions of ```src/*``` are translated from [Klaus Post's Go Implementation](https://github.com/klauspost/reedsolomon), and are under the same MIT License as used by Klaus Post's project
-
-The source code copied directly from Klaus Post's project repo are under the MIT License as used by the project, the files are in `KlausPost_reedsolomon`
-
 #### Nicolas Trangez's Haskell Reed-Solomon implementation
 The C files for SIMD operations are copied (with no/minor modifications) from [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon), and are under the same MIT License as used by NicolasT's project
-
-The source code copied directly from Nicolas Trangez's project repo are under the MIT License as used by the project, the files are in `NicolasT_reedsolomon`
 
 #### TL;DR
 All files are released under the MIT License
