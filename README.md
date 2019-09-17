@@ -114,7 +114,7 @@ Many thanks to the following people for testing and benchmarking on various plat
 
   - Laurențiu Nicola [lnicola](https://github.com/lnicola/) (platforms: Linux, Intel)
 
-  - Roger Andersen [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
+  - Roger Andersen [hexjelly](https://github.com/hexjelly) (platforms: Windows, AMD)
 
 ## Notes
 #### Code quality review
