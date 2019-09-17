@@ -112,7 +112,7 @@ Many thanks to the following people for overhaul of the library and introduction
 #### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
 
-  - Laurențiu Nicola [lnicola](https://github.com/lnicola/) (platforms: (Linux, Intel))
+  - Laurențiu Nicola [lnicola](https://github.com/lnicola/) (platforms: Linux, Intel)
 
   - Roger Andersen [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
 
