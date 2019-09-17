@@ -1,5 +1,5 @@
+use super::{fill_random, option_shards_into_shards, shards_into_option_shards};
 use crate::galois_16::ReedSolomon;
-use super::{option_shards_into_shards, shards_into_option_shards, fill_random};
 
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{

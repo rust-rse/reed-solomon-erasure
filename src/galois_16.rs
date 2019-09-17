@@ -4,7 +4,7 @@
 //! field of `GF(2^8)`, as defined in the `galois_8` module.
 
 use crate::galois_8;
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 // the irreducible polynomial used as a modulus for the field.
 // print R.irreducible_element(2,algorithm="first_lexicographic" )
@@ -19,7 +19,7 @@ pub struct Field;
 
 impl crate::Field for Field {
     const ORDER: usize = 65536;
-    
+
     type Elem = [u8; 2];
 
     fn add(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {
@@ -47,7 +47,9 @@ impl crate::Field for Field {
     }
 
     fn nth(n: usize) -> [u8; 2] {
-        if n >= Self::ORDER { panic!("{} out of bounds for GF(2^8) member", n) }
+        if n >= Self::ORDER {
+            panic!("{} out of bounds for GF(2^8) member", n)
+        }
 
         [(n >> 8) as u8, n as u8]
     }
@@ -70,7 +72,9 @@ impl Element {
     }
 
     // A constant element evaluating to `n`.
-    fn constant(n: u8) -> Element { Element([0, n]) }
+    fn constant(n: u8) -> Element {
+        Element([0, n])
+    }
 
     // Whether this is the zero element.
     fn is_zero(&self) -> bool {
@@ -107,8 +111,8 @@ impl Element {
     }
 
     fn degree(&self) -> usize {
-        if self.0[0] != 0 { 
-            1 
+        if self.0[0] != 0 {
+            1
         } else {
             0
         }
@@ -116,21 +120,22 @@ impl Element {
 }
 
 impl From<[u8; 2]> for Element {
-    fn from(c: [u8; 2]) -> Self { Element(c) }
+    fn from(c: [u8; 2]) -> Self {
+        Element(c)
+    }
 }
 
 impl Default for Element {
-    fn default() -> Self { Element::zero() }
+    fn default() -> Self {
+        Element::zero()
+    }
 }
 
 impl Add for Element {
     type Output = Element;
 
     fn add(self, other: Self) -> Element {
-        Element([
-            self.0[0] ^ other.0[0],
-            self.0[1] ^ other.0[1],
-        ])
+        Element([self.0[0] ^ other.0[0], self.0[1] ^ other.0[1]])
     }
 }
 
@@ -150,7 +155,7 @@ impl Mul for Element {
         let out: [u8; 3] = [
             galois_8::mul(self.0[0], rhs.0[0]),
             galois_8::add(
-                galois_8::mul(self.0[1], rhs.0[0]), 
+                galois_8::mul(self.0[1], rhs.0[0]),
                 galois_8::mul(self.0[0], rhs.0[1]),
             ),
             galois_8::mul(self.0[1], rhs.0[1]),
@@ -164,10 +169,7 @@ impl Mul<u8> for Element {
     type Output = Element;
 
     fn mul(self, rhs: u8) -> Element {
-        Element([
-            galois_8::mul(rhs, self.0[0]),
-            galois_8::mul(rhs, self.0[1]),
-        ])
+        Element([galois_8::mul(rhs, self.0[0]), galois_8::mul(rhs, self.0[1])])
     }
 }
 
@@ -215,7 +217,7 @@ impl Element {
             // dividing by constant is the same as multiplying by another constant.
             // and all constant multiples of EXT_POLY are in the equivalence class
             // of 0.
-            return (Element::zero(), Element::zero())
+            return (Element::zero(), Element::zero());
         }
 
         // divisor is ensured linear here.
@@ -258,7 +260,7 @@ impl Element {
             (quotient, Element::zero())
         } else {
             // self degree is at least divisor degree, divisor degree not 0.
-            // therefore both are 1. 
+            // therefore both are 1.
             debug_assert_eq!(self.degree(), divisor_degree);
             debug_assert_eq!(self.degree(), 1);
 
@@ -293,7 +295,7 @@ impl Element {
         // done here because EXT_POLY is outside the scope of `Element`.
         let (gcd, y) = {
             // self / EXT_POLY = (0, self)
-            let remainder = self; 
+            let remainder = self;
 
             // GCD is constant because EXT_POLY is irreducible
             let (g, x, _) = remainder.const_egcd(EgcdRhs::ExtPoly);

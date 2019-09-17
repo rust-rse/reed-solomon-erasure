@@ -35,7 +35,9 @@ impl crate::Field for Field {
     }
 
     fn nth(n: usize) -> u8 {
-        if n >= Self::ORDER { panic!("{} out of bounds for GF(2^8) member", n) }
+        if n >= Self::ORDER {
+            panic!("{} out of bounds for GF(2^8) member", n)
+        }
 
         n as u8
     }
