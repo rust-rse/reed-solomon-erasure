@@ -18,15 +18,15 @@ Version `>= 2.0.0` copies Klaus Post's implementation. The SIMD C code is copied
 See [Notes](#notes) and [License](#license) section for details.
 
 ## Usage
-Add the following to your `Cargo.toml` for the normal version(tries to compile with SIMD operations when applicable)
+Add the following to your `Cargo.toml` for the normal version (pure Rust version)
 ```toml
 [dependencies]
-reed-solomon-erasure = "3.1"
+reed-solomon-erasure = "4.0"
 ```
-or the following for the pure rust version
+or the following for the version which tries to utilise SIMD
 ```toml
 [dependencies]
-reed-solomon-erasure = { version = "3.1", default-features = false }
+reed-solomon-erasure = { version = "4.0", features = "simd-accel" }
 ```
 and the following to your crate root
 ```rust
@@ -100,17 +100,21 @@ Below shows the result of one of the test configurations, other configurations s
 Contributions are welcome. Note that by submitting contributions, you agree to license your work under the same license used by this project as stated in the LICENSE file.
 
 ## Credits
-#### Galois 16 backend
+#### Library overhaul and Galois 2^16 backend
 Many thanks to the following people for overhaul of the library and introduction of Galois 16 backend
 
-  - 
+  - [drskalman](https://github.com/drskalman)
+
+  - Jeff Burdges [burdges](https://github.com/burdges)
+
+  - Robert Habermeier [rphmeier](https://github.com/rphmeier)
 
 #### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
 
-  - [lnicola](https://github.com/lnicola/) (platforms: (Linux, Intel))
+  - Laurențiu Nicola [lnicola](https://github.com/lnicola/) (platforms: Linux, Intel)
 
-  - [hexjelly](https://github.com/hexjelly) (platforms: (Windows, AMD))
+  - Roger Andersen [hexjelly](https://github.com/hexjelly) (platforms: Windows, AMD)
 
 ## Notes
 #### Code quality review
