@@ -72,10 +72,10 @@ pub trait Field: Sized {
     /// The "one" element or multiplicative identity.
     fn one() -> Self::Elem;
 
-    /// Yield the nth element of the field. Panics if n >= ORDER.
-    /// Assignment is arbitrary but must be unique to `n`.
     fn nth_internal(n: usize) -> Self::Elem;
 
+    /// Yield the nth element of the field. Panics if n >= ORDER.
+    /// Assignment is arbitrary but must be unique to `n`.
     fn nth(n: usize) -> Self::Elem {
         if n >= Self::ORDER {
             let pow = (Self::ORDER as f32).log(2.0) as usize;
