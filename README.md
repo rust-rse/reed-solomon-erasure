@@ -91,9 +91,11 @@ Machine: laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 C
 
 Below shows the result of one of the test configurations, other configurations show similar results in terms of ratio.
 
-|Configuration| Klaus Post's | >= 2.1.0 | 2.0.X | 1.X.X |
+|Configuration| Klaus Post's | >= 2.1.0 && < 4.0.0 | 2.0.X | 1.X.X |
 |---|---|---|---|---|
 | 10x2x1M | ~7800MB/s |~4500MB/s | ~1000MB/s | ~240MB/s |
+
+Versions `>= 4.0.0` have not been benchmarked thoroughly yet
 
 ## Changelog
 [Changelog](CHANGELOG.md)
