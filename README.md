@@ -103,7 +103,7 @@ Contributions are welcome. Note that by submitting contributions, you agree to l
 
 ## Credits
 #### Library overhaul and Galois 2^16 backend
-Many thanks to the following people for overhaul of the library and introduction of Galois 16 backend
+Many thanks to the following people for overhaul of the library and introduction of Galois 2^16 backend
 
   - [drskalman](https://github.com/drskalman)
 
