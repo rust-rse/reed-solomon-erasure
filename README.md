@@ -76,10 +76,10 @@ fn main () {
 ```
 
 ## Benchmark it yourself
-You can test performance under different configurations quickly(e.g. data parity shards ratio, parallel parameters)
+You can test performance under different configurations quickly (e.g. data parity shards ratio, parallel parameters)
 by cloning this repo: https://github.com/darrenldl/rse-benchmark
 
-`rse-benchmark` contains a copy of this library(usually a fully functional dev version), so you only need to adjust `main.rs`
+`rse-benchmark` contains a copy of this library (usually a fully functional dev version), so you only need to adjust `main.rs`
 then do `cargo run --release` to start the benchmark.
 
 ## Performance
