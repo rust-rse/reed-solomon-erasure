@@ -40,7 +40,7 @@ extern crate reed_solomon_erasure;
 
 use reed_solomon_erasure::galois_8::ReedSolomon;
 // or use the following for Galois 2^16 backend
-// use reed_solomon_erasure::galois_8::ReedSolomon;
+// use reed_solomon_erasure::galois_16::ReedSolomon;
 
 fn main () {
     let r = ReedSolomon::new(3, 2).unwrap(); // 3 data shards, 2 parity shards
