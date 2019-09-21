@@ -26,10 +26,10 @@ use std::iter::{self, FromIterator};
 #[macro_use]
 mod macros;
 
+mod core;
 mod errors;
 mod inversion_tree;
 mod matrix;
-mod core;
 
 #[cfg(test)]
 mod tests;
@@ -40,8 +40,8 @@ pub mod galois_8;
 pub use crate::errors::Error;
 pub use crate::errors::SBSError;
 
-pub use crate::core::ShardByShard;
 pub use crate::core::ReedSolomon;
+pub use crate::core::ShardByShard;
 
 /// A finite field to perform encoding over.
 pub trait Field: Sized {
