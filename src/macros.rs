@@ -6,7 +6,7 @@
 /// # use reed_solomon_erasure::*;
 /// # fn main () {
 /// let shards: Vec<Vec<u8>> = shards!([1, 2, 3],
-///                      [4, 5, 6]);
+///                                    [4, 5, 6]);
 /// # }
 /// ```
 #[macro_export]
@@ -37,7 +37,7 @@ macro_rules! shards {
 /// # #[macro_use] extern crate reed_solomon_erasure;
 /// # fn main () {
 /// let mut array: [[u8; 3]; 2] = [[1, 2, 3],
-///                                 [4, 5, 6]];
+///                                [4, 5, 6]];
 ///
 /// let refs: Vec<&mut [u8]> =
 ///     convert_2D_slices!(array =>to_mut_vec &mut [u8]);
@@ -50,7 +50,7 @@ macro_rules! shards {
 /// # use smallvec::SmallVec;
 /// # fn main () {
 /// let mut array: [[u8; 3]; 2] = [[1, 2, 3],
-///                                 [4, 5, 6]];
+///                                [4, 5, 6]];
 ///
 /// let refs: SmallVec<[&mut [u8]; 32]> =
 ///     convert_2D_slices!(array =>to_mut SmallVec<[&mut [u8]; 32]>,

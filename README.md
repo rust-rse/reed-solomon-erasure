@@ -40,7 +40,7 @@ extern crate reed_solomon_erasure;
 
 use reed_solomon_erasure::galois_8::ReedSolomon;
 // or use the following for Galois 2^16 backend
-// use reed_solomon_erasure::galois_8::ReedSolomon;
+// use reed_solomon_erasure::galois_16::ReedSolomon;
 
 fn main () {
     let r = ReedSolomon::new(3, 2).unwrap(); // 3 data shards, 2 parity shards
@@ -76,10 +76,10 @@ fn main () {
 ```
 
 ## Benchmark it yourself
-You can test performance under different configurations quickly(e.g. data parity shards ratio, parallel parameters)
+You can test performance under different configurations quickly (e.g. data parity shards ratio, parallel parameters)
 by cloning this repo: https://github.com/darrenldl/rse-benchmark
 
-`rse-benchmark` contains a copy of this library(usually a fully functional dev version), so you only need to adjust `main.rs`
+`rse-benchmark` contains a copy of this library (usually a fully functional dev version), so you only need to adjust `main.rs`
 then do `cargo run --release` to start the benchmark.
 
 ## Performance
@@ -91,9 +91,11 @@ Machine: laptop with `Intel(R) Core(TM) i5-3337U CPU @ 1.80GHz (max 2.70GHz) 2 C
 
 Below shows the result of one of the test configurations, other configurations show similar results in terms of ratio.
 
-|Configuration| Klaus Post's | >= 2.1.0 | 2.0.X | 1.X.X |
+|Configuration| Klaus Post's | >= 2.1.0 && < 4.0.0 | 2.0.X | 1.X.X |
 |---|---|---|---|---|
 | 10x2x1M | ~7800MB/s |~4500MB/s | ~1000MB/s | ~240MB/s |
+
+Versions `>= 4.0.0` have not been benchmarked thoroughly yet
 
 ## Changelog
 [Changelog](CHANGELOG.md)

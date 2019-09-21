@@ -369,14 +369,28 @@ mod tests {
             }
         }
 
-        fn qc_exponent(a: Element, n: u8) -> bool {
-            n == 0 || {
+        fn qc_exponent_1(a: Element, n: u8) -> bool {
+            a.is_zero() || n == 0 || {
                 let mut b = a.exp(n as usize);
                 for _ in 1..n {
                     b = b / a;
                 }
 
                 a == b
+            }
+        }
+
+        fn qc_exponent_2(a: Element, n: u8) -> bool {
+            a.is_zero() || {
+                let mut res = true;
+                let mut b = Element::constant(1);
+
+                for i in 0..n {
+                    res = res && b == a.exp(i as usize);
+                    b = b * a;
+                }
+
+                res
             }
         }
 
