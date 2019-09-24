@@ -21,7 +21,6 @@
  * SOFTWARE
  */
 
-#include <unistd.h>
 #include <stdint.h>
 
 #if HAVE_CONFIG_H
