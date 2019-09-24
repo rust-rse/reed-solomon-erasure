@@ -36,7 +36,6 @@
         const size_t len
 #define PROTO(name)                     \
         PROTO_RETURN                    \
-        __attribute__((nonnull))        \
         name (PROTO_ARGS)
 
 PROTO(reedsolomon_gal_mul);
