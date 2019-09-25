@@ -11,6 +11,8 @@ branches:
 script:
   - cargo build --verbose --all
   - cargo test  --verbose --all
+  - cargo build --verbose --all --features=simd-accel
+  - cargo test  --verbose --all --features=simd-accel
 
 env:
   global:
