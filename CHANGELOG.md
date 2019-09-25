@@ -1,3 +1,10 @@
+## 4.0.1
+- Updated SIMD C code for Windows compatibility
+  - Removed include of `unistd.h` in `simd_c/reedsolomon.c`
+  - Removed GCC `nonnull` attribute in `simd_c/reedsolomon.h`
+  - See PR #63 #64 for details
+- Replaced use of `libc::uint8_t` in `src/galois_8.rs` with `u8`
+
 ## 4.0.0
 - Major API restructure: removed `Shard` type in favor of generic functions
 - The logic of this crate is now generic over choice of finite field
