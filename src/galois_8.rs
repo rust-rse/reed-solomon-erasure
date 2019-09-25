@@ -263,18 +263,18 @@ fn slice_xor(input: &[u8], out: &mut [u8]) {
 ))]
 extern "C" {
     fn reedsolomon_gal_mul(
-        low: *const libc::uint8_t,
-        high: *const libc::uint8_t,
-        input: *const libc::uint8_t,
-        out: *mut libc::uint8_t,
+        low: *const u8,
+        high: *const u8,
+        input: *const u8,
+        out: *mut u8,
         len: libc::size_t,
     ) -> libc::size_t;
 
     fn reedsolomon_gal_mul_xor(
-        low: *const libc::uint8_t,
-        high: *const libc::uint8_t,
-        input: *const libc::uint8_t,
-        out: *mut libc::uint8_t,
+        low: *const u8,
+        high: *const u8,
+        input: *const u8,
+        out: *mut u8,
         len: libc::size_t,
     ) -> libc::size_t;
 }
@@ -285,13 +285,13 @@ extern "C" {
     not(any(target_os = "android", target_os = "ios"))
 ))]
 pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
-    let low: *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
-    let high: *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
+    let low: *const u8 = &MUL_TABLE_LOW[c as usize][0];
+    let high: *const u8 = &MUL_TABLE_HIGH[c as usize][0];
 
     assert_eq!(input.len(), out.len());
 
-    let input_ptr: *const libc::uint8_t = &input[0];
-    let out_ptr: *mut libc::uint8_t = &mut out[0];
+    let input_ptr: *const u8 = &input[0];
+    let out_ptr: *mut u8 = &mut out[0];
     let size: libc::size_t = input.len();
 
     let bytes_done: usize =
@@ -306,13 +306,13 @@ pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
     not(any(target_os = "android", target_os = "ios"))
 ))]
 pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
-    let low: *const libc::uint8_t = &MUL_TABLE_LOW[c as usize][0];
-    let high: *const libc::uint8_t = &MUL_TABLE_HIGH[c as usize][0];
+    let low: *const u8 = &MUL_TABLE_LOW[c as usize][0];
+    let high: *const u8 = &MUL_TABLE_HIGH[c as usize][0];
 
     assert_eq!(input.len(), out.len());
 
-    let input_ptr: *const libc::uint8_t = &input[0];
-    let out_ptr: *mut libc::uint8_t = &mut out[0];
+    let input_ptr: *const u8 = &input[0];
+    let out_ptr: *mut u8 = &mut out[0];
     let size: libc::size_t = input.len();
 
     let bytes_done: usize =
