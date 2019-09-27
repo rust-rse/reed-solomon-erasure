@@ -58,7 +58,7 @@ dependencies = [
 
 [[package]]
 name = "reed-solomon-erasure-wasm"
-version = "0.1.0"
+version = "0.2.4"
 dependencies = [
  "reed-solomon-erasure 4.0.1",
  "wasm-bindgen 0.2.51 (registry+https://github.com/rust-lang/crates.io-index)",

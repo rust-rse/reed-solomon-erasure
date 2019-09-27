@@ -2,6 +2,7 @@ extern crate reed_solomon_erasure;
 extern crate wasm_bindgen;
 
 use reed_solomon_erasure::*;
+use reed_solomon_erasure::galois_8::ReedSolomon;
 use wasm_bindgen::prelude::*;
 
 #[global_allocator]
