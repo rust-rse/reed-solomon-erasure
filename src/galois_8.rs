@@ -117,6 +117,7 @@ macro_rules! return_if_empty {
 #[cfg(not(all(
     feature = "simd-accel",
     any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(target_env = "msvc"),
     not(any(target_os = "android", target_os = "ios"))
 )))]
 pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
@@ -126,6 +127,7 @@ pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
 #[cfg(not(all(
     feature = "simd-accel",
     any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(target_env = "msvc"),
     not(any(target_os = "android", target_os = "ios"))
 )))]
 pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
@@ -259,6 +261,7 @@ fn slice_xor(input: &[u8], out: &mut [u8]) {
 #[cfg(all(
     feature = "simd-accel",
     any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(target_env = "msvc"),
     not(any(target_os = "android", target_os = "ios"))
 ))]
 extern "C" {
@@ -282,6 +285,7 @@ extern "C" {
 #[cfg(all(
     feature = "simd-accel",
     any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(target_env = "msvc"),
     not(any(target_os = "android", target_os = "ios"))
 ))]
 pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
@@ -303,6 +307,7 @@ pub fn mul_slice(c: u8, input: &[u8], out: &mut [u8]) {
 #[cfg(all(
     feature = "simd-accel",
     any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(target_env = "msvc"),
     not(any(target_os = "android", target_os = "ios"))
 ))]
 pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
