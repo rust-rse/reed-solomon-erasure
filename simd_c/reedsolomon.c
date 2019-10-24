@@ -62,6 +62,17 @@
 # define USE_AVX2 0
 #endif
 
+
+#if defined(__AVX512F__) && __AVX512F__
+# define USE_AVX512 1
+# undef VECTOR_SIZE
+# define VECTOR_SIZE 64
+# include <immintrin.h>
+#else
+# define USE_AVX512 0
+#endif
+
+
 /*#if ((defined(__ARM_NEON__) && __ARM_NEON__) \
         || (defined(__ARM_NEON) && __ARM_NEON) \
         || (defined(__aarch64__) && __aarch64__)) \
@@ -160,6 +171,14 @@ typedef union {
 } v256 __attribute__((aligned(1)));
 #undef VSIZE
 
+#define VSIZE 512
+typedef union {
+        T(uint8_t, u8);
+#if USE_AVX512
+        __m512i m512i;
+#endif
+} v512 __attribute__((aligned(1)));
+
 #undef T
 #undef T1
 
@@ -167,6 +186,8 @@ typedef union {
 typedef v128 v;
 #elif VECTOR_SIZE == 32
 typedef v256 v;
+#elif VECTOR_SIZE == 64
+typedef v512 v;
 #else
 # error Unsupported VECTOR_SIZE
 #endif
@@ -183,7 +204,9 @@ static ALWAYS_INLINE UNALIGNED_ACCESS v128 loadu_v128(const uint8_t *in) {
 }
 
 static ALWAYS_INLINE UNALIGNED_ACCESS v loadu_v(const uint8_t *in) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_loadu_si512((const __m512i *)in) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_loadu_si256((const __m256i *)in) };
 #else
         const v128 result = loadu_v128(in);
@@ -193,7 +216,9 @@ static ALWAYS_INLINE UNALIGNED_ACCESS v loadu_v(const uint8_t *in) {
 }
 
 static ALWAYS_INLINE ALIGNED_ACCESS v load_v(const uint8_t *in) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_load_si512((const __m512i *)in) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_load_si256((const __m256i *)in) };
 #elif USE_SSE2
         const v128 result = { .m128i = _mm_load_si128((const __m128i *)in) };
@@ -209,7 +234,9 @@ static ALWAYS_INLINE ALIGNED_ACCESS v load_v(const uint8_t *in) {
 }
 
 static ALWAYS_INLINE CONST_FUNCTION v set1_epi8_v(const uint8_t c) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_set1_epi8(c) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_set1_epi8(c) };
 #elif USE_SSE2
         const v128 result = { .m128i = _mm_set1_epi8(c) };
@@ -235,7 +262,9 @@ static ALWAYS_INLINE CONST_FUNCTION v set1_epi8_v(const uint8_t c) {
 }
 
 static ALWAYS_INLINE CONST_FUNCTION v srli_epi64_v(const v in, const unsigned int n) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_srli_epi64(in.m512i, n) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_srli_epi64(in.m256i, n) };
 #elif USE_SSE2
         const v128 result = { .m128i = _mm_srli_epi64(in.m128i, n) };
@@ -257,7 +286,9 @@ static ALWAYS_INLINE CONST_FUNCTION v srli_epi64_v(const v in, const unsigned in
 }
 
 static ALWAYS_INLINE CONST_FUNCTION v and_v(const v a, const v b) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_and_si512(a.m512i, b.m512i) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_and_si256(a.m256i, b.m256i) };
 #elif USE_SSE2
         const v128 result = { .m128i = _mm_and_si128(a.m128i, b.m128i) };
@@ -273,7 +304,9 @@ static ALWAYS_INLINE CONST_FUNCTION v and_v(const v a, const v b) {
 }
 
 static ALWAYS_INLINE CONST_FUNCTION v xor_v(const v a, const v b) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_xor_si512(a.m512i, b.m512i) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_xor_si256(a.m256i, b.m256i) };
 #elif USE_SSE2
         const v128 result = { .m128i = _mm_xor_si128(a.m128i, b.m128i) };
@@ -289,7 +322,9 @@ static ALWAYS_INLINE CONST_FUNCTION v xor_v(const v a, const v b) {
 }
 
 static ALWAYS_INLINE CONST_FUNCTION v shuffle_epi8_v(const v vec, const v mask) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_shuffle_epi8(vec.m512i, mask.m512i) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_shuffle_epi8(vec.m256i, mask.m256i) };
 #elif USE_SSSE3
         const v128 result = { .m128i = _mm_shuffle_epi8(vec.m128i, mask.m128i) };
@@ -329,7 +364,9 @@ static ALWAYS_INLINE CONST_FUNCTION v shuffle_epi8_v(const v vec, const v mask) 
 }
 
 static ALWAYS_INLINE UNALIGNED_ACCESS void storeu_v(uint8_t *out, const v vec) {
-#if USE_AVX2
+#if USE_AVX512
+        _mm512_storeu_si512((__m512i *)out, vec.m512i);
+#elif USE_AVX2
         _mm256_storeu_si256((__m256i *)out, vec.m256i);
 #elif USE_SSE2
         _mm_storeu_si128((__m128i *)out, vec.m128i);
@@ -339,7 +376,9 @@ static ALWAYS_INLINE UNALIGNED_ACCESS void storeu_v(uint8_t *out, const v vec) {
 }
 
 static ALWAYS_INLINE ALIGNED_ACCESS void store_v(uint8_t *out, const v vec) {
-#if USE_AVX2
+#if USE_AVX512
+        _mm512_store_si512((__m512i *)out, vec.m512i);
+#elif USE_AVX2
         _mm256_store_si256((__m256i *)out, vec.m256i);
 #elif USE_SSE2
         _mm_store_si128((__m128i *)out, vec.m128i);
@@ -353,7 +392,9 @@ static ALWAYS_INLINE ALIGNED_ACCESS void store_v(uint8_t *out, const v vec) {
 }
 
 static ALWAYS_INLINE CONST_FUNCTION v replicate_v128_v(const v128 vec) {
-#if USE_AVX2
+#if USE_AVX512
+        const v512 result = { .m512i = _mm512_broadcast_i32x4(vec.m128i) };
+#elif USE_AVX2
         const v256 result = { .m256i = _mm256_broadcastsi128_si256(vec.m128i) };
 #else
         const v128 result = vec;
