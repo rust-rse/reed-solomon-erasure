@@ -550,7 +550,7 @@ mod tests {
     #[test]
     fn test_slice_add() {
         let length_list = [16, 32, 34];
-        for len in length_list.into_iter() {
+        for len in length_list.iter() {
             let mut input = vec![0; *len];
             fill_random(&mut input);
             let mut output = vec![0; *len];

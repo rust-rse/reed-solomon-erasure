@@ -56,7 +56,7 @@ fn shards_to_option_shards<T: Clone>(shards: &[Vec<T>]) -> Vec<Option<Vec<T>>> {
 fn shards_into_option_shards<T>(shards: Vec<Vec<T>>) -> Vec<Option<Vec<T>>> {
     let mut result = Vec::with_capacity(shards.len());
 
-    for v in shards.into_iter() {
+    for v in shards {
         result.push(Some(v));
     }
     result
@@ -79,7 +79,7 @@ fn option_shards_to_shards<T: Clone>(shards: &[Option<Vec<T>>]) -> Vec<Vec<T>> {
 fn option_shards_into_shards<T>(shards: Vec<Option<Vec<T>>>) -> Vec<Vec<T>> {
     let mut result = Vec::with_capacity(shards.len());
 
-    for shard in shards.into_iter() {
+    for shard in shards {
         let shard = match shard {
             Some(x) => x,
             None => panic!("Missing shard"),

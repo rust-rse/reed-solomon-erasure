@@ -699,7 +699,7 @@ impl<F: Field> ReedSolomon<F> {
                 // matrix could be used to generate the shards that we have
                 // from the original data.
                 let mut sub_matrix = Matrix::new(self.data_shard_count, self.data_shard_count);
-                for (sub_matrix_row, &valid_index) in valid_indices.into_iter().enumerate() {
+                for (sub_matrix_row, &valid_index) in valid_indices.iter().enumerate() {
                     for c in 0..self.data_shard_count {
                         sub_matrix.set(sub_matrix_row, c, self.matrix.get(valid_index, c));
                     }
@@ -791,7 +791,7 @@ impl<F: Field> ReedSolomon<F> {
         let mut invalid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
 
         // Separate the shards into groups
-        for (matrix_row, shard) in shards.into_iter().enumerate() {
+        for (matrix_row, shard) in shards.iter_mut().enumerate() {
             // get or initialize the shard so we can reconstruct in-place,
             // but if we are only reconstructing data shard,
             // do not initialize if the shard is not a data shard
