@@ -58,7 +58,7 @@ fn main () {
 
     // Make a copy and transform it into option shards arrangement
     // for feeding into reconstruct_shards
-    let mut shards: Vec<_> = master_copy.clone().into_iter().map(Some).collect();
+    let mut shards: Vec<_> = master_copy.iter().cloned().map(Some).collect();
 
     // We can remove up to 2 shards, which may be data or parity shards
     shards[0] = None;

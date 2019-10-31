@@ -17,8 +17,8 @@ macro_rules! acc {
 
 pub fn flatten<T>(m: Vec<Vec<T>>) -> Vec<T> {
     let mut result: Vec<T> = Vec::with_capacity(m.len() * m[0].len());
-    for row in m.into_iter() {
-        for v in row.into_iter() {
+    for row in m {
+        for v in row {
             result.push(v);
         }
     }
