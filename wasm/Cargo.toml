@@ -1,0 +1,18 @@
+[package]
+name = "reed-solomon-erasure-wasm"
+version = "0.2.4"
+authors = ["Nazar Mokrynskyi <nazar@mokrynskyi.com>", "Darren Ldl <darrenldldev@gmail.com>"]
+edition = "2018"
+repository = "git://github.com/darrenldl/reed-solomon-erasure.git"
+license = "MIT"
+
+[dependencies]
+reed-solomon-erasure = { version = "4.0", path = ".." }
+wasm-bindgen = "0.2"
+wee_alloc = "0.4.4"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = []

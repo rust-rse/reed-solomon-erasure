@@ -45,3 +45,11 @@ after_success: |
   echo "Uploaded code coverage to Codecov" &&
   for file in target/debug/reed_solomon_erasure-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   echo "Uploaded code coverage to Coveralls"
+
+deploy:
+  provider: npm
+  api_key:
+    secure: "a+NsGhDychhcdKHiJGGOLw95vHJDg4h2uOnGKG2EcziCeNExibgEKAP6YHz5TC15Ezhvs6cA3hQMgVVE5Gb7Xxs70PH2YjixndcKMJcYtPI8Z1JmCNFm7tySKvxYdI3X3KVpgiMeoT8gk2z4hCNw/LRhK/h6HO4aP5+3+MXE3daBFyxFKv8RuxHz0Bm6miFh2thvNpFj3wTdLuS5aReyHiExGubNA5dFdx+6zQrpFggGwY1JIoVOF8ayJY2DZAiV3RsitAvZNaIBjOsD8kToM5cyVanyt/iMlpmV36s2wx9lqvUtGKWCAw4AbxC9QBNAXL/lBLuZlEpvyzoY3eQKFsORL+9h6B3ZQSTmCe7Hul/subtTxECkHM9M5QM0pIavt2AH3FE2zUNnSjR26gqeWyODCfE8rPBvkJlRGO2uU1ygHMopjt1ekC1sjDksntVrSqLl7EDr6+K66v5wsbAFoFjqNjBIv0WUPWDsEV38JDdX/3Caii+EOvNe4iEqsdPIcI519qhKUC3IFc6Xc/NXMfuKR4oWSc6fzahIwum/6joQ1QpO0ors9LA+cWptJn8AVy8o1QljNk9u6QDFjWEA+FI1a0moty0uUmPXbcbAE6Vxbd6GEDoz2V3wC5mBaOzL1CsGSql2iBg+PYGyDAXcPtiVgpNSYWQ9nUuhfyX5bV4="
+  on:
+    tags: true
+  skip_cleanup: true

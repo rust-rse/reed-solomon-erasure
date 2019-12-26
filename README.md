@@ -9,6 +9,8 @@
 
 Rust implementation of Reed-Solomon erasure coding
 
+WASM builds are also available, see section **WASM usage** below for details
+
 This is a port of [BackBlaze's Java implementation](https://github.com/Backblaze/JavaReedSolomon), [Klaus Post's Go implementation](https://github.com/klauspost/reedsolomon), and [Nicolas Trangez's Haskell implementation](https://github.com/NicolasT/reedsolomon).
 
 Version `1.X.X` copies BackBlaze's implementation, and is less performant as there were fewer places where parallelism could be added.
@@ -17,7 +19,11 @@ Version `>= 2.0.0` copies Klaus Post's implementation. The SIMD C code is copied
 
 See [Notes](#notes) and [License](#license) section for details.
 
-## Usage
+## WASM usage
+
+See [here](wasm/README.md) for details
+
+## Rust usage
 Add the following to your `Cargo.toml` for the normal version (pure Rust version)
 ```toml
 [dependencies]
@@ -112,6 +118,11 @@ Many thanks to the following people for overhaul of the library and introduction
   - Jeff Burdges [burdges](https://github.com/burdges)
 
   - Robert Habermeier [rphmeier](https://github.com/rphmeier)
+
+#### WASM builds
+Many thanks to Nazar Mokrynskyi [nazar-pc](https://github.com/nazar-pc) for submitting his package for WASM builds
+
+He is the original author of the files stored in `wasm` folder. The files may have been modified by me later.
 
 #### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
