@@ -62,11 +62,12 @@ pub fn reconstruct(
     let reed_solomon = ReedSolomon::new(data_shards, parity_shards).unwrap();
     let shard_size = shards.len() / (data_shards + parity_shards);
 
-    let mut separate_slice_shards: Vec<_> = shards.chunks_exact_mut(shard_size).collect();
+    let shards_available_slice_iter = shards_available.iter().map(|&num| num == 1u8);
 
-    let shards_available_slice: Vec<_> = shards_available.iter().map(|&num| num == 1u8).collect();
+    let mut separate_slice_shards: Vec<_> = shards
+        .chunks_exact_mut(shard_size)
+        .zip(shards_available_slice_iter)
+        .collect();
 
-    return result_to_number(
-        reed_solomon.reconstruct_data(&mut separate_slice_shards, &shards_available_slice),
-    );
+    return result_to_number(reed_solomon.reconstruct_data(&mut separate_slice_shards));
 }
