@@ -113,7 +113,7 @@ Contributions are welcome. Note that by submitting contributions, you agree to l
 #### Library overhaul and Galois 2^16 backend
 Many thanks to the following people for overhaul of the library and introduction of Galois 2^16 backend
 
-  - [drskalman](https://github.com/drskalman)
+  - [@drskalman](https://github.com/drskalman)
 
   - Jeff Burdges [burdges](https://github.com/burdges)
 
@@ -123,6 +123,9 @@ Many thanks to the following people for overhaul of the library and introduction
 Many thanks to Nazar Mokrynskyi [nazar-pc](https://github.com/nazar-pc) for submitting his package for WASM builds
 
 He is the original author of the files stored in `wasm` folder. The files may have been modified by me later.
+
+#### AVX512 support
+Many thanks to [@sakridge](https://github.com/sakridge) for adding support for AVX512 (see [PR #69](https://github.com/darrenldl/reed-solomon-erasure/pull/69))
 
 #### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
