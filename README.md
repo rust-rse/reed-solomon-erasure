@@ -125,7 +125,7 @@ Many thanks to Nazar Mokrynskyi [nazar-pc](https://github.com/nazar-pc) for subm
 He is the original author of the files stored in `wasm` folder. The files may have been modified by me later.
 
 #### AVX512 support
-Many thanks to @sakridge for adding support for AVX512 (see [PR #69](https://github.com/darrenldl/reed-solomon-erasure/pull/69))
+Many thanks to [@sakridge](https://github.com/sakridge) for adding support for AVX512 (see [PR #69](https://github.com/darrenldl/reed-solomon-erasure/pull/69))
 
 #### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
