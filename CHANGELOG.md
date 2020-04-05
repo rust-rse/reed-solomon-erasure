@@ -1,8 +1,18 @@
+## 4.0.2
+- Updated build.rs to respect RUSTFLAGS's target-cpu if available
+  - See [PR #75](https://github.com/darrenldl/reed-solomon-erasure/pull/75)
+- Added AVX512 support
+  - See [PR #69](https://github.com/darrenldl/reed-solomon-erasure/pull/69)
+- Disabled SIMD acceleration when MSVC is being used to build the library
+  - See [PR #67](https://github.com/darrenldl/reed-solomon-erasure/pull/67)
+- Dependencies update
+  - Updated `smallvec` from `0.6` to `1.2`
+
 ## 4.0.1
 - Updated SIMD C code for Windows compatibility
   - Removed include of `unistd.h` in `simd_c/reedsolomon.c`
   - Removed GCC `nonnull` attribute in `simd_c/reedsolomon.h`
-  - See PR #63 #64 for details
+  - See PR [#63](https://github.com/darrenldl/reed-solomon-erasure/pull/63) [#64](https://github.com/darrenldl/reed-solomon-erasure/pull/64) for details
 - Replaced use of `libc::uint8_t` in `src/galois_8.rs` with `u8`
 
 ## 4.0.0
