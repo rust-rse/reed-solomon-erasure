@@ -115,24 +115,27 @@ Many thanks to the following people for overhaul of the library and introduction
 
   - [@drskalman](https://github.com/drskalman)
 
-  - Jeff Burdges [burdges](https://github.com/burdges)
+  - Jeff Burdges [@burdges](https://github.com/burdges)
 
-  - Robert Habermeier [rphmeier](https://github.com/rphmeier)
+  - Robert Habermeier [@rphmeier](https://github.com/rphmeier)
 
 #### WASM builds
-Many thanks to Nazar Mokrynskyi [nazar-pc](https://github.com/nazar-pc) for submitting his package for WASM builds
+Many thanks to Nazar Mokrynskyi [@nazar-pc](https://github.com/nazar-pc) for submitting his package for WASM builds
 
 He is the original author of the files stored in `wasm` folder. The files may have been modified by me later.
 
 #### AVX512 support
 Many thanks to [@sakridge](https://github.com/sakridge) for adding support for AVX512 (see [PR #69](https://github.com/darrenldl/reed-solomon-erasure/pull/69))
 
+#### build.rs improvements
+Many thanks to [@ryoqun](https://github.com/ryoqun) for improving the usability of the library in the context of cross-compilation (see [PR #75](https://github.com/darrenldl/reed-solomon-erasure/pull/75))
+
 #### Testers
 Many thanks to the following people for testing and benchmarking on various platforms
 
-  - Laurențiu Nicola [lnicola](https://github.com/lnicola/) (platforms: Linux, Intel)
+  - Laurențiu Nicola [@lnicola](https://github.com/lnicola/) (platforms: Linux, Intel)
 
-  - Roger Andersen [hexjelly](https://github.com/hexjelly) (platforms: Windows, AMD)
+  - Roger Andersen [@hexjelly](https://github.com/hexjelly) (platforms: Windows, AMD)
 
 ## Notes
 #### Code quality review
