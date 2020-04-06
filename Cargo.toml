@@ -1,6 +1,6 @@
 [package]
 name= "reed-solomon-erasure"
-version = "4.0.1"
+version = "4.0.2"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 edition = "2018"
 build = "build.rs"
@@ -34,7 +34,7 @@ codecov = { repository = "darrenldl/reed-solomon-erasure" }
 coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
 [dependencies]
-smallvec = "0.6"
+smallvec = "1.2"
 libc = { version = "0.2", optional = true }
 
 [dev-dependencies]
