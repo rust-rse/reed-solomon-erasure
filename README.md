@@ -32,7 +32,7 @@ reed-solomon-erasure = "4.0"
 or the following for the version which tries to utilise SIMD
 ```toml
 [dependencies]
-reed-solomon-erasure = { version = "4.0", features = "simd-accel" }
+reed-solomon-erasure = { version = "4.0", features = [ "simd-accel" ] }
 ```
 and the following to your crate root
 ```rust
@@ -55,7 +55,7 @@ fn main () {
         [0, 1,  2,  3],
         [4, 5,  6,  7],
         [8, 9, 10, 11],
-        [0, 0,  0,  0], // last 2 rows are parity hards
+        [0, 0,  0,  0], // last 2 rows are parity shards
         [0, 0,  0,  0]
     );
 
