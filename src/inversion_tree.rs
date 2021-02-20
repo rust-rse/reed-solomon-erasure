@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::matrix::Matrix;
 use crate::Field;
@@ -16,7 +17,7 @@ pub enum Error {
 pub struct InversionTree<F: Field> {
     pub root: Mutex<InversionNode<F>>,
     total_shards: usize,
-    total_indices: Mutex<usize>,
+    total_indices: AtomicUsize,
     indices_limit: usize,
 }
 
@@ -35,7 +36,7 @@ impl<F: Field> InversionTree<F> {
                 data_shards + parity_shards,
             )),
             total_shards: data_shards + parity_shards,
-            total_indices: Mutex::new(0),
+            total_indices: AtomicUsize::new(0),
             indices_limit: DEFAULT_INDICES_LIMIT,
         }
     }
@@ -47,7 +48,7 @@ impl<F: Field> InversionTree<F> {
                 data_shards + parity_shards,
             )),
             total_shards: data_shards + parity_shards,
-            total_indices: Mutex::new(0),
+            total_indices: AtomicUsize::new(0),
             indices_limit: indices_limit,
         }
     }
@@ -84,10 +85,13 @@ impl<F: Field> InversionTree<F> {
         // https://github.com/darrenldl/reed-solomon-erasure/issues/74
         // partial solution from https://github.com/near/nearcore/pull/2317
         // suggested eviction policy: LRU
-        let mut total_indices_lock = self.total_indices.lock().unwrap();
-        *total_indices_lock += invalid_indices.len();
-        if *total_indices_lock >= self.indices_limit {
+        let mut total_indices = self.total_indices.load(Ordering::Relaxed);
+        total_indices += invalid_indices.len();
+
+        if total_indices >= self.indices_limit {
             self.root.lock().unwrap().evict( invalid_indices.len() );
+        } else {
+            self.total_indices.store(total_indices, Ordering::Relaxed);
         }
 
         // Lock the tree for writing and reading before accessing the tree.
