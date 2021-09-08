@@ -1,8 +1,11 @@
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::matrix::Matrix;
 use crate::Field;
+
+const DEFAULT_INDICES_LIMIT: usize = 254;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Error {
@@ -14,12 +17,15 @@ pub enum Error {
 pub struct InversionTree<F: Field> {
     pub root: Mutex<InversionNode<F>>,
     total_shards: usize,
+    total_indices: AtomicUsize,
+    indices_limit: usize,
 }
 
 #[derive(Debug)]
 pub struct InversionNode<F: Field> {
     pub matrix: Option<Arc<Matrix<F>>>,
     pub children: Vec<Option<InversionNode<F>>>,
+    pub used: u64,
 }
 
 impl<F: Field> InversionTree<F> {
@@ -30,6 +36,20 @@ impl<F: Field> InversionTree<F> {
                 data_shards + parity_shards,
             )),
             total_shards: data_shards + parity_shards,
+            total_indices: AtomicUsize::new(0),
+            indices_limit: DEFAULT_INDICES_LIMIT,
+        }
+    }
+
+    pub fn with_limit(data_shards: usize, parity_shards: usize, indices_limit: usize) -> InversionTree<F> {
+        InversionTree {
+            root: Mutex::new(InversionNode::new(
+                Some(Arc::new(Matrix::identity(data_shards))),
+                data_shards + parity_shards,
+            )),
+            total_shards: data_shards + parity_shards,
+            total_indices: AtomicUsize::new(0),
+            indices_limit: indices_limit,
         }
     }
 
@@ -62,6 +82,18 @@ impl<F: Field> InversionTree<F> {
             return Err(Error::NotSquare);
         }
 
+        // https://github.com/darrenldl/reed-solomon-erasure/issues/74
+        // partial solution from https://github.com/near/nearcore/pull/2317
+        // suggested eviction policy: LRU
+        let mut total_indices = self.total_indices.load(Ordering::Relaxed);
+        total_indices += invalid_indices.len();
+
+        if total_indices >= self.indices_limit {
+            self.root.lock().unwrap().evict( invalid_indices.len() );
+        } else {
+            self.total_indices.store(total_indices, Ordering::Relaxed);
+        }
+
         // Lock the tree for writing and reading before accessing the tree.
         // Recursively create nodes for the inverted matrix in the tree until
         // we reach the node to insert the matrix to.  We start by passing in
@@ -77,13 +109,32 @@ impl<F: Field> InversionTree<F> {
     }
 }
 
+fn get_petals<F: Field>(
+    node: &mut Option<InversionNode<F>>
+) -> Vec<&mut Option<InversionNode<F>>> {
+    let mut petals = vec![];
+    if let Some(some_node) = node {
+        for child_node in some_node.children.iter_mut() {
+            if let Some(node) = child_node {
+                if node.children.is_empty() {
+                    petals.push(child_node);
+                } else {
+                    let child_petals = get_petals(child_node);
+                    petals.extend(child_petals);
+                }
+            }
+        }
+    }
+    petals
+}
+
 impl<F: Field> InversionNode<F> {
     pub fn new(matrix: Option<Arc<Matrix<F>>>, children_count: usize) -> InversionNode<F> {
         let mut children = Vec::with_capacity(children_count);
         for _ in 0..children_count {
             children.push(None);
         }
-        InversionNode { matrix, children }
+        InversionNode { matrix, children, used: 0 }
     }
 
     fn get_child<'a>(
@@ -99,7 +150,14 @@ impl<F: Field> InversionNode<F> {
                 None => {
                     *node = Some(Self::new(None, total_shards - offset));
                 }
-                Some(_) => {}
+                Some(_) => {
+                    match self.children[node_index] {
+                        None => panic!(),
+                        Some(ref mut x) => {
+                            x.used += 1;
+                        },
+                    }
+                }
             }
         }
         match self.children[node_index] {
@@ -146,6 +204,40 @@ impl<F: Field> InversionNode<F> {
                     total_shards,
                     requested_index + 1,
                 )
+        }
+    }
+
+    /// this function is getting very end leafs of trea
+    /// removing least used one
+    /// for count to clean be 0
+    pub fn evict(
+        &mut self,
+        count: usize,
+    ) {
+        let mut petals = vec![];
+        for child_node in self.children.iter_mut() {
+            let child_petals = get_petals(child_node);
+            petals.extend(child_petals);
+        }
+        if !petals.is_empty() {
+            petals.sort_by(|a, b| {
+                let a_used = match a {
+                    None => 0,
+                    Some(aa) => aa.used,
+                };
+                let b_used = match b {
+                    None => 0,
+                    Some(bb) => bb.used,
+                };
+                a_used.cmp(&b_used)
+            });
+            if let Some(first) = petals.first_mut() {
+                **first = None;
+            }
+            let new_count = count - 1;
+            if new_count > 0 {
+                self.evict(new_count);
+            }
         }
     }
 }
