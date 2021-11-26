@@ -161,9 +161,9 @@ fn compile_simd_c() {
     fn guess_target_cpu() -> String {
         // Copied and adapted from https://github.com/alexcrichton/proc-macro2/blob/4173a21dc497c67326095e438ff989cc63cd9279/build.rs#L115
         // Licensed under Apache-2.0 + MIT (compatible because we're MIT)
-        let rustflags = env::var_os("RUSTFLAGS");
+        let rustflags = env::var_os("RUSTFLAGS").or(env::var_os("CARGO_ENCODED_RUSTFLAGS"));
         if let Some(rustflags) = rustflags {
-            for mut flag in rustflags.to_string_lossy().split(' ') {
+            for mut flag in rustflags.to_string_lossy().split(&[' ', '\u{1f}'][..]) {
                 if flag.starts_with("-C") {
                     flag = &flag["-C".len()..];
                 }
