@@ -328,6 +328,10 @@ pub fn mul_slice_xor(c: u8, input: &[u8], out: &mut [u8]) {
 
 #[cfg(test)]
 mod tests {
+    extern crate alloc;
+
+    use alloc::vec;
+
     use super::*;
     use crate::tests::fill_random;
     use rand;

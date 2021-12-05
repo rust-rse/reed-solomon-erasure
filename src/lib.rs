@@ -8,6 +8,7 @@
 //! and simply leave out the corrupted shards when attempting to reconstruct
 //! the missing data.
 #![allow(dead_code)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
 #[macro_use]
@@ -21,7 +22,8 @@ extern crate smallvec;
 #[cfg(feature = "simd-accel")]
 extern crate libc;
 
-use std::iter::{self, FromIterator};
+use ::core::iter;
+use ::core::iter::FromIterator;
 
 #[macro_use]
 mod macros;
@@ -43,6 +45,14 @@ pub use crate::errors::SBSError;
 pub use crate::core::ReedSolomon;
 pub use crate::core::ShardByShard;
 
+// TODO: Can be simplified once https://github.com/rust-lang/rfcs/issues/2505 is resolved
+#[cfg(not(feature = "std"))]
+use libm::log2f as log2;
+#[cfg(feature = "std")]
+fn log2(n: f32) -> f32 {
+    n.log2()
+}
+
 /// A finite field to perform encoding over.
 pub trait Field: Sized {
     /// The order of the field. This is a limit on the number of shards
@@ -50,7 +60,7 @@ pub trait Field: Sized {
     const ORDER: usize;
 
     /// The representational type of the field.
-    type Elem: Default + Clone + Copy + PartialEq + std::fmt::Debug;
+    type Elem: Default + Clone + Copy + PartialEq + ::core::fmt::Debug;
 
     /// Add two elements together.
     fn add(a: Self::Elem, b: Self::Elem) -> Self::Elem;
@@ -76,7 +86,7 @@ pub trait Field: Sized {
     /// Assignment is arbitrary but must be unique to `n`.
     fn nth(n: usize) -> Self::Elem {
         if n >= Self::ORDER {
-            let pow = (Self::ORDER as f32).log(2.0) as usize;
+            let pow = log2(Self::ORDER as f32) as usize;
             panic!("{} out of bounds for GF(2^{}) member", n, pow)
         }
 

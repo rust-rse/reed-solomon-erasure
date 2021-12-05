@@ -1,4 +1,9 @@
 #![allow(dead_code)]
+extern crate alloc;
+
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::Field;
 use smallvec::SmallVec;
 
@@ -273,6 +278,10 @@ impl<F: Field> Matrix<F> {
 
 #[cfg(test)]
 mod tests {
+    extern crate alloc;
+
+    use alloc::vec;
+
     use super::Matrix;
     use crate::galois_8;
 

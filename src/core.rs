@@ -1,4 +1,8 @@
-use std::sync::Arc;
+extern crate alloc;
+
+use alloc::sync::Arc;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use smallvec::SmallVec;
 

@@ -168,7 +168,7 @@ fn compile_simd_c() {
                     flag = &flag["-C".len()..];
                 }
                 if flag.starts_with("target-cpu=") {
-                    return flag["target-cpu=".len()..].to_owned()
+                    return flag["target-cpu=".len()..].to_owned();
                 }
             }
         }
