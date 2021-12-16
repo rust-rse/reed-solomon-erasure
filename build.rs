@@ -168,7 +168,7 @@ fn compile_simd_c() {
                     flag = &flag["-C".len()..];
                 }
                 if flag.starts_with("target-cpu=") {
-                    return flag["target-cpu=".len()..].to_owned()
+                    return flag["target-cpu=".len()..].to_owned();
                 }
             }
         }
@@ -176,9 +176,15 @@ fn compile_simd_c() {
         "native".to_string()
     }
 
-    cc::Build::new()
-        .opt_level(3)
-        .flag(&format!("-march={}", guess_target_cpu()))
+    let mut build = cc::Build::new();
+    build.opt_level(3);
+
+    // `-march=native` is not supported on Apple M1
+    #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+    {
+        build.flag(&format!("-march={}", guess_target_cpu()));
+    }
+    build
         .flag("-std=c11")
         .file("simd_c/reedsolomon.c")
         .compile("reedsolomon");
