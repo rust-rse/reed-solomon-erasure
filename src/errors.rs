@@ -1,5 +1,4 @@
-use std;
-use std::fmt::Formatter;
+use core::fmt::Formatter;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Error {
@@ -38,12 +37,13 @@ impl Error {
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), core::fmt::Error> {
         write!(f, "{}", self.to_string())
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn description(&self) -> &str {
         self.to_string()
@@ -67,12 +67,13 @@ impl SBSError {
     }
 }
 
-impl std::fmt::Display for SBSError {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+impl core::fmt::Display for SBSError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), core::fmt::Error> {
         write!(f, "{}", self.to_string())
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for SBSError {
     fn description(&self) -> &str {
         self.to_string()
@@ -143,11 +144,13 @@ mod tests {
         assert_eq!(SBSError::LeftoverShards.to_string(), "Leftover shards");
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn test_error_display_does_not_panic() {
         println!("{}", Error::TooFewShards);
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn test_sbserror_display_does_not_panic() {
         println!("{}", SBSError::TooManyCalls);

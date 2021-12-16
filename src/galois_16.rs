@@ -4,7 +4,7 @@
 //! field of `GF(2^8)`, as defined in the `galois_8` module.
 
 use crate::galois_8;
-use std::ops::{Add, Div, Mul, Sub};
+use core::ops::{Add, Div, Mul, Sub};
 
 // the irreducible polynomial used as a modulus for the field.
 // print R.irreducible_element(2,algorithm="first_lexicographic" )

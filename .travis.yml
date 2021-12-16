@@ -10,7 +10,10 @@ branches:
 
 script:
   - cargo build --verbose --all
-  - cargo test  --verbose --all --features=simd-accel
+  # Test `no_std` variant
+  - cargo test --verbose --all --no-default-features
+  # Test `std` variant with SIMD
+  - cargo test --verbose --all --features=simd-accel
 
 env:
   global:

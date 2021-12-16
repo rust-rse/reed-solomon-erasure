@@ -1,6 +1,13 @@
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::atomic::{AtomicUsize, Ordering};
+extern crate alloc;
+
+use alloc::sync::Arc;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::sync::atomic::{AtomicUsize, Ordering};
+#[cfg(feature = "std")]
+use parking_lot::Mutex;
+#[cfg(not(feature = "std"))]
+use spin::Mutex;
 
 use crate::matrix::Matrix;
 use crate::Field;
@@ -41,7 +48,11 @@ impl<F: Field> InversionTree<F> {
         }
     }
 
-    pub fn with_limit(data_shards: usize, parity_shards: usize, indices_limit: usize) -> InversionTree<F> {
+    pub fn with_limit(
+        data_shards: usize,
+        parity_shards: usize,
+        indices_limit: usize,
+    ) -> InversionTree<F> {
         InversionTree {
             root: Mutex::new(InversionNode::new(
                 Some(Arc::new(Matrix::identity(data_shards))),
@@ -55,7 +66,7 @@ impl<F: Field> InversionTree<F> {
 
     pub fn get_inverted_matrix(&self, invalid_indices: &[usize]) -> Option<Arc<Matrix<F>>> {
         if invalid_indices.len() == 0 {
-            match self.root.lock().unwrap().matrix {
+            match self.root.lock().matrix {
                 None => panic!(),
                 Some(ref x) => return Some(Arc::clone(x)),
             }
@@ -63,7 +74,6 @@ impl<F: Field> InversionTree<F> {
 
         self.root
             .lock()
-            .unwrap()
             .get_inverted_matrix(invalid_indices, self.total_shards, 0)
     }
 
@@ -89,7 +99,7 @@ impl<F: Field> InversionTree<F> {
         total_indices += invalid_indices.len();
 
         if total_indices >= self.indices_limit {
-            self.root.lock().unwrap().evict( invalid_indices.len() );
+            self.root.lock().evict(invalid_indices.len());
         } else {
             self.total_indices.store(total_indices, Ordering::Relaxed);
         }
@@ -98,20 +108,15 @@ impl<F: Field> InversionTree<F> {
         // Recursively create nodes for the inverted matrix in the tree until
         // we reach the node to insert the matrix to.  We start by passing in
         // 0 as the parent index as we start at the root of the tree.
-        self.root.lock().unwrap().insert_inverted_matrix(
-            matrix,
-            invalid_indices,
-            self.total_shards,
-            0,
-        );
+        self.root
+            .lock()
+            .insert_inverted_matrix(matrix, invalid_indices, self.total_shards, 0);
 
         Ok(())
     }
 }
 
-fn get_petals<F: Field>(
-    node: &mut Option<InversionNode<F>>
-) -> Vec<&mut Option<InversionNode<F>>> {
+fn get_petals<F: Field>(node: &mut Option<InversionNode<F>>) -> Vec<&mut Option<InversionNode<F>>> {
     let mut petals = vec![];
     if let Some(some_node) = node {
         for child_node in some_node.children.iter_mut() {
@@ -134,7 +139,11 @@ impl<F: Field> InversionNode<F> {
         for _ in 0..children_count {
             children.push(None);
         }
-        InversionNode { matrix, children, used: 0 }
+        InversionNode {
+            matrix,
+            children,
+            used: 0,
+        }
     }
 
     fn get_child<'a>(
@@ -150,14 +159,12 @@ impl<F: Field> InversionNode<F> {
                 None => {
                     *node = Some(Self::new(None, total_shards - offset));
                 }
-                Some(_) => {
-                    match self.children[node_index] {
-                        None => panic!(),
-                        Some(ref mut x) => {
-                            x.used += 1;
-                        },
+                Some(_) => match self.children[node_index] {
+                    None => panic!(),
+                    Some(ref mut x) => {
+                        x.used += 1;
                     }
-                }
+                },
             }
         }
         match self.children[node_index] {
@@ -210,10 +217,7 @@ impl<F: Field> InversionNode<F> {
     /// this function is getting very end leafs of trea
     /// removing least used one
     /// for count to clean be 0
-    pub fn evict(
-        &mut self,
-        count: usize,
-    ) {
+    pub fn evict(&mut self, count: usize) {
         let mut petals = vec![];
         for child_node in self.children.iter_mut() {
             let child_petals = get_petals(child_node);
@@ -244,10 +248,14 @@ impl<F: Field> InversionNode<F> {
 
 #[cfg(test)]
 mod tests {
+    extern crate alloc;
+
     use rand;
 
-    use std::collections::HashMap;
-    use std::sync::Arc;
+    use alloc::collections::BTreeMap;
+    use alloc::sync::Arc;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     use crate::galois_8;
     use crate::inversion_tree::*;
@@ -270,7 +278,7 @@ mod tests {
     fn test_new_inversion_tree() {
         let tree: InversionTree<galois_8::Field> = InversionTree::new(3, 2);
 
-        let children = tree.root.lock().unwrap().children.len();
+        let children = tree.root.lock().children.len();
         assert_eq!(5, children);
 
         let expect = matrix!([1, 0, 0], [0, 1, 0], [0, 0, 1]);
@@ -447,7 +455,8 @@ mod tests {
     fn qc_tree_same_as_hash_map_prop(param: QCTreeTestParam) -> bool {
         let tree: InversionTree<galois_8::Field> =
             InversionTree::new(param.data_shards, param.parity_shards);
-        let mut map = HashMap::with_capacity(param.matrix_count);
+        // The only reason to prefer `BTreeMap` over `HashMap` here is to support `no_std`
+        let mut map = BTreeMap::new();
 
         let mut invalid_indices_set = Vec::with_capacity(param.matrix_count);
 

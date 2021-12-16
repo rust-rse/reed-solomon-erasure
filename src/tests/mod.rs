@@ -1,5 +1,10 @@
 #![allow(dead_code)]
 
+extern crate alloc;
+
+use alloc::vec;
+use alloc::vec::Vec;
+
 use super::{galois_8, Error, SBSError};
 use rand::{self, thread_rng, Rng};
 
