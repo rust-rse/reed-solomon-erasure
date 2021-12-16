@@ -1,3 +1,7 @@
+## 5.0.0
+- Merged serveral PRs
+- Not fully reviewed as I am no longer maintaining this crate
+
 ## 4.0.2
 - Updated build.rs to respect RUSTFLAGS's target-cpu if available
   - See [PR #75](https://github.com/darrenldl/reed-solomon-erasure/pull/75)
