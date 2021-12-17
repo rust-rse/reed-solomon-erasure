@@ -261,7 +261,14 @@ static ALWAYS_INLINE CONST_FUNCTION v set1_epi8_v(const uint8_t c) {
         return result;
 }
 
-static ALWAYS_INLINE CONST_FUNCTION v srli_epi64_v(const v in, const unsigned int n) {
+static ALWAYS_INLINE CONST_FUNCTION v srli_epi64_v(const v in /*, const unsigned int n*/) {
+        // TODO: Hard code n to 4 to avoid build issues on M1 Macs (the
+        //       `USE_ARM_NEON` path below) where apple clang is failing to
+        //       recognize the constant `n`.
+        //
+        //       See https://github.com/rust-rse/reed-solomon-erasure/pull/92
+        //
+        #define n 4
 #if USE_AVX512
         const v512 result = { .m512i = _mm512_srli_epi64(in.m512i, n) };
 #elif USE_AVX2
@@ -281,7 +288,7 @@ static ALWAYS_INLINE CONST_FUNCTION v srli_epi64_v(const v in, const unsigned in
         const v128 result = { .u64 = { in.u64[0] >> n,
                                        in.u64[1] >> n } };
 #endif
-
+        #undef n
         return result;
 }
 
@@ -495,7 +502,7 @@ static ALWAYS_INLINE v reedsolomon_gal_mul_v(
         const v in_x,
         const v old) {
         const v low_input = and_v(in_x, low_mask_unpacked),
-                in_x_shifted = srli_epi64_v(in_x, 4),
+                in_x_shifted = srli_epi64_v(in_x /*, 4*/),
                 high_input = and_v(in_x_shifted, low_mask_unpacked),
 
                 mul_low_part = shuffle_epi8_v(low_vector, low_input),
