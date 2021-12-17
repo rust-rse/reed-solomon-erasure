@@ -420,7 +420,7 @@ TEXT ·galMulSSSE3Xor(SB), 7, $0
     MOVOU  (DX), X7             // X7: high
     MOVQ    $15, BX             // BX: low mask
     MOVQ    BX, X8
-    PXOR    X5, X5    
+    PXOR    X5, X5
     MOVQ    in+48(FP),SI        // R11: &in
     MOVQ    in_len+56(FP),R9    // R9: len(in)
     MOVQ    out+72(FP), DX      // DX: &out
@@ -443,7 +443,7 @@ loopback_xor:
     PXOR    X4, X3   // X3: Result xor existing out
     MOVOU   X3, (DX) // Store
     ADDQ    $16, SI  // in+=16
-    ADDQ    $16, DX  // out+=16 
+    ADDQ    $16, DX  // out+=16
     SUBQ    $1, R9
     JNZ     loopback_xor
 done_xor:
@@ -457,7 +457,7 @@ TEXT ·galMulSSSE3(SB), 7, $0
     MOVOU   (DX), X7            // X7: high
     MOVQ    $15, BX             // BX: low mask
     MOVQ    BX, X8
-    PXOR    X5, X5    
+    PXOR    X5, X5
     MOVQ    in+48(FP),SI        // R11: &in
     MOVQ    in_len+56(FP),R9    // R9: len(in)
     MOVQ    out+72(FP), DX      // DX: &out
@@ -478,7 +478,7 @@ loopback:
     PXOR    X2, X3   // X3: Result
     MOVOU   X3, (DX) // Store
     ADDQ    $16, SI  // in+=16
-    ADDQ    $16, DX  // out+=16 
+    ADDQ    $16, DX  // out+=16
     SUBQ    $1, R9
     JNZ     loopback
 done:
