@@ -161,8 +161,8 @@ fn compile_simd_c() {
     let mut build = cc::Build::new();
     build.opt_level(3);
 
-    // `-march=native` is not supported on Apple M1
-    #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+    // `-march=native` is not supported on Apple M1, or other aarch64
+    #[cfg(not(all(target_arch = "aarch64")))]
     {
         fn guess_target_cpu() -> String {
             // Copied and adapted from https://github.com/alexcrichton/proc-macro2/blob/4173a21dc497c67326095e438ff989cc63cd9279/build.rs#L115
