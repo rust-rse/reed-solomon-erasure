@@ -161,7 +161,7 @@ fn compile_simd_c() {
     let mut build = cc::Build::new();
     build.opt_level(3);
 
-    match env::var("RSE_ARCH") {
+    match env::var("RUST_REED_SOLOMON_ERASURE_ARCH") {
         Ok(arch) => {
             // Use explicitly specified environment variable as architecture.
             build.flag(&format!("-march={}", arch));

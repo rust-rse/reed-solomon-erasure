@@ -1,5 +1,5 @@
 ## 5.0.2
-* Add support for `RSE_ARCH` environment variable and stop using `native` architecture for SIMD code
+* Add support for `RUST_REED_SOLOMON_ERASURE_ARCH` environment variable and stop using `native` architecture for SIMD code
   - See [PR #98](https://github.com/rust-rse/reed-solomon-erasure/pull/98)
 
 ## 5.0.1
