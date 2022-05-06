@@ -39,6 +39,11 @@ and the following to your crate root
 extern crate reed_solomon_erasure;
 ```
 
+NOTE: `simd-accel` is tuned for Haswell+ processors on x86-64 and not in any way for other architectures, set
+environment variable `RUST_REED_SOLOMON_ERASURE_ARCH` during build to force compilation of C code for specific architecture (`-march` flag in
+GCC/Clang). Even on x86-64 you can achieve better performance by setting it to `native`, but it will stop running on
+older CPUs, YMMV.
+
 ## Example
 ```rust
 #[macro_use(shards)]
