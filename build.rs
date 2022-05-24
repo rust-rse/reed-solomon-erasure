@@ -169,8 +169,10 @@ fn compile_simd_c() {
         Err(_error) => {
             // On x86-64 enabling Haswell architecture unlocks useful instructions and improves performance
             // dramatically while allowing it to run ony modern CPU.
-            #[cfg(target_arch = "x86_64")]
-            build.flag(&"-march=haswell");
+            match env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str(){
+                "x86_64"  => { build.flag(&"-march=haswell"); },
+                _         => ()
+            }
         }
     }
 
