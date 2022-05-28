@@ -1,3 +1,7 @@
+## 5.0.3
+- Fixed cross build bug for aarch64 with simd-accel
+  - See [PR #100](https://github.com/rust-rse/reed-solomon-erasure/pull/100)
+
 ## 5.0.2
 * Add support for `RUST_REED_SOLOMON_ERASURE_ARCH` environment variable and stop using `native` architecture for SIMD code
   - See [PR #98](https://github.com/rust-rse/reed-solomon-erasure/pull/98)
