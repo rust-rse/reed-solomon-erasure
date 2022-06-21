@@ -37,15 +37,7 @@ pub struct InversionNode<F: Field> {
 
 impl<F: Field> InversionTree<F> {
     pub fn new(data_shards: usize, parity_shards: usize) -> InversionTree<F> {
-        InversionTree {
-            root: Mutex::new(InversionNode::new(
-                Some(Arc::new(Matrix::identity(data_shards))),
-                data_shards + parity_shards,
-            )),
-            total_shards: data_shards + parity_shards,
-            total_indices: AtomicUsize::new(0),
-            indices_limit: DEFAULT_INDICES_LIMIT,
-        }
+        Self::with_limit(data_shards, parity_shards, DEFAULT_INDICES_LIMIT)
     }
 
     pub fn with_limit(
