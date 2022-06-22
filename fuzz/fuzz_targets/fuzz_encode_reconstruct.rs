@@ -2,7 +2,7 @@
 #[macro_use] extern crate libfuzzer_sys;
 extern crate reed_solomon_erasure;
 
-use reed_solomon_erasure::ReedSolomon;
+use reed_solomon_erasure::{galois_8, ReedSolomon};
 
 fuzz_target!(|data: &[u8]| {
     if data.len() >= 7 {
@@ -24,7 +24,8 @@ fuzz_target!(|data: &[u8]| {
             && data_shards + parity_shards <= 256
             && data.len() == data_shards * shard_size
         {
-            let codec = ReedSolomon::new(data_shards, parity_shards).unwrap();
+            let codec: ReedSolomon<galois_8::Field> =
+                ReedSolomon::new(data_shards, parity_shards).unwrap();
 
             for _ in 0..run_count {
                 assert_eq!(codec.data_shard_count(), data_shards);
@@ -99,8 +100,10 @@ fuzz_target!(|data: &[u8]| {
                         slices.push(p);
                     }
 
-                    codec.reconstruct(&mut slices,
-                                      &mut slice_present).unwrap();
+                    let mut x: Vec<(&mut [u8], bool)> =
+                        slices.into_iter().zip(slice_present.into_iter()).collect();
+
+                    codec.reconstruct(&mut x).unwrap();
                 }
 
                 {
