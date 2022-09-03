@@ -30,7 +30,6 @@ mod macros;
 
 mod core;
 mod errors;
-mod inversion_tree;
 mod matrix;
 
 #[cfg(test)]
