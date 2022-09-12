@@ -50,3 +50,6 @@ quickcheck = "0.9"
 
 [build-dependencies]
 cc = { version = "1.0", optional = true }
+
+[[bench]]
+name = "reconstruct"
