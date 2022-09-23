@@ -1,3 +1,11 @@
+## 6.0.0
+- Use LruCache instead of InversionTree for caching data decode matrices
+  - See [PR #104](https://github.com/rust-rse/reed-solomon-erasure/pull/104)
+- Minor code duplication
+  - See [PR #102](https://github.com/rust-rse/reed-solomon-erasure/pull/102)
+- Dependencies update
+  - Updated `smallvec` from `0.6.1` to `1.8.0`
+
 ## 5.0.3
 - Fixed cross build bug for aarch64 with simd-accel
   - See [PR #100](https://github.com/rust-rse/reed-solomon-erasure/pull/100)
