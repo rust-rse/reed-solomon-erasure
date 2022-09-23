@@ -38,6 +38,7 @@ coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 libc = { version = "0.2", optional = true }
 # `log2()` impl for `no_std`
 libm = "0.2.1"
+lru = "0.7.8"
 # Efficient `Mutex` implementation for `std` environment
 parking_lot = { version = "0.11.2", optional = true }
 smallvec = "1.2"
@@ -50,3 +51,6 @@ quickcheck = "0.9"
 
 [build-dependencies]
 cc = { version = "1.0", optional = true }
+
+[[bench]]
+name = "reconstruct"
