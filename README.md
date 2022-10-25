@@ -108,6 +108,9 @@ Below shows the result of one of the test configurations, other configurations s
 
 Versions `>= 4.0.0` have not been benchmarked thoroughly yet
 
+## Benchmarking
+You can run benchmarks via `cargo bench`. To enable simd acceleration during benchmarks use `cargo bench --features simd-accel`.
+
 ## Changelog
 [Changelog](CHANGELOG.md)
 
