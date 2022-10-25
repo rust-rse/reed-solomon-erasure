@@ -88,7 +88,7 @@ fn rs_reconstruct_benchmark(
 fn encode(c: &mut Criterion) {
     // let plot_config = PlotConfiguration::default();
     {
-        let mut group = c.benchmark_group("Galos 8 [1024KB] Encode");
+        let mut group = c.benchmark_group("Galos 8 [1KiB] Encode");
         // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 1024, 4, 4);
         rs_encode_benchmark(&mut group, 1024, 8, 8);
@@ -97,22 +97,22 @@ fn encode(c: &mut Criterion) {
         rs_encode_benchmark(&mut group, 1024, 64, 64);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [2048KB] Encode");
+        let mut group = c.benchmark_group("Galos 8 [2KiB] Encode");
         // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 2048, 4, 4);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [4096KB] Encode");
+        let mut group = c.benchmark_group("Galos 8 [4KiB] Encode");
         // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 4096, 4, 4);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [8192KB] Encode");
+        let mut group = c.benchmark_group("Galos 8 [8KiB] Encode");
         // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 8192, 4, 4);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [16384KB] Encode");
+        let mut group = c.benchmark_group("Galos 8 [16KiB] Encode");
         // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 16384, 4, 4);
     }
@@ -120,7 +120,7 @@ fn encode(c: &mut Criterion) {
 
 fn reconstruct_one(c: &mut Criterion) {
     {
-        let mut group = c.benchmark_group("Galos 8 [1024KB] Reconstruct One");
+        let mut group = c.benchmark_group("Galos 8 [1KiB] Reconstruct One");
         rs_reconstruct_benchmark(&mut group, 1024, 4, 4, 1);
         rs_reconstruct_benchmark(&mut group, 1024, 8, 8, 1);
         rs_reconstruct_benchmark(&mut group, 1024, 16, 16, 1);
@@ -128,26 +128,26 @@ fn reconstruct_one(c: &mut Criterion) {
         rs_reconstruct_benchmark(&mut group, 1024, 64, 64, 1);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [2048KB] Reconstruct One");
+        let mut group = c.benchmark_group("Galos 8 [2KiB] Reconstruct One");
         rs_reconstruct_benchmark(&mut group, 2048, 4, 4, 1);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [4096KB] Reconstruct One");
+        let mut group = c.benchmark_group("Galos 8 [4KiB] Reconstruct One");
         rs_reconstruct_benchmark(&mut group, 4096, 4, 4, 1);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [8192KB] Reconstruct One");
+        let mut group = c.benchmark_group("Galos 8 [8KiB] Reconstruct One");
         rs_reconstruct_benchmark(&mut group, 8192, 4, 4, 1);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [16384KB] Reconstruct One");
+        let mut group = c.benchmark_group("Galos 8 [16KiB] Reconstruct One");
         rs_reconstruct_benchmark(&mut group, 16384, 4, 4, 1);
     }
 }
 
 fn reconstruct_all(c: &mut Criterion) {
     {
-        let mut group = c.benchmark_group("Galos 8 [1024KB] Reconstruct All");
+        let mut group = c.benchmark_group("Galos 8 [1KiB] Reconstruct All");
         rs_reconstruct_benchmark(&mut group, 1024, 4, 4, 4);
         rs_reconstruct_benchmark(&mut group, 1024, 8, 8, 8);
         rs_reconstruct_benchmark(&mut group, 1024, 16, 16, 16);
@@ -155,19 +155,19 @@ fn reconstruct_all(c: &mut Criterion) {
         rs_reconstruct_benchmark(&mut group, 1024, 64, 64, 64);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [2048KB] Reconstruct All");
+        let mut group = c.benchmark_group("Galos 8 [2KiB] Reconstruct All");
         rs_reconstruct_benchmark(&mut group, 2048, 4, 4, 4);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [4096KB] Reconstruct All");
+        let mut group = c.benchmark_group("Galos 8 [4KiB] Reconstruct All");
         rs_reconstruct_benchmark(&mut group, 4096, 4, 4, 4);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [8192KB] Reconstruct All");
+        let mut group = c.benchmark_group("Galos 8 [8KiB] Reconstruct All");
         rs_reconstruct_benchmark(&mut group, 8192, 4, 4, 4);
     }
     {
-        let mut group = c.benchmark_group("Galos 8 [16384KB] Reconstruct All");
+        let mut group = c.benchmark_group("Galos 8 [16KiB] Reconstruct All");
         rs_reconstruct_benchmark(&mut group, 16384, 4, 4, 4);
     }
 }
