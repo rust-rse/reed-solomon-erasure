@@ -175,5 +175,19 @@ fn reconstruct_all(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, encode, reconstruct_one, reconstruct_all);
+fn reconstruct_none(c: &mut Criterion) {
+    {
+        let mut group = c.benchmark_group("Galos 8 [1KiB] Reconstruct None");
+        rs_reconstruct_benchmark(&mut group, 1024, 4, 4, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 8, 8, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 16, 16, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 32, 32, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 64, 64, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 5, 2, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 10, 4, 0);
+        rs_reconstruct_benchmark(&mut group, 1024, 50, 20, 0);
+    }
+}
+
+criterion_group!(benches, encode, reconstruct_one, reconstruct_all, reconstruct_none);
 criterion_main!(benches);
