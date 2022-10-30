@@ -93,6 +93,9 @@ fn encode(c: &mut Criterion) {
         rs_encode_benchmark(&mut group, 1024, 16, 16);
         rs_encode_benchmark(&mut group, 1024, 32, 32);
         rs_encode_benchmark(&mut group, 1024, 64, 64);
+        rs_encode_benchmark(&mut group, 1024, 5, 2);
+        rs_encode_benchmark(&mut group, 1024, 10, 4);
+        rs_encode_benchmark(&mut group, 1024, 50, 20);
     }
     {
         let mut group = c.benchmark_group("Galos 8 [2KiB] Encode");
@@ -120,6 +123,9 @@ fn reconstruct_one(c: &mut Criterion) {
         rs_reconstruct_benchmark(&mut group, 1024, 16, 16, 1);
         rs_reconstruct_benchmark(&mut group, 1024, 32, 32, 1);
         rs_reconstruct_benchmark(&mut group, 1024, 64, 64, 1);
+        rs_reconstruct_benchmark(&mut group, 1024, 5, 2, 1);
+        rs_reconstruct_benchmark(&mut group, 1024, 10, 4, 1);
+        rs_reconstruct_benchmark(&mut group, 1024, 50, 20, 1);
     }
     {
         let mut group = c.benchmark_group("Galos 8 [2KiB] Reconstruct One");
@@ -147,6 +153,9 @@ fn reconstruct_all(c: &mut Criterion) {
         rs_reconstruct_benchmark(&mut group, 1024, 16, 16, 16);
         rs_reconstruct_benchmark(&mut group, 1024, 32, 32, 32);
         rs_reconstruct_benchmark(&mut group, 1024, 64, 64, 64);
+        rs_reconstruct_benchmark(&mut group, 1024, 5, 2, 2);
+        rs_reconstruct_benchmark(&mut group, 1024, 10, 4, 4);
+        rs_reconstruct_benchmark(&mut group, 1024, 50, 20, 20);
     }
     {
         let mut group = c.benchmark_group("Galos 8 [2KiB] Reconstruct All");
