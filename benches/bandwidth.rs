@@ -44,7 +44,7 @@ fn rs_encode_benchmark(
 
     group.bench_function(format!("{}+{}", data_shards, parity_shards), |b| {
         let mut shards = create_shards(block_size, data_shards, parity_shards);
-        let rs = ReedSolomon::new(data_shards, parity_shards).unwrap(); // 3 data shards, 2 parity shards
+        let rs = ReedSolomon::new(data_shards, parity_shards).unwrap();
 
         assert_eq!(shards.len(), data_shards + parity_shards);
         assert_eq!(shards.last().unwrap().len(), block_size);
@@ -60,7 +60,7 @@ fn rs_reconstruct_benchmark(
     block_size: usize,
     data_shards: usize,
     parity_shards: usize,
-    num: usize,
+    delete: usize,
 ) {
     let size = block_size * data_shards;
 
@@ -68,7 +68,7 @@ fn rs_reconstruct_benchmark(
 
     group.bench_function(format!("{}+{}", data_shards, parity_shards), |b| {
         let mut shards = create_shards(block_size, data_shards, parity_shards);
-        let rs = ReedSolomon::new(data_shards, parity_shards).unwrap(); // 3 data shards, 2 parity shards
+        let rs = ReedSolomon::new(data_shards, parity_shards).unwrap();
 
         assert_eq!(shards.len(), data_shards + parity_shards);
         assert_eq!(shards.last().unwrap().len(), block_size);
@@ -79,17 +79,15 @@ fn rs_reconstruct_benchmark(
         let mut calculated: Vec<Option<Vec<u8>>> = shards.into_iter().map(Some).collect();
 
         b.iter(|| {
-            (0..num).for_each(|i| calculated[i] = None);
+            (0..delete).for_each(|i| calculated[i] = None);
             rs.reconstruct(black_box(&mut calculated)).unwrap();
         });
     });
 }
 
 fn encode(c: &mut Criterion) {
-    // let plot_config = PlotConfiguration::default();
     {
         let mut group = c.benchmark_group("Galos 8 [1KiB] Encode");
-        // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 1024, 4, 4);
         rs_encode_benchmark(&mut group, 1024, 8, 8);
         rs_encode_benchmark(&mut group, 1024, 16, 16);
@@ -98,22 +96,18 @@ fn encode(c: &mut Criterion) {
     }
     {
         let mut group = c.benchmark_group("Galos 8 [2KiB] Encode");
-        // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 2048, 4, 4);
     }
     {
         let mut group = c.benchmark_group("Galos 8 [4KiB] Encode");
-        // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 4096, 4, 4);
     }
     {
         let mut group = c.benchmark_group("Galos 8 [8KiB] Encode");
-        // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 8192, 4, 4);
     }
     {
         let mut group = c.benchmark_group("Galos 8 [16KiB] Encode");
-        // group.plot_config(plot_config.clone());
         rs_encode_benchmark(&mut group, 16384, 4, 4);
     }
 }
