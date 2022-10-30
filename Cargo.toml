@@ -56,8 +56,5 @@ criterion = { version = "0.4.0", features = ["html_reports"] }
 cc = { version = "1.0", optional = true }
 
 [[bench]]
-name = "reconstruct"
-
-[[bench]]
 name = "bandwidth"
 harness = false
