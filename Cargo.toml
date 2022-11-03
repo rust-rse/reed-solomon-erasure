@@ -1,5 +1,5 @@
 [package]
-name= "reed-solomon-erasure"
+name = "reed-solomon-erasure"
 version = "6.0.0"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 edition = "2018"
@@ -12,14 +12,14 @@ exclude = [
 description = "Rust implementation of Reed-Solomon erasure coding"
 
 documentation = "https://docs.rs/reed-solomon-erasure"
-homepage= "https://github.com/darrenldl/reed-solomon-erasure"
-repository= "https://github.com/darrenldl/reed-solomon-erasure"
+homepage = "https://github.com/darrenldl/reed-solomon-erasure"
+repository = "https://github.com/darrenldl/reed-solomon-erasure"
 
-readme= "README.md"
+readme = "README.md"
 
-keywords= ["reed-solomon", "erasure"]
+keywords = ["reed-solomon", "erasure"]
 
-categories= ["encoding"]
+categories = ["encoding"]
 
 license = "MIT"
 
@@ -30,7 +30,7 @@ simd-accel = ["cc", "libc"]
 
 [badges]
 travis-ci = { repository = "darrenldl/reed-solomon-erasure" }
-appveyor= { repository = "darrenldl/reed-solomon-erasure" }
+appveyor = { repository = "darrenldl/reed-solomon-erasure" }
 codecov = { repository = "darrenldl/reed-solomon-erasure" }
 coveralls = { repository = "darrenldl/reed-solomon-erasure" }
 
@@ -46,11 +46,15 @@ smallvec = "1.2"
 spin = { version = "0.9.2", default-features = false, features = ["spin_mutex"] }
 
 [dev-dependencies]
-rand = "0.7.2"
+rand = { version = "0.7.2", features = ["small_rng"] }
 quickcheck = "0.9"
+
+# Scientific benchmarking
+criterion = { version = "0.4.0", features = ["html_reports"] }
 
 [build-dependencies]
 cc = { version = "1.0", optional = true }
 
 [[bench]]
-name = "reconstruct"
+name = "bandwidth"
+harness = false
