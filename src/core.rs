@@ -3,6 +3,7 @@ extern crate alloc;
 use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::num::NonZeroUsize;
 
 use smallvec::SmallVec;
 
@@ -21,7 +22,7 @@ use spin::Mutex;
 use super::Field;
 use super::ReconstructShard;
 
-const DATA_DECODE_MATRIX_CACHE_CAPACITY: usize = 254;
+const DATA_DECODE_MATRIX_CACHE_CAPACITY: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(254) };
 
 // /// Parameters for parallelism.
 // #[derive(PartialEq, Debug, Clone, Copy)]
