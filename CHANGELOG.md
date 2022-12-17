@@ -1,3 +1,6 @@
+## 6.1.0
+- Update multiple dependencies
+
 ## 6.0.0
 - Use LruCache instead of InversionTree for caching data decode matrices
   - See [PR #104](https://github.com/rust-rse/reed-solomon-erasure/pull/104)

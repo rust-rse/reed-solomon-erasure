@@ -1,12 +1,15 @@
 [package]
 name = "reed-solomon-erasure"
-version = "6.0.0"
+version = "6.1.0"
 authors = ["Darren Ldl <darrenldldev@gmail.com>"]
 edition = "2018"
-build = "build.rs"
-exclude = [
-    "appveyor.yml",
-    ".travis.yml"
+include = [
+    "/benches",
+    "/simd_c",
+    "/src",
+    "/build.rs",
+    "/LICENSE",
+    "/README.md"
 ]
 
 description = "Rust implementation of Reed-Solomon erasure coding"
