@@ -57,7 +57,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -132,7 +132,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -181,7 +181,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -244,7 +244,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -278,7 +278,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -320,7 +320,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -351,7 +351,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -390,7 +390,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -419,7 +419,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -463,7 +463,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 

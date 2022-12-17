@@ -119,8 +119,8 @@ fn test_too_many_shards() {
 fn test_shard_count() {
     let mut rng = thread_rng();
     for _ in 0..10 {
-        let data_shard_count = rng.gen_range(1, 128);
-        let parity_shard_count = rng.gen_range(1, 128);
+        let data_shard_count = rng.gen_range(1..128);
+        let parity_shard_count = rng.gen_range(1..128);
 
         let total_shard_count = data_shard_count + parity_shard_count;
 
@@ -376,7 +376,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -451,7 +451,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -500,7 +500,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -563,7 +563,7 @@ quickcheck! {
             corrupt_pos_s.push(pos);
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -597,7 +597,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -639,7 +639,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -670,7 +670,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -709,7 +709,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -738,7 +738,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -782,7 +782,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let r = ReedSolomon::new(data, parity).unwrap();
 
@@ -1235,7 +1235,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let reuse = reuse % 10;
 
@@ -1285,7 +1285,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let reuse = reuse % 10;
 
@@ -1398,7 +1398,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let reuse = reuse % 10;
 
@@ -1457,7 +1457,7 @@ quickcheck! {
             parity -= data + parity - 256;
         }
 
-        let size = 1 + size % 1_000_000;
+        let size = 1 + size % 50;
 
         let reuse = reuse % 10;
 

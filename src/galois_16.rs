@@ -318,10 +318,10 @@ impl Element {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use quickcheck::Arbitrary;
+    use quickcheck::{Arbitrary, Gen};
 
     impl Arbitrary for Element {
-        fn arbitrary<G: quickcheck::Gen>(gen: &mut G) -> Self {
+        fn arbitrary(gen: &mut Gen) -> Self {
             let a = u8::arbitrary(gen);
             let b = u8::arbitrary(gen);
 
