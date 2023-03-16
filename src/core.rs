@@ -430,6 +430,12 @@ impl<F: Field> ReedSolomon<F> {
     fn build_matrix(data_shards: usize, total_shards: usize) -> Matrix<F> {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
 
+        for i in 0..total_shards {
+            for j in 0..data_shards {
+                println!("{:?}", vandermonde.get(i,j));
+            }
+        }
+
         let top = vandermonde.sub_matrix(0, 0, data_shards, data_shards);
 
         vandermonde.multiply(&top.invert().unwrap())

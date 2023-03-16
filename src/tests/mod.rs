@@ -9,6 +9,7 @@ use super::{galois_8, Error, SBSError};
 use rand::{self, thread_rng, Rng};
 
 mod galois_16;
+mod galois_381;
 
 type ReedSolomon = crate::ReedSolomon<galois_8::Field>;
 type ShardByShard<'a> = crate::ShardByShard<'a, galois_8::Field>;
