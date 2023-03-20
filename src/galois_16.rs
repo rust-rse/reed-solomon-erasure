@@ -26,6 +26,10 @@ impl crate::Field for Field {
         (Element(a) + Element(b)).0
     }
 
+    fn sub(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {
+        (Element(a) + Element(b)).0
+    }
+
     fn mul(a: [u8; 2], b: [u8; 2]) -> [u8; 2] {
         (Element(a) * Element(b)).0
     }

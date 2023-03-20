@@ -1,5 +1,5 @@
-use std::ops::{Add, Div, Mul, MulAssign};
-use ark_bls12_381::fq;
+use std::ops::{Add, Div, Mul, MulAssign, Sub};
+use ark_bls12_381::{fq, fr};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Field;
@@ -7,10 +7,14 @@ pub struct Field;
 impl crate::Field for Field {
     //todo: the order is much bigger.
     const ORDER: usize = usize::MAX;
-    type Elem = fq::Fq;
+    type Elem = fr::Fr;
 
     fn add(a: Self::Elem, b: Self::Elem) -> Self::Elem {
         a.add(b)
+    }
+
+    fn sub(a: Self::Elem, b: Self::Elem) -> Self::Elem {
+        a.sub(b)
     }
 
     fn mul(a: Self::Elem, b: Self::Elem) -> Self::Elem {
@@ -23,10 +27,10 @@ impl crate::Field for Field {
 
     fn exp(a: Self::Elem, n: usize) -> Self::Elem {
         if n == 0 {
-            return fq::FQ_ONE
+            return fr::Fr::from(1);
         }
-        if a ==  fq::FQ_ZERO {
-            return fq::FQ_ONE
+        if a ==  fr::Fr::from(0) {
+            return fr::Fr::from(0);
         }
         let mut r = a;
         for _ in 1..n {
@@ -36,15 +40,15 @@ impl crate::Field for Field {
     }
 
     fn zero() -> Self::Elem {
-        fq::FQ_ZERO
+        fr::Fr::from(0)
     }
 
     fn one() -> Self::Elem {
-        fq::FQ_ONE
+        fr::Fr::from(1)
     }
 
     fn nth_internal(n: usize) -> Self::Elem {
-        fq::Fq::from(n as u64)
+        fr::Fr::from(n as u64)
     }
 }
 

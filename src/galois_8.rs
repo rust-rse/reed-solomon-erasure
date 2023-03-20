@@ -14,6 +14,10 @@ impl crate::Field for Field {
         add(a, b)
     }
 
+    fn sub(a: u8, b: u8) -> u8 {
+        sub(a, b)
+    }
+
     fn mul(a: u8, b: u8) -> u8 {
         mul(a, b)
     }

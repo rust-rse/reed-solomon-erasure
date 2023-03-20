@@ -221,7 +221,7 @@ impl<F: Field> Matrix<F> {
                 if acc!(self, r_below, r) != F::zero() {
                     let scale = acc!(self, r_below, r).clone();
                     for c in 0..self.col_count {
-                        acc!(self, r_below, c) = F::add(
+                        acc!(self, r_below, c) = F::sub(
                             acc!(self, r_below, c).clone(),
                             F::mul(scale, acc!(self, r, c).clone()),
                         );
@@ -236,7 +236,7 @@ impl<F: Field> Matrix<F> {
                 if acc!(self, r_above, d) != F::zero() {
                     let scale = acc!(self, r_above, d).clone();
                     for c in 0..self.col_count {
-                        acc!(self, r_above, c) = F::add(
+                        acc!(self, r_above, c) = F::sub(
                             acc!(self, r_above, c).clone(),
                             F::mul(scale, acc!(self, d, c).clone()),
                         );

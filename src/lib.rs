@@ -65,6 +65,8 @@ pub trait Field: Sized {
     /// Add two elements together.
     fn add(a: Self::Elem, b: Self::Elem) -> Self::Elem;
 
+    fn sub(a: Self::Elem, b: Self::Elem) -> Self::Elem;
+
     /// Multiply two elements together.
     fn mul(a: Self::Elem, b: Self::Elem) -> Self::Elem;
 
