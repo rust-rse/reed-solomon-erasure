@@ -37,7 +37,7 @@ mod tests;
 
 pub mod galois_16;
 pub mod galois_8;
-pub mod galois_381;
+pub mod galois_prime;
 
 pub use crate::errors::Error;
 pub use crate::errors::SBSError;

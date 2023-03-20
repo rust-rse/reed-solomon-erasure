@@ -1,9 +1,9 @@
 use std::convert::TryFrom;
 use std::ops::{Div, Mul};
 use ark_bls12_381::{Fr, fr};
-use crate::galois_381::{Field, ReedSolomon};
+use crate::galois_prime::{Field, ReedSolomon};
 use crate::matrix::Matrix;
-use crate::tests::{galois_381, option_shards_to_shards, shards_to_option_shards};
+use crate::tests::{galois_prime, option_shards_to_shards, shards_to_option_shards};
 use super::{fill_random, option_shards_into_shards, shards_into_option_shards};
 
 fn print_shards(shards: &Vec<Vec<Fr>>) {
