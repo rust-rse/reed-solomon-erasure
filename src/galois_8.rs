@@ -63,7 +63,6 @@ pub fn add(a: u8, b: u8) -> u8 {
 }
 
 /// Subtract `b` from `a`.
-#[cfg(test)]
 pub fn sub(a: u8, b: u8) -> u8 {
     a ^ b
 }
