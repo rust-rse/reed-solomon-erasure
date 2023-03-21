@@ -119,6 +119,8 @@ pub trait Field: Sized {
             *o = Self::add(o.clone(), Self::mul(elem.clone(), i.clone()))
         }
     }
+
+    fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8>;
 }
 
 /// Something which might hold a shard.

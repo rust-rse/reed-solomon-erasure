@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 use std::ops::{Div, Mul};
 use ark_bls12_381::{Fr, fr};
+use ark_ff::BigInteger;
 use crate::galois_prime::{Field, ReedSolomon};
 use crate::matrix::Matrix;
 use crate::tests::{galois_prime, option_shards_to_shards, shards_to_option_shards};
@@ -50,6 +51,9 @@ fn test_fr() {
     let e = b.mul(c); // e=b*c
 
     let f = d.div(e); // f=d/e
+
+    let aaa = f.0;
+    println!("{:?}",aaa.to_bytes_le());
 
     assert_eq!(f,a); // f == a ?
 }

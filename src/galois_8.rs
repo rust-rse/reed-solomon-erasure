@@ -49,6 +49,10 @@ impl crate::Field for Field {
     fn mul_slice_add(c: u8, input: &[u8], out: &mut [u8]) {
         mul_slice_xor(c, input, out)
     }
+
+    fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8> {
+        input.to_vec()
+    }
 }
 
 /// Type alias of ReedSolomon over GF(2^8).

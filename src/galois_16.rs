@@ -53,6 +53,13 @@ impl crate::Field for Field {
     fn nth_internal(n: usize) -> [u8; 2] {
         [(n >> 8) as u8, n as u8]
     }
+
+    fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8> {
+        input.iter()
+            .flatten()
+            .cloned()
+            .collect()
+    }
 }
 
 /// Type alias of ReedSolomon over GF(2^8).

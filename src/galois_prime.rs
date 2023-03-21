@@ -1,5 +1,7 @@
 use std::ops::{Add, Div, Mul, MulAssign, Sub};
 use ark_bls12_381::{fq, fr};
+use ark_ff::fields::Field as OtherField;
+use ark_ff::{BigInteger, PrimeField};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Field;
@@ -49,6 +51,12 @@ impl crate::Field for Field {
 
     fn nth_internal(n: usize) -> Self::Elem {
         fr::Fr::from(n as u64)
+    }
+
+    fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8> {
+        input.iter()
+            .flat_map(|&u| u.0.to_bytes_le().to_vec())
+            .collect()
     }
 }
 
