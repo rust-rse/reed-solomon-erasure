@@ -58,6 +58,17 @@ impl crate::Field for Field {
             .flat_map(|&u| u.0.to_bytes_le().to_vec())
             .collect()
     }
+
+    fn from_vec(input: Vec<u8>) -> Vec<fr::Fr> {
+        let mut output = Vec::new();
+
+        let chunks = input.chunks_exact((fr::Fr::MODULUS_BIT_SIZE as usize) / 8);
+        for chunk  in chunks {
+            output.push(fr::Fr::from_le_bytes_mod_order(chunk));
+        }
+
+        output
+    }
 }
 
 pub type ReedSolomon = crate::ReedSolomon<Field>;

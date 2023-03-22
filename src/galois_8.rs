@@ -50,8 +50,12 @@ impl crate::Field for Field {
         mul_slice_xor(c, input, out)
     }
 
-    fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8> {
+    fn slice_to_vec(input: &[u8]) -> Vec<u8> {
         input.to_vec()
+    }
+
+    fn from_vec(input: Vec<u8>) -> Vec<u8> {
+        input
     }
 }
 

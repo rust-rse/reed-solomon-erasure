@@ -54,11 +54,26 @@ impl crate::Field for Field {
         [(n >> 8) as u8, n as u8]
     }
 
-    fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8> {
+    fn slice_to_vec(input: &[[u8; 2]]) -> Vec<u8> {
         input.iter()
             .flatten()
             .cloned()
             .collect()
+    }
+
+    fn from_vec(input: Vec<u8>) -> Vec<[u8; 2]> {
+        let chunk_size = 2;
+        let chunks = input.chunks_exact(chunk_size);
+
+        let mut u8_arrays = Vec::with_capacity(chunks.len());
+
+        for chunk in chunks {
+            let mut u8_array: [u8; 2] = [0; 2];
+            u8_array.copy_from_slice(chunk);
+            u8_arrays.push(u8_array);
+        }
+
+        u8_arrays
     }
 }
 

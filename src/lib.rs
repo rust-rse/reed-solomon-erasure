@@ -121,6 +121,8 @@ pub trait Field: Sized {
     }
 
     fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8>;
+
+    fn from_vec(input: Vec<u8>) -> Vec<Self::Elem>;
 }
 
 /// Something which might hold a shard.
