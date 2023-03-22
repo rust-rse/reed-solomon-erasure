@@ -127,10 +127,6 @@ pub trait Field: Sized {
     fn from_vec(input: Vec<u8>) -> Vec<Self::Elem>;
 }
 
-#[derive(Serialize,Deserialize)]
-pub struct Shard {
-    elts: Vec<Field::Elem>,
-}
 
 /// Something which might hold a shard.
 ///
