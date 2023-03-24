@@ -2,6 +2,7 @@ extern crate alloc;
 
 use alloc::vec;
 use alloc::vec::Vec;
+use crate::Field;
 
 use super::{fill_random, option_shards_into_shards, shards_into_option_shards};
 use crate::galois_16::ReedSolomon;
@@ -20,6 +21,34 @@ macro_rules! make_random_shards {
         shards
     }};
 }
+
+#[test]
+fn test_vec_gf16() {
+    let mut bytes = Vec::new();
+
+    bytes.push(1);
+
+    let elems = crate::galois_16::Field::from_vec(bytes.clone());
+    let mut bytes2 = crate::galois_16::Field::slice_to_vec(elems.as_slice());
+    bytes2.truncate(bytes.len());
+    assert_eq!(bytes, bytes2);
+
+    bytes.push(4);
+    bytes.push(120);
+    bytes.push(45);
+
+    let elems = crate::galois_16::Field::from_vec(bytes.clone());
+    let bytes2 = crate::galois_16::Field::slice_to_vec(elems.as_slice());
+    assert_eq!(bytes, bytes2);
+
+    for i in 0..60 {
+        bytes.push(i);
+    }
+    let elems = crate::galois_16::Field::from_vec(bytes.clone());
+    let bytes2 = crate::galois_16::Field::slice_to_vec(elems.as_slice());
+    assert_eq!(bytes, bytes2);
+}
+
 
 #[test]
 fn correct_field_order_restriction() {

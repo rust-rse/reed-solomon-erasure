@@ -1,8 +1,10 @@
 use std::convert::TryFrom;
 use std::ops::{Div, Mul};
 use ark_bls12_381::{Fr, fr};
-use ark_ff::BigInteger;
-use crate::galois_prime::{Field, ReedSolomon};
+use ark_ff::{BigInteger, PrimeField};
+use rand::Rng;
+use crate::Field;
+use crate::galois_prime::{Field as PrimeF, ReedSolomon};
 use crate::matrix::Matrix;
 use crate::tests::{galois_prime, option_shards_to_shards, shards_to_option_shards};
 use super::{fill_random, option_shards_into_shards, shards_into_option_shards};
@@ -17,7 +19,7 @@ fn print_shards(shards: &Vec<Vec<Fr>>) {
     }
 }
 
-fn display_matrix(mat: &Matrix<Field>) {
+fn display_matrix(mat: &Matrix<PrimeF>) {
     for i in 0..mat.row_count() {
         for j in 0..mat.col_count() {
             print!("0{},", mat.get(i,j));
@@ -59,33 +61,47 @@ fn test_fr() {
 }
 
 #[test]
-fn test_mat_gf() {
-    let m = Matrix::<Field>::vandermonde(3,3);
-    let inv = m.invert().unwrap();
-    let invinv = inv.invert().unwrap();
-    let mut aug = m.augment(&Matrix::<Field>::identity(3));
+fn test_vec_fr_small() {
+    let mut bytes = Vec::new();
 
+    bytes.push(0);
+    bytes.push(0);
+    bytes.push(1);
+    bytes.push(0);
+    let elems = crate::galois_prime::Field::from_vec(bytes.clone());
+    let mut bytes2 = crate::galois_prime::Field::slice_to_vec(elems.as_slice());
+    bytes2.truncate(bytes.len());
+    assert_eq!(bytes, bytes2);
+}
 
-    println!("aug");
-    display_matrix(&aug);
+#[test]
+fn test_vec_fr_big() {
+    let mut bytes = Vec::new();
 
-    aug.gaussian_elim().unwrap();
-    println!("gaussian elim aug");
-    display_matrix(&aug);
+    bytes.push(1);
 
-    println!("matrix");
-    display_matrix(&m);
+    let elems = crate::galois_prime::Field::from_vec(bytes.clone());
+    let mut bytes2 = crate::galois_prime::Field::slice_to_vec(elems.as_slice());
+    bytes2.truncate(bytes.len());
+    assert_eq!(bytes, bytes2);
 
-    println!("inv");
-    display_matrix(&inv);
+    bytes.push(4);
+    bytes.push(120);
+    bytes.push(45);
 
-    println!("inv inv");
-    display_matrix(&invinv);
+    let elems = crate::galois_prime::Field::from_vec(bytes.clone());
+    let mut bytes2 = crate::galois_prime::Field::slice_to_vec(elems.as_slice());
+    bytes2.truncate(bytes.len());
+    assert_eq!(bytes, bytes2);
 
-    let mm = m.multiply(&inv);
-
-    println!("mul");
-    display_matrix(&mm);
+    for i in 0..60 {
+        bytes.push(i);
+    }
+    let elems = crate::galois_prime::Field::from_vec(bytes.clone());
+    println!("{}",elems.len());
+    let mut bytes2 = crate::galois_prime::Field::slice_to_vec(elems.as_slice());
+    bytes2.truncate(bytes.len());
+    assert_eq!(bytes, bytes2);
 }
 
 #[test]

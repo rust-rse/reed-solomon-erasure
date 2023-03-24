@@ -62,18 +62,13 @@ impl crate::Field for Field {
     }
 
     fn from_vec(input: Vec<u8>) -> Vec<[u8; 2]> {
-        let chunk_size = 2;
-        let chunks = input.chunks_exact(chunk_size);
-
-        let mut u8_arrays = Vec::with_capacity(chunks.len());
-
-        for chunk in chunks {
-            let mut u8_array: [u8; 2] = [0; 2];
-            u8_array.copy_from_slice(chunk);
-            u8_arrays.push(u8_array);
-        }
-
-        u8_arrays
+        input.chunks(2).map(|chunk| {
+            let mut arr = [0u8; 2];
+            for i in 0..chunk.len() {
+                arr[i] = chunk[i];
+            }
+            arr
+        }).collect()
     }
 }
 
