@@ -30,13 +30,13 @@ mod macros;
 
 mod core;
 mod errors;
-mod matrix;
 
 #[cfg(test)]
 mod tests;
 
 pub mod galois_16;
 pub mod galois_8;
+pub mod matrix;
 
 pub use crate::errors::Error;
 pub use crate::errors::SBSError;

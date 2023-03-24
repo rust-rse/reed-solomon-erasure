@@ -435,14 +435,14 @@ impl<F: Field> ReedSolomon<F> {
         vandermonde.multiply(&top.invert().unwrap())
     }
 
-    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
+    /// Cheks the validity of data and parity shard counts.
     ///
     /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
     ///
     /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
     ///
     /// Returns `Error::TooManyShards` if `data_shards + parity_shards > F::ORDER`.
-    pub fn new(data_shards: usize, parity_shards: usize) -> Result<ReedSolomon<F>, Error> {
+    fn check_shard_count(data_shards: usize, parity_shards: usize) -> Result<(), Error> {
         if data_shards == 0 {
             return Err(Error::TooFewDataShards);
         }
@@ -452,10 +452,58 @@ impl<F: Field> ReedSolomon<F> {
         if data_shards + parity_shards > F::ORDER {
             return Err(Error::TooManyShards);
         }
+        Ok(())
+    }
+
+    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
+    ///
+    /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
+    ///
+    /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
+    ///
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > F::ORDER`.
+    pub fn new(data_shards: usize, parity_shards: usize) -> Result<ReedSolomon<F>, Error> {
+        Self::check_shard_count(data_shards, parity_shards)?;
 
         let total_shards = data_shards + parity_shards;
 
         let matrix = Self::build_matrix(data_shards, total_shards);
+
+        Ok(ReedSolomon {
+            data_shard_count: data_shards,
+            parity_shard_count: parity_shards,
+            total_shard_count: total_shards,
+            matrix,
+            data_decode_matrix_cache: Mutex::new(LruCache::new(DATA_DECODE_MATRIX_CACHE_CAPACITY)),
+        })
+    }
+
+    /// Creates a new instance of Reed-Solomon erasure code encoder/decoder with an externally built matrix.
+    ///
+    /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
+    ///
+    /// Returns `Error::TooFewParityShards` if `parity_shards == 0`.
+    ///
+    /// Returns `Error::TooManyShards` if `data_shards + parity_shards > F::ORDER`.
+    ///
+    /// Returns `Error::IncorrectShardSize` if `data_shards != matrix.col_count()`.
+    ///
+    /// Returns `Error::IncorrectShardSize` if `data_shards + parity_shards != matrix.row_count()`.
+    pub fn new_with_matrix(
+        data_shards: usize,
+        parity_shards: usize,
+        matrix: Matrix<F>,
+    ) -> Result<ReedSolomon<F>, Error> {
+        Self::check_shard_count(data_shards, parity_shards)?;
+
+        let total_shards = data_shards + parity_shards;
+
+        if data_shards != matrix.col_count() {
+            return Err(Error::IncorrectShardSize);
+        }
+        if total_shards != matrix.row_count() {
+            return Err(Error::IncorrectShardSize);
+        }
 
         Ok(ReedSolomon {
             data_shard_count: data_shards,

@@ -5,7 +5,7 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use super::{galois_8, Error, SBSError};
+use super::{galois_8, matrix, Error, SBSError};
 use rand::{self, thread_rng, Rng};
 
 mod galois_16;
@@ -2616,4 +2616,49 @@ fn test_encode_single_error_handling() {
             r.encode_single(14, &mut slice_refs).unwrap_err()
         );
     }
+}
+
+#[test]
+fn test_new_with_matrix_invalid_data_shards() {
+    let matrix = matrix::Matrix::new_with_data(vec![
+        vec![1, 0, 0],
+        vec![0, 1, 0],
+        vec![0, 0, 1],
+        vec![1, 1, 1],
+        vec![4, 2, 1],
+    ]);
+
+    assert_eq!(
+        Error::IncorrectShardSize,
+        ReedSolomon::new_with_matrix(10, 2, matrix).unwrap_err()
+    );
+}
+
+#[test]
+fn test_new_with_matrix_invalid_parity_shards() {
+    let matrix = matrix::Matrix::new_with_data(vec![
+        vec![1, 0, 0],
+        vec![0, 1, 0],
+        vec![0, 0, 1],
+        vec![1, 1, 1],
+        vec![4, 2, 1],
+    ]);
+
+    assert_eq!(
+        Error::IncorrectShardSize,
+        ReedSolomon::new_with_matrix(3, 1, matrix).unwrap_err()
+    );
+}
+
+#[test]
+fn test_new_with_matrix_ok() {
+    let matrix = matrix::Matrix::new_with_data(vec![
+        vec![1, 0, 0],
+        vec![0, 1, 0],
+        vec![0, 0, 1],
+        vec![1, 1, 1],
+        vec![4, 2, 1],
+    ]);
+
+    assert!(ReedSolomon::new_with_matrix(3, 2, matrix).is_ok());
 }
