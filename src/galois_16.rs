@@ -55,20 +55,20 @@ impl crate::Field for Field {
     }
 
     fn slice_to_vec(input: &[[u8; 2]]) -> Vec<u8> {
-        input.iter()
-            .flatten()
-            .cloned()
-            .collect()
+        input.iter().flatten().cloned().collect()
     }
 
     fn from_vec(input: Vec<u8>) -> Vec<[u8; 2]> {
-        input.chunks(2).map(|chunk| {
-            let mut arr = [0u8; 2];
-            for i in 0..chunk.len() {
-                arr[i] = chunk[i];
-            }
-            arr
-        }).collect()
+        input
+            .chunks(2)
+            .map(|chunk| {
+                let mut arr = [0u8; 2];
+                for i in 0..chunk.len() {
+                    arr[i] = chunk[i];
+                }
+                arr
+            })
+            .collect()
     }
 }
 

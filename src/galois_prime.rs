@@ -1,7 +1,6 @@
+use ark_bls12_381::fr;
+use ark_ff::{BigInteger, PrimeField};
 use std::ops::{Add, Div, Mul, MulAssign, Sub};
-use ark_bls12_381::{fq, fr};
-use ark_ff::fields::Field as OtherField;
-use ark_ff::{BigInt, BigInteger, PrimeField};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct Field;
@@ -31,7 +30,7 @@ impl crate::Field for Field {
         if n == 0 {
             return fr::Fr::from(1);
         }
-        if a ==  fr::Fr::from(0) {
+        if a == fr::Fr::from(0) {
             return fr::Fr::from(0);
         }
         let mut r = a;
@@ -54,9 +53,10 @@ impl crate::Field for Field {
     }
 
     fn slice_to_vec(input: &[Self::Elem]) -> Vec<u8> {
-        input.iter()
+        input
+            .iter()
             //.flat_map(|&u| u.into_bigint().to_bytes_le())
-            .flat_map(|&u|  {
+            .flat_map(|&u| {
                 //let nb_bytes = (u.into_bigint().num_bits()+7)/8;
                 let mut v = u.into_bigint().to_bytes_le();
                 v.truncate((fr::Fr::MODULUS_BIT_SIZE as usize) / 8 as usize);
@@ -69,7 +69,7 @@ impl crate::Field for Field {
         let mut output = Vec::new();
 
         let chunks = input.chunks((fr::Fr::MODULUS_BIT_SIZE as usize) / 8);
-        for chunk  in chunks {
+        for chunk in chunks {
             //output.push(fr::Fr::from_random_bytes(chunk).unwrap());
             output.push(fr::Fr::from_le_bytes_mod_order(chunk));
         }

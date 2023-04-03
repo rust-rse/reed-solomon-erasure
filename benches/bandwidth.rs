@@ -189,5 +189,11 @@ fn reconstruct_none(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, encode, reconstruct_one, reconstruct_all, reconstruct_none);
+criterion_group!(
+    benches,
+    encode,
+    reconstruct_one,
+    reconstruct_all,
+    reconstruct_none
+);
 criterion_main!(benches);

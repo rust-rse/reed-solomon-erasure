@@ -1,8 +1,8 @@
 extern crate alloc;
 
+use crate::Field;
 use alloc::vec;
 use alloc::vec::Vec;
-use crate::Field;
 
 use super::{fill_random, option_shards_into_shards, shards_into_option_shards};
 use crate::galois_16::ReedSolomon;
@@ -48,7 +48,6 @@ fn test_vec_gf16() {
     let bytes2 = crate::galois_16::Field::slice_to_vec(elems.as_slice());
     assert_eq!(bytes, bytes2);
 }
-
 
 #[test]
 fn correct_field_order_restriction() {

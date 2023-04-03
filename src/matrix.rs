@@ -94,7 +94,6 @@ impl<F: Field> Matrix<F> {
 
     pub fn identity(size: usize) -> Matrix<F> {
         let mut result = Self::new(size, size);
-        let a = F::one();
         for i in 0..size {
             acc!(result, i, i) = F::one();
         }
