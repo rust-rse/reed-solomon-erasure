@@ -1015,12 +1015,14 @@ impl<F: Field> ReedSolomonNonSystematic<F> {
 
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
+        let mut number_present = 0;
         let mut shard_len = None;
         for shard in slices.iter_mut() {
             if let Some(len) = shard.len() {
                 if len == 0 {
                     return Err(Error::EmptyShard);
                 }
+                number_present += 1;
                 if let Some(old_len) = shard_len {
                     if len != old_len {
                         // mismatch between shards.
@@ -1029,6 +1031,11 @@ impl<F: Field> ReedSolomonNonSystematic<F> {
                 }
                 shard_len = Some(len);
             }
+        }
+
+        // More complete sanity check
+        if number_present < data_shard_count {
+            return Err(Error::TooFewShardsPresent);
         }
 
         let shard_len = shard_len.expect("at least one shard present; qed");

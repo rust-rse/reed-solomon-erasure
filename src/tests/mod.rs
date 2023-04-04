@@ -2641,8 +2641,16 @@ fn test_non_systematic() {
     shards[1] = None;
     shards[2] = None;
     rs.reconstruct(&mut shards).unwrap();
-    let shards = option_shards_to_shards(&shards);
-    for i in 0..k {
-        assert_eq!(shards.get(i).unwrap(), master_copy.get(i).unwrap());
+    {
+        let shards = option_shards_to_shards(&shards);
+        for i in 0..k {
+            assert_eq!(shards.get(i).unwrap(), master_copy.get(i).unwrap());
+        }
     }
+
+    shards[1] = None;
+    shards[2] = None;
+    shards[3] = None;
+    shards[4] = None;
+    assert_eq!(Error::TooFewShardsPresent, rs.reconstruct(&mut shards).unwrap_err());
 }
