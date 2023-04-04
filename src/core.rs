@@ -992,7 +992,6 @@ impl<F: Field> ReedSolomonNonSystematic<F> {
         for j in 0..self.total_shard_count {
             for i in 0..self.data_shard_count {
                 let e = self.matrix.get(j, i);
-                println!("in repair {}: source {} * {:?}", j, i, e);
                 if i == 0 {
                     F::mul_slice(e, &inn[i].as_ref(), &mut slices[j].as_mut());
                 } else {
@@ -1057,18 +1056,14 @@ impl<F: Field> ReedSolomonNonSystematic<F> {
                     }
                 }
                 Err(None) => {
-                    println!("errr");
                 }
                 Err(Some(x)) => {
                     let shard = x?;
                     sub_shards.push(shard);
-                    println!("err");
                 }
             }
         }
-        if sub_shards.len() == self.data_shard_count {
-            println!("ok for decoding");
-        }
+
 
         let mut sub_matrix = Matrix::new(self.data_shard_count, self.data_shard_count);
         for (sub_matrix_row, &valid_index) in valid_indices.iter().enumerate() {
