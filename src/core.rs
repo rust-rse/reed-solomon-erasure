@@ -922,3 +922,178 @@ impl<F: Field> ReedSolomon<F> {
         }
     }
 }
+
+#[derive(Debug)]
+pub struct ReedSolomonNonSystematic<F: Field> {
+    data_shard_count: usize,
+    parity_shard_count: usize,
+    total_shard_count: usize,
+    matrix: Matrix<F>,
+    data_decode_matrix_cache: Mutex<LruCache<Vec<usize>, Arc<Matrix<F>>>>,
+}
+
+impl<F: Field> Clone for ReedSolomonNonSystematic<F> {
+    fn clone(&self) -> ReedSolomonNonSystematic<F> {
+        ReedSolomonNonSystematic::vandermonde(self.data_shard_count, self.parity_shard_count)
+            .expect("basic checks already passed as precondition of existence of self")
+    }
+}
+
+impl<F: Field> PartialEq for ReedSolomonNonSystematic<F> {
+    fn eq(&self, rhs: &ReedSolomonNonSystematic<F>) -> bool {
+        self.data_shard_count == rhs.data_shard_count
+            && self.parity_shard_count == rhs.parity_shard_count
+    }
+}
+
+impl<F: Field> ReedSolomonNonSystematic<F> {
+    pub fn vandermonde(k: usize, n: usize) -> Result<ReedSolomonNonSystematic<F>, Error> {
+        if k == 0 {
+            return Err(Error::TooFewDataShards);
+        }
+        if n == 0 {
+            return Err(Error::TooFewParityShards);
+        }
+        if k + n > F::ORDER {
+            return Err(Error::TooManyShards);
+        }
+
+        let matrix = Matrix::vandermonde(n, k);
+
+        Ok(ReedSolomonNonSystematic {
+            data_shard_count: k,
+            parity_shard_count: n - k,
+            total_shard_count: n,
+            matrix,
+            data_decode_matrix_cache: Mutex::new(LruCache::new(DATA_DECODE_MATRIX_CACHE_CAPACITY)),
+        })
+    }
+
+    pub fn encode<T, U>(&self, mut shards: T) -> Result<(), Error>
+    where
+        T: AsRef<[U]> + AsMut<[U]>,
+        U: AsRef<[F::Elem]> + AsMut<[F::Elem]>,
+    {
+        let slices: &mut [U] = shards.as_mut();
+
+        check_piece_count!(all => self, slices);
+        check_slices!(multi => slices);
+
+        let mut inn = Vec::with_capacity(self.data_shard_count);
+        for i in 0..self.data_shard_count {
+            let shard = slices.get(i).unwrap();
+            let mut copy = Vec::with_capacity(shard.as_ref().len());
+            for i in shard.as_ref() {
+                copy.push(*i);
+            }
+            inn.push(copy);
+        }
+
+        for j in 0..self.total_shard_count {
+            for i in 0..self.data_shard_count {
+                let e = self.matrix.get(j, i);
+                println!("in repair {}: source {} * {:?}", j, i, e);
+                if i == 0 {
+                    F::mul_slice(e, &inn[i].as_ref(), &mut slices[j].as_mut());
+                } else {
+                    F::mul_slice_add(e, &inn[i].as_ref(), &mut slices[j].as_mut());
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn reconstruct<T: ReconstructShard<F>>(&self, slices: &mut [T]) -> Result<(), Error> {
+        check_piece_count!(all => self, slices);
+
+        let data_shard_count = self.data_shard_count;
+
+        let mut sub_shards: SmallVec<[&mut [F::Elem]; 32]> =
+            SmallVec::with_capacity(data_shard_count);
+        let mut valid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
+
+        // Quick check: are all of the shards present?  If so, there's
+        // nothing to do.
+        let mut shard_len = None;
+        for shard in slices.iter_mut() {
+            if let Some(len) = shard.len() {
+                if len == 0 {
+                    return Err(Error::EmptyShard);
+                }
+                if let Some(old_len) = shard_len {
+                    if len != old_len {
+                        // mismatch between shards.
+                        return Err(Error::IncorrectShardSize);
+                    }
+                }
+                shard_len = Some(len);
+            }
+        }
+
+        let shard_len = shard_len.expect("at least one shard present; qed");
+
+        let mut inn = Vec::with_capacity(self.data_shard_count);
+        for (id, shard) in slices.iter_mut().enumerate() {
+            let data = shard.get_or_initialize(shard_len).map_err(Some);
+            match data {
+                Ok(shard) => {
+                    println!("{}", id);
+                    if inn.len() < self.data_shard_count {
+                        let mut copy = Vec::with_capacity(shard_len);
+                        for i in shard.as_ref() {
+                            copy.push(*i);
+                        }
+                        inn.push(copy);
+                        sub_shards.push(shard);
+                        valid_indices.push(id);
+                    }
+                }
+                Err(None) => {
+                    println!("errr");
+                }
+                Err(Some(x)) => {
+                    let shard = x?;
+                    sub_shards.push(shard);
+                    println!("err");
+                }
+            }
+        }
+        if sub_shards.len() == self.data_shard_count {
+            println!("ok for decoding");
+        }
+
+        let mut sub_matrix = Matrix::new(self.data_shard_count, self.data_shard_count);
+        for (sub_matrix_row, &valid_index) in valid_indices.iter().enumerate() {
+            for c in 0..self.data_shard_count {
+                sub_matrix.set(sub_matrix_row, c, self.matrix.get(valid_index, c));
+            }
+        }
+
+        let data_decode_matrix: Matrix<F> = sub_matrix.invert().unwrap();
+
+        let sz = sub_shards.get(0).unwrap().len();
+        let mut result = Vec::new();
+        for _i in 0..self.data_shard_count {
+            let mut vv = Vec::<F::Elem>::with_capacity(sz);
+            for _e in 0..sz {
+                vv.push(F::Elem::default());
+            }
+            result.push(vv);
+        }
+
+        for j in 0..self.data_shard_count {
+            for i in 0..self.data_shard_count {
+                let e = data_decode_matrix.get(j, i);
+                let o = sub_shards.get_mut(j).unwrap().as_mut(); //result.get_mut(j).unwrap().as_mut();
+                if i == 0 {
+                    F::mul_slice(e, &inn[i].as_ref(), o);
+                } else {
+                    F::mul_slice_add(e, &inn[i].as_ref(), o);
+                }
+            }
+        }
+
+        Ok(())
+    }
+}

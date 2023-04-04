@@ -79,5 +79,6 @@ impl crate::Field for Field {
 }
 
 pub type ReedSolomon = crate::ReedSolomon<Field>;
+pub type ReedSolomonNS = crate::ReedSolomonNonSystematic<Field>;
 
 pub type ShardByShard<'a> = crate::ShardByShard<'a, Field>;

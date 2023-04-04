@@ -13,6 +13,7 @@ mod galois_prime;
 
 type ReedSolomon = crate::ReedSolomon<galois_8::Field>;
 type ShardByShard<'a> = crate::ShardByShard<'a, galois_8::Field>;
+type ReedSolomonNS = crate::ReedSolomonNonSystematic<galois_8::Field>;
 
 macro_rules! make_random_shards {
     ($per_shard:expr, $size:expr) => {{
@@ -2616,5 +2617,32 @@ fn test_encode_single_error_handling() {
             Error::InvalidIndex,
             r.encode_single(14, &mut slice_refs).unwrap_err()
         );
+    }
+}
+
+#[test]
+fn test_non_systematic() {
+    let (k, n) = (3, 5);
+    let rs = ReedSolomonNS::vandermonde(k, n).unwrap();
+
+    let mut shards = Vec::with_capacity(n);
+    shards.push(vec![1, 1, 1, 1]);
+    shards.push(vec![2, 2, 2, 2]);
+    shards.push(vec![3, 3, 3, 3]);
+    shards.push(vec![0; 4]);
+    shards.push(vec![0; 4]);
+
+    let master_copy = shards.clone();
+
+    rs.encode(&mut shards).unwrap();
+
+    let mut shards = shards_to_option_shards(&shards);
+
+    shards[1] = None;
+    shards[2] = None;
+    rs.reconstruct(&mut shards).unwrap();
+    let shards = option_shards_to_shards(&shards);
+    for i in 0..k {
+        assert_eq!(shards.get(i).unwrap(), master_copy.get(i).unwrap());
     }
 }

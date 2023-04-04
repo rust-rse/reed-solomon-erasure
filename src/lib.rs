@@ -43,6 +43,7 @@ pub use crate::errors::Error;
 pub use crate::errors::SBSError;
 
 pub use crate::core::ReedSolomon;
+pub use crate::core::ReedSolomonNonSystematic;
 pub use crate::core::ShardByShard;
 
 // TODO: Can be simplified once https://github.com/rust-lang/rfcs/issues/2505 is resolved
