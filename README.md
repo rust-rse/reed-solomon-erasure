@@ -27,12 +27,12 @@ See [here](wasm/README.md) for details
 Add the following to your `Cargo.toml` for the normal version (pure Rust version)
 ```toml
 [dependencies]
-reed-solomon-erasure = "4.0"
+reed-solomon-erasure = "6.0"
 ```
 or the following for the version which tries to utilise SIMD
 ```toml
 [dependencies]
-reed-solomon-erasure = { version = "4.0", features = [ "simd-accel" ] }
+reed-solomon-erasure = { version = "6.0", features = [ "simd-accel" ] }
 ```
 and the following to your crate root
 ```rust
