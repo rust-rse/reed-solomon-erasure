@@ -1,5 +1,7 @@
 extern crate alloc;
 
+use core::num::NonZeroUsize;
+
 use alloc::sync::Arc;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -462,7 +464,9 @@ impl<F: Field> ReedSolomon<F> {
             parity_shard_count: parity_shards,
             total_shard_count: total_shards,
             matrix,
-            data_decode_matrix_cache: Mutex::new(LruCache::new(DATA_DECODE_MATRIX_CACHE_CAPACITY)),
+            data_decode_matrix_cache: Mutex::new(LruCache::new(
+                NonZeroUsize::new(DATA_DECODE_MATRIX_CACHE_CAPACITY).unwrap(),
+            )),
         })
     }
 
