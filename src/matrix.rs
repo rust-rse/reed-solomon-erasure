@@ -7,95 +7,199 @@ use alloc::vec::Vec;
 use crate::Field;
 use smallvec::SmallVec;
 
-#[derive(Debug)]
+const ROW_ARRAY_STACK_LENGTH: usize = 64;
+/// Maximum length of the matrix data array in stack, exceeding which leads to heap allocation.
+const DATA_ARRAY_STACK_LENGTH: usize = 1024;
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     SingularMatrix,
 }
 
-macro_rules! acc {
-    (
-        $m:ident, $r:expr, $c:expr
-    ) => {
-        $m.data[$r * $m.col_count + $c]
-    };
-}
-
-pub fn flatten<T>(m: Vec<Vec<T>>) -> Vec<T> {
-    let mut result: Vec<T> = Vec::with_capacity(m.len() * m[0].len());
-    for row in m {
-        for v in row {
-            result.push(v);
-        }
-    }
-    result
-}
-
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Matrix<F: Field> {
     row_count: usize,
     col_count: usize,
-    data: SmallVec<[F::Elem; 1024]>, // store in flattened structure
-                                     // the smallvec can hold a matrix of size up to 32x32 in stack
+    /// Row-major flattened matrix cells.
+    data: SmallVec<[F::Elem; DATA_ARRAY_STACK_LENGTH]>,
 }
 
-fn calc_matrix_row_start_end(col_count: usize, row: usize) -> (usize, usize) {
-    let start = row * col_count;
-    let end = start + col_count;
+type RowRef<'a, T> = &'a [T];
+type RowRefArr<'a, T> = SmallVec<[RowRef<'a, T>; ROW_ARRAY_STACK_LENGTH]>;
 
-    (start, end)
+type RowMut<'a, T> = &'a mut [T];
+type RowMutArr<'a, T> = SmallVec<[RowMut<'a, T>; ROW_ARRAY_STACK_LENGTH]>;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct SubmatrixMut<'a, F: Field> {
+    row_count: usize,
+    col_count: usize,
+    rows: RowMutArr<'a, F::Elem>,
+}
+
+impl<'a, F: Field> SubmatrixMut<'a, F> {
+    fn new(row_count: usize, col_count: usize, rows: RowMutArr<'a, F::Elem>) -> Self {
+        debug_assert_eq!(rows.len(), row_count);
+        debug_assert!(rows.iter().all(|row| row.len() == col_count));
+
+        Self {
+            row_count,
+            col_count,
+            rows,
+        }
+    }
+
+    /// Swap rows in place.
+    fn swap_rows(&mut self, row1: usize, row2: usize) {
+        let (first, second) = if row1 < row2 {
+            (row1, row2)
+        } else {
+            (row2, row1)
+        };
+
+        let (left, right) = self.rows.split_at_mut(second);
+        left[first].swap_with_slice(right[0]);
+    }
+
+    /// In-place Gaussian elimination.
+    fn gaussian_elim(&mut self) -> Result<(), Error> {
+        for i in 0..self.row_count {
+            // Find pivot
+            let mut pivot_row = None;
+            for r in i..self.row_count {
+                if self.rows[r][i] != F::zero() {
+                    pivot_row = Some(r);
+                    break;
+                }
+            }
+            let pivot_row = pivot_row.ok_or(Error::SingularMatrix)?;
+
+            // Swap to top
+            if pivot_row != i {
+                self.swap_rows(i, pivot_row);
+            }
+
+            // Scale pivot to 1
+            let inv_pivot = F::inv(self.rows[i][i]);
+            for a in self.rows[i].iter_mut() {
+                *a = F::mul(*a, inv_pivot);
+            }
+
+            // Eliminate other rows
+            for r in 0..self.row_count {
+                if r != i && self.rows[r][i] != F::zero() {
+                    let factor = self.rows[r][i];
+                    for j in 0..self.col_count {
+                        let a = self.rows[r][j];
+                        self.rows[r][j] = F::add(a, F::mul(factor, self.rows[i][j]));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<F: Field> Matrix<F> {
-    fn calc_row_start_end(&self, row: usize) -> (usize, usize) {
-        calc_matrix_row_start_end(self.col_count, row)
-    }
+    // TODO: rename to `zero` since this in effect outputs a zero matrix.
+    pub fn new(row_count: usize, col_count: usize) -> Self {
+        let data = SmallVec::from_vec(vec![F::zero(); row_count * col_count]);
 
-    pub fn new(rows: usize, cols: usize) -> Matrix<F> {
-        let data = SmallVec::from_vec(vec![F::zero(); rows * cols]);
-
-        Matrix {
-            row_count: rows,
-            col_count: cols,
+        Self {
+            row_count,
+            col_count,
             data,
         }
     }
 
-    pub fn new_with_data(init_data: Vec<Vec<F::Elem>>) -> Matrix<F> {
-        let rows = init_data.len();
-        let cols = init_data[0].len();
+    pub fn new_with_data(rows: &[Vec<F::Elem>]) -> Self {
+        let row_count = rows.len();
+        let col_count = rows[0].len();
 
-        for r in init_data.iter() {
-            if r.len() != cols {
-                panic!("Inconsistent row sizes")
-            }
+        assert!(
+            rows.iter().all(|r| r.len() == col_count),
+            "Inconsistent row sizes"
+        );
+
+        let data = SmallVec::from_vec(rows.iter().flatten().copied().collect());
+
+        Self {
+            row_count,
+            col_count,
+            data,
+        }
+    }
+
+    pub fn from_rows<'a>(rows: RowRefArr<'a, F::Elem>) -> Self {
+        let row_count = rows.len();
+        let col_count = rows[0].len();
+
+        let mut data: SmallVec<[F::Elem; DATA_ARRAY_STACK_LENGTH]> =
+            SmallVec::with_capacity(row_count * col_count);
+
+        for row in rows.iter() {
+            debug_assert_eq!(row.len(), col_count);
+            data.extend_from_slice(row);
         }
 
-        let data = SmallVec::from_vec(flatten(init_data));
-
-        Matrix {
-            row_count: rows,
-            col_count: cols,
+        Self {
+            row_count,
+            col_count,
             data,
         }
     }
 
     #[cfg(test)]
-    pub fn make_random(size: usize) -> Matrix<F>
+    pub fn make_random(size: usize) -> Self
     where
-        rand::distributions::Standard: rand::distributions::Distribution<F::Elem>,
+        rand::distr::StandardUniform: rand::distr::Distribution<F::Elem>,
     {
         let mut vec: Vec<Vec<F::Elem>> = vec![vec![Default::default(); size]; size];
         for v in vec.iter_mut() {
             crate::tests::fill_random(v);
         }
 
-        Matrix::new_with_data(vec)
+        Self::new_with_data(&vec)
     }
 
-    pub fn identity(size: usize) -> Matrix<F> {
+    /// Write rows `[row_offset..]` of a Vandermonde matrix into the result. Here, `row_offset`
+    /// allows to do construct submatrices of a Vandermonde matrix on which to do targeted linear
+    /// algebra.
+    fn vandermonde(row_count: usize, col_count: usize, row_offset: usize) -> Self {
+        let mut mat = Matrix::new(row_count, col_count);
+
+        for (i, row) in mat.rows_mut().iter_mut().enumerate() {
+            // let row_gen = F::exp(F::generator(), i + 1);
+            //
+            // row_gen should be non-0 and unique, such as above. Below is the crate v6.0 behaviour
+            // that only works, that is row_gen(0) != 0, because in that case row_offset ==
+            // self.col_count != 0.
+            let row_gen = F::nth(i + row_offset);
+            for (j, a) in row.iter_mut().enumerate() {
+                *a = F::exp(row_gen, j);
+            }
+        }
+
+        mat
+    }
+
+    /// Construct the systematic generator matrix $G = [I | E]$ where $E$ is the parity encoder
+    /// coefficient matrix.
+    fn systematic_generator(e: Matrix<F>) -> Self {
+        let col_count = e.col_count;
+        let mut result = Self::new(col_count + e.row_count, col_count);
+        for i in 0..col_count {
+            result.set(i, i, F::one());
+        }
+        result.data[col_count * col_count..].copy_from_slice(&e.data);
+        result
+    }
+
+    #[cfg(test)]
+    pub fn identity(size: usize) -> Self {
         let mut result = Self::new(size, size);
         for i in 0..size {
-            acc!(result, i, i) = F::one();
+            result.set(i, i, F::one());
         }
         result
     }
@@ -108,172 +212,177 @@ impl<F: Field> Matrix<F> {
         self.row_count
     }
 
-    pub fn get(&self, r: usize, c: usize) -> F::Elem {
-        acc!(self, r, c).clone()
+    pub fn get(&self, row: usize, col: usize) -> F::Elem {
+        self.data[row * self.col_count + col]
     }
 
-    pub fn set(&mut self, r: usize, c: usize, val: F::Elem) {
-        acc!(self, r, c) = val;
+    pub fn set(&mut self, row: usize, col: usize, val: F::Elem) {
+        self.data[row * self.col_count + col] = val;
     }
 
-    pub fn multiply(&self, rhs: &Matrix<F>) -> Matrix<F> {
-        if self.col_count != rhs.row_count {
-            panic!(
-                "Colomn count on left is different from row count on right, lhs: {}, rhs: {}",
-                self.col_count, rhs.row_count
-            )
-        }
+    pub fn multiply(&self, rhs: &Matrix<F>) -> Self {
+        assert_eq!(
+            self.col_count, rhs.row_count,
+            "Colomn count on left is different from row count on right, lhs: {}, rhs: {}",
+            self.col_count, rhs.row_count
+        );
+
         let mut result = Self::new(self.row_count, rhs.col_count);
         for r in 0..self.row_count {
             for c in 0..rhs.col_count {
                 let mut val = F::zero();
                 for i in 0..self.col_count {
-                    let mul = F::mul(acc!(self, r, i).clone(), acc!(rhs, i, c).clone());
+                    let mul = F::mul(self.get(r, i), rhs.get(i, c));
 
                     val = F::add(val, mul);
                 }
-                acc!(result, r, c) = val;
+                result.set(r, c, val);
             }
         }
         result
     }
 
-    pub fn augment(&self, rhs: &Matrix<F>) -> Matrix<F> {
-        if self.row_count != rhs.row_count {
-            panic!(
-                "Matrices do not have the same row count, lhs: {}, rhs: {}",
-                self.row_count, rhs.row_count
-            )
-        }
-        let mut result = Self::new(self.row_count, self.col_count + rhs.col_count);
-        for r in 0..self.row_count {
-            for c in 0..self.col_count {
-                acc!(result, r, c) = acc!(self, r, c).clone();
-            }
-            let self_column_count = self.col_count;
-            for c in 0..rhs.col_count {
-                acc!(result, r, self_column_count + c) = acc!(rhs, r, c).clone();
-            }
-        }
+    fn augment_with_identity(&self) -> Self {
+        let n = self.row_count;
+        let mut aug = Matrix::new(n, 2 * n);
 
-        result
+        for i in 0..n {
+            for j in 0..n {
+                aug.set(i, j, self.get(i, j));
+            }
+            aug.set(i, n + i, F::one()); // identity
+        }
+        aug
     }
 
-    pub fn sub_matrix(&self, rmin: usize, cmin: usize, rmax: usize, cmax: usize) -> Matrix<F> {
-        let mut result = Self::new(rmax - rmin, cmax - cmin);
-        for r in rmin..rmax {
-            for c in cmin..cmax {
-                acc!(result, r - rmin, c - cmin) = acc!(self, r, c).clone();
+    fn submatrix<R, C>(&self, row_range: R, col_range: C) -> Self
+    where
+        R: core::ops::RangeBounds<usize>,
+        C: core::ops::RangeBounds<usize>,
+    {
+        let b = self.matrix_bounds(row_range, col_range);
+
+        let mut m = Matrix::new(b.row_count, b.col_count);
+        for (i, r) in (b.row_start..b.row_end).enumerate() {
+            for (j, c) in (b.col_start..b.col_end).enumerate() {
+                m.set(i, j, self.get(r, c));
             }
         }
-        result
+
+        m
+    }
+
+    fn submatrix_mut<'a, R, C>(&'a mut self, row_range: R, col_range: C) -> SubmatrixMut<'a, F>
+    where
+        R: core::ops::RangeBounds<usize>,
+        C: core::ops::RangeBounds<usize>,
+    {
+        let b = self.matrix_bounds(row_range, col_range);
+        let base_ptr = self.data.as_mut_ptr();
+
+        let rows: RowMutArr<'a, F::Elem> = (b.row_start..b.row_end)
+            .map(|i| unsafe {
+                let row_ptr = base_ptr.add(i * self.col_count + b.col_start);
+                core::slice::from_raw_parts_mut(row_ptr, b.col_count)
+            })
+            .collect();
+
+        SubmatrixMut::new(b.row_count, b.col_count, rows)
+    }
+
+    pub fn rows<'a>(&'a self) -> RowRefArr<'a, F::Elem> {
+        self.data.chunks(self.col_count).collect()
+    }
+
+    pub fn rows_mut<'a>(&'a mut self) -> RowMutArr<'a, F::Elem> {
+        self.data.chunks_mut(self.col_count).collect()
     }
 
     pub fn get_row(&self, row: usize) -> &[F::Elem] {
-        let (start, end) = self.calc_row_start_end(row);
+        let start = row * self.col_count;
+        let end = start + self.col_count;
 
         &self.data[start..end]
-    }
-
-    pub fn swap_rows(&mut self, r1: usize, r2: usize) {
-        let (r1_s, _) = self.calc_row_start_end(r1);
-        let (r2_s, _) = self.calc_row_start_end(r2);
-
-        if r1 == r2 {
-            return;
-        } else {
-            for i in 0..self.col_count {
-                self.data.swap(r1_s + i, r2_s + i);
-            }
-        }
     }
 
     pub fn is_square(&self) -> bool {
         self.row_count == self.col_count
     }
 
-    pub fn gaussian_elim(&mut self) -> Result<(), Error> {
-        for r in 0..self.row_count {
-            if acc!(self, r, r) == F::zero() {
-                for r_below in r + 1..self.row_count {
-                    if acc!(self, r_below, r) != F::zero() {
-                        self.swap_rows(r, r_below);
-                        break;
-                    }
-                }
-            }
-            // If we couldn't find one, the matrix is singular.
-            if acc!(self, r, r) == F::zero() {
-                return Err(Error::SingularMatrix);
-            }
-            // Scale to 1.
-            if acc!(self, r, r) != F::one() {
-                let scale = F::div(F::one(), acc!(self, r, r).clone());
-                for c in 0..self.col_count {
-                    acc!(self, r, c) = F::mul(scale, acc!(self, r, c).clone());
-                }
-            }
-            // Make everything below the 1 be a 0 by subtracting
-            // a multiple of it.  (Subtraction and addition are
-            // both exclusive or in the Galois field.)
-            for r_below in r + 1..self.row_count {
-                if acc!(self, r_below, r) != F::zero() {
-                    let scale = acc!(self, r_below, r).clone();
-                    for c in 0..self.col_count {
-                        acc!(self, r_below, c) = F::add(
-                            acc!(self, r_below, c).clone(),
-                            F::mul(scale, acc!(self, r, c).clone()),
-                        );
-                    }
-                }
-            }
+    pub fn invert(&self) -> Result<Self, Error> {
+        assert!(self.is_square(), "Trying to invert a non-square matrix");
+
+        let mut aug = self.augment_with_identity();
+        {
+            let mut aug_rows = aug.submatrix_mut(.., ..);
+            aug_rows.gaussian_elim()?;
         }
 
-        // Now clear the part above the main diagonal.
-        for d in 0..self.row_count {
-            for r_above in 0..d {
-                if acc!(self, r_above, d) != F::zero() {
-                    let scale = acc!(self, r_above, d).clone();
-                    for c in 0..self.col_count {
-                        acc!(self, r_above, c) = F::add(
-                            acc!(self, r_above, c).clone(),
-                            F::mul(scale, acc!(self, d, c).clone()),
-                        );
-                    }
-                }
-            }
-        }
-        Ok(())
+        Ok(aug.submatrix(0..aug.row_count, aug.row_count..aug.col_count))
     }
 
-    pub fn invert(&self) -> Result<Matrix<F>, Error> {
-        if !self.is_square() {
-            panic!("Trying to invert a non-square matrix")
-        }
-
-        let row_count = self.row_count;
-        let col_count = self.col_count;
-
-        let mut work = self.augment(&Self::identity(row_count));
-        work.gaussian_elim()?;
-
-        Ok(work.sub_matrix(0, row_count, col_count, col_count * 2))
+    fn parity_encode_coeffs(data_shards: usize, total_shards: usize) -> Self {
+        let v0 = Matrix::vandermonde(data_shards, data_shards, 0);
+        let v1 = Matrix::vandermonde(total_shards - data_shards, data_shards, data_shards);
+        v1.multiply(&v0.invert().unwrap())
     }
 
-    pub fn vandermonde(rows: usize, cols: usize) -> Matrix<F> {
-        let mut result = Self::new(rows, cols);
-
-        for r in 0..rows {
-            // doesn't matter what `r_a` is as long as it's unique.
-            // then the vandermonde matrix is invertible.
-            let r_a = F::nth(r);
-            for c in 0..cols {
-                acc!(result, r, c) = F::exp(r_a, c);
-            }
-        }
-
-        result
+    pub fn encode_coeffs(data_shards: usize, total_shards: usize) -> Self {
+        let parity_encode_coeffs = Matrix::parity_encode_coeffs(data_shards, total_shards);
+        Matrix::systematic_generator(parity_encode_coeffs)
     }
+
+    fn matrix_bounds<R, C>(&self, row_range: R, col_range: C) -> MatrixBounds
+    where
+        R: core::ops::RangeBounds<usize>,
+        C: core::ops::RangeBounds<usize>,
+    {
+        use core::ops::Bound::*;
+
+        let row_start = match row_range.start_bound() {
+            Included(&x) => x,
+            Excluded(&x) => x + 1,
+            Unbounded => 0,
+        };
+        let row_end = match row_range.end_bound() {
+            Included(&x) => x + 1,
+            Excluded(&x) => x,
+            Unbounded => self.row_count,
+        };
+
+        let col_start = match col_range.start_bound() {
+            Included(&x) => x,
+            Excluded(&x) => x + 1,
+            Unbounded => 0,
+        };
+        let col_end = match col_range.end_bound() {
+            Included(&x) => x + 1,
+            Excluded(&x) => x,
+            Unbounded => self.col_count,
+        };
+
+        let row_count = row_end - row_start;
+        let col_count = col_end - col_start;
+
+        MatrixBounds {
+            row_count,
+            col_count,
+            row_start,
+            row_end,
+            col_start,
+            col_end,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+struct MatrixBounds {
+    row_count: usize,
+    col_count: usize,
+    row_start: usize,
+    row_end: usize,
+    col_start: usize,
+    col_end: usize,
 }
 
 #[cfg(test)]
@@ -291,7 +400,7 @@ mod tests {
                 [ $( $x:expr ),+ ]
             ),*
         ) => (
-            Matrix::<galois_8::Field>::new_with_data(vec![ $( vec![$( $x ),*] ),* ])
+            Matrix::<galois_8::Field>::new_with_data(&[ $( vec![$( $x ),*] ),* ])
         );
         ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
     }
@@ -319,26 +428,6 @@ mod tests {
     }
 
     #[test]
-    fn test_matrix_swap_rows() {
-        {
-            let mut m1 = matrix!([1, 2, 3], [4, 5, 6], [7, 8, 9]);
-            let expect = matrix!([7, 8, 9], [4, 5, 6], [1, 2, 3]);
-            m1.swap_rows(0, 2);
-            assert_eq!(expect, m1);
-        }
-        {
-            let mut m1 = matrix!([1, 2, 3], [4, 5, 6], [7, 8, 9]);
-            let expect = m1.clone();
-            m1.swap_rows(0, 0);
-            assert_eq!(expect, m1);
-            m1.swap_rows(1, 1);
-            assert_eq!(expect, m1);
-            m1.swap_rows(2, 2);
-            assert_eq!(expect, m1);
-        }
-    }
-
-    #[test]
     #[should_panic]
     fn test_inconsistent_row_sizes() {
         matrix!([1, 0, 0], [0, 1], [0, 0, 1]);
@@ -354,12 +443,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_incompatible_augment() {
-        let m1 = matrix!([0, 1]);
-        let m2 = matrix!([0, 1], [2, 3]);
+    fn test_augment_right_identity() {
+        let m1 = matrix!([0, 1], [2, 3]);
 
-        m1.augment(&m2);
+        let m2 = m1.augment_with_identity();
+        let m2_right = m2.submatrix(0..2, 2..4);
+
+        assert_eq!(m2_right, Matrix::identity(2));
     }
 
     #[test]
@@ -421,5 +511,25 @@ mod tests {
     #[should_panic]
     fn test_matrix_inverse_singular() {
         matrix!([4, 2], [12, 6]).invert().unwrap();
+    }
+
+    #[test]
+    fn submatrix_mut_swap_rows() {
+        let data: Vec<_> = (0u8..9).collect();
+
+        let rows: Vec<Vec<u8>> = data.chunks_exact(3).map(|chunk| chunk.to_vec()).collect();
+
+        let mut rows_rev = rows.clone();
+        rows_rev.reverse();
+        let m_rev = Matrix::<galois_8::Field>::new_with_data(&rows_rev);
+
+        let mut m = Matrix::<galois_8::Field>::new_with_data(&rows);
+
+        {
+            let mut rows_mut = m.submatrix_mut(.., ..);
+            rows_mut.swap_rows(0, 2);
+        }
+
+        assert_eq!(m, m_rev);
     }
 }

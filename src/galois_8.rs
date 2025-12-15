@@ -22,6 +22,10 @@ impl crate::Field for Field {
         div(a, b)
     }
 
+    fn inv(a: u8) -> u8 {
+        inv(a)
+    }
+
     fn exp(elem: u8, n: usize) -> u8 {
         exp(elem, n)
     }
@@ -32,6 +36,10 @@ impl crate::Field for Field {
 
     fn one() -> u8 {
         1
+    }
+
+    fn generator() -> u8 {
+        2
     }
 
     fn nth_internal(n: usize) -> u8 {
@@ -84,6 +92,12 @@ pub fn div(a: u8, b: u8) -> u8 {
         }
         EXP_TABLE[log_result as usize]
     }
+}
+
+pub fn inv(a: u8) -> u8 {
+    assert_ne!(a, 0, "0 is not invertible");
+    let la = LOG_TABLE[a as usize] as usize;
+    EXP_TABLE[255 - la]
 }
 
 /// Compute a^n.
@@ -264,7 +278,7 @@ fn slice_xor(input: &[u8], out: &mut [u8]) {
     not(target_env = "msvc"),
     not(any(target_os = "android", target_os = "ios"))
 ))]
-extern "C" {
+unsafe extern "C" {
     fn reedsolomon_gal_mul(
         low: *const u8,
         high: *const u8,

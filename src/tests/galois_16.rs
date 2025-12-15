@@ -48,10 +48,10 @@ quickcheck! {
 
         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
         for _ in 0..corrupt {
-            let mut pos = rand::random::<usize>() % (data + parity);
+            let mut pos: usize = rand::random::<u64>() as usize % (data + parity);
 
             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-                pos = rand::random::<usize>() % (data + parity);
+                pos = rand::random::<u64>() as usize % (data + parity);
             }
 
             corrupt_pos_s.push(pos);
@@ -123,10 +123,10 @@ quickcheck! {
 
         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
         for _ in 0..corrupt {
-            let mut pos = rand::random::<usize>() % (data + parity);
+            let mut pos = rand::random::<u64>() as usize % (data + parity);
 
             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-                pos = rand::random::<usize>() % (data + parity);
+                pos = rand::random::<u64>() as usize % (data + parity);
             }
 
             corrupt_pos_s.push(pos);
@@ -172,10 +172,10 @@ quickcheck! {
 
         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
         for _ in 0..corrupt {
-            let mut pos = rand::random::<usize>() % (data + parity);
+            let mut pos = rand::random::<u64>() as usize % (data + parity);
 
             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-                pos = rand::random::<usize>() % (data + parity);
+                pos = rand::random::<u64>() as usize % (data + parity);
             }
 
             corrupt_pos_s.push(pos);
@@ -235,10 +235,10 @@ quickcheck! {
 
         let mut corrupt_pos_s = Vec::with_capacity(corrupt);
         for _ in 0..corrupt {
-            let mut pos = rand::random::<usize>() % (data + parity);
+            let mut pos = rand::random::<u64>() as usize % (data + parity);
 
             while let Some(_) = corrupt_pos_s.iter().find(|&&x| x == pos) {
-                pos = rand::random::<usize>() % (data + parity);
+                pos = rand::random::<u64>() as usize % (data + parity);
             }
 
             corrupt_pos_s.push(pos);

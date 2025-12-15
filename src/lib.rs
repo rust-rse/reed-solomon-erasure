@@ -53,7 +53,7 @@ fn log2(n: f32) -> f32 {
 }
 
 /// A finite field to perform encoding over.
-pub trait Field: Sized {
+pub trait Field: Sized + std::fmt::Debug {
     /// The order of the field. This is a limit on the number of shards
     /// in an encoding.
     const ORDER: usize;
@@ -70,6 +70,9 @@ pub trait Field: Sized {
     /// Divide a by b. Panics is b is zero.
     fn div(a: Self::Elem, b: Self::Elem) -> Self::Elem;
 
+    /// Multiplicative inverse of `a`.
+    fn inv(a: Self::Elem) -> Self::Elem;
+
     /// Raise `a` to the n'th power.
     fn exp(a: Self::Elem, n: usize) -> Self::Elem;
 
@@ -78,6 +81,9 @@ pub trait Field: Sized {
 
     /// The "one" element or multiplicative identity.
     fn one() -> Self::Elem;
+
+    /// Generator element.
+    fn generator() -> Self::Elem;
 
     fn nth_internal(n: usize) -> Self::Elem;
 
@@ -157,11 +163,7 @@ impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]> + FromIterator<F::Elem>> R
             .get_or_insert_with(|| iter::repeat(F::zero()).take(len).collect())
             .as_mut();
 
-        if is_some {
-            Ok(x)
-        } else {
-            Err(Ok(x))
-        }
+        if is_some { Ok(x) } else { Err(Ok(x)) }
     }
 }
 
@@ -175,11 +177,7 @@ impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]>> ReconstructShard<F> for (
     }
 
     fn get(&mut self) -> Option<&mut [F::Elem]> {
-        if !self.1 {
-            None
-        } else {
-            Some(self.0.as_mut())
-        }
+        if !self.1 { None } else { Some(self.0.as_mut()) }
     }
 
     fn get_or_initialize(
@@ -188,11 +186,7 @@ impl<F: Field, T: AsRef<[F::Elem]> + AsMut<[F::Elem]>> ReconstructShard<F> for (
     ) -> Result<&mut [F::Elem], Result<&mut [F::Elem], Error>> {
         let x = self.0.as_mut();
         if x.len() == len {
-            if self.1 {
-                Ok(x)
-            } else {
-                Err(Ok(x))
-            }
+            if self.1 { Ok(x) } else { Err(Ok(x)) }
         } else {
             Err(Err(Error::IncorrectShardSize))
         }

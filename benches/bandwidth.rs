@@ -1,33 +1,30 @@
 use std::convert::TryInto;
 
 use criterion::measurement::WallTime;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkGroup, Criterion};
-use rand::distributions::{Distribution, Standard};
-use rand::rngs::SmallRng;
+use criterion::{BenchmarkGroup, Criterion, criterion_group, criterion_main};
 use rand::SeedableRng;
+use rand::distr::{Distribution, StandardUniform};
+use rand::rngs::SmallRng;
 use reed_solomon_erasure::galois_8::ReedSolomon;
+use std::hint::black_box;
 
 type Shards = Vec<Vec<u8>>;
 
 fn create_shards(block_size: usize, data: usize, parity: usize) -> Shards {
-    let mut small_rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_rng(&mut rand::rng());
 
     let mut shards = Vec::new();
 
     // Create data shards with random data
     shards.resize_with(data, || {
-        Standard
-            .sample_iter(&mut small_rng)
+        StandardUniform
+            .sample_iter(&mut rng)
             .take(block_size)
             .collect()
     });
 
     // Create empty parity shards
-    shards.resize_with(data + parity, || {
-        let mut vec = Vec::with_capacity(block_size);
-        vec.resize(block_size, 0);
-        vec
-    });
+    shards.resize(data + parity, vec![0; block_size]);
 
     shards
 }
@@ -189,5 +186,11 @@ fn reconstruct_none(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, encode, reconstruct_one, reconstruct_all, reconstruct_none);
+criterion_group!(
+    benches,
+    encode,
+    reconstruct_one,
+    reconstruct_all,
+    reconstruct_none
+);
 criterion_main!(benches);
