@@ -161,18 +161,50 @@ fn compile_simd_c() {
     let mut build = cc::Build::new();
     build.opt_level(3);
 
-    match env::var("RUST_REED_SOLOMON_ERASURE_ARCH") {
-        Ok(arch) => {
-            // Use explicitly specified environment variable as architecture.
-            build.flag(&format!("-march={}", arch));
-        }
-        Err(_error) => {
-            // On x86-64 enabling Haswell architecture unlocks useful instructions and improves performance
-            // dramatically while allowing it to run ony modern CPU.
-            match env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str(){
-                "x86_64"  => { build.flag(&"-march=haswell"); },
-                _         => ()
+    if let Ok(arch) = env::var("RUST_REED_SOLOMON_ERASURE_ARCH") {
+        // Use explicitly specified environment variable as architecture.
+        build.flag(&format!("-march={}", arch));
+    } else {
+        let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+
+        // Use the cargo populated CARGO_CFG_TARGET_FEATURE list.
+        let target_features: Vec<String> = env::var("CARGO_CFG_TARGET_FEATURE")
+            .unwrap_or_default()
+            .split(',')
+            .map(|f| f.trim().to_string())
+            .filter(|f| !f.is_empty())
+            .collect();
+
+        match target_arch.as_str() {
+            "x86_64" => {
+                for feature in &target_features {
+                    let flag = match feature.as_str() {
+                        "avx512f" => Some("-mavx512f"),
+                        "avx512bw" => Some("-mavx512bw"),
+                        "avx512cd" => Some("-mavx512cd"),
+                        "avx512dq" => Some("-mavx512dq"),
+                        "avx512vl" => Some("-mavx512vl"),
+                        "avx2" => Some("-mavx2"),
+                        "avx" => Some("-mavx"),
+                        "sse4.2" => Some("-msse4.2"),
+                        "sse4.1" => Some("-msse4.1"),
+                        "sse4a" => Some("-msse4a"),
+                        "ssse3" => Some("-mssse3"),
+                        "sse3" => Some("-msse3"),
+                        "sse2" => Some("-msse2"),
+                        "sse" => Some("-msse"),
+                        "bmi1" => Some("-mbmi"),
+                        "bmi2" => Some("-mbmi2"),
+                        "fma" => Some("-mfma"),
+                        "pclmulqdq" => Some("-mpclmul"),
+                        _ => None,
+                    };
+                    if let Some(f) = flag {
+                        build.flag(f);
+                    }
+                }
             }
+            _ => {}
         }
     }
 
