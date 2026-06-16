@@ -65,19 +65,21 @@ impl<F: Field> ReedSolomon<F> {
         parity_rows
     }
 
-    pub(crate) fn build_matrix(data_shards: usize, total_shards: usize) -> Matrix<F> {
+    pub(crate) fn build_matrix(data_shards: usize, total_shards: usize) -> Result<Matrix<F>, Error> {
         let vandermonde = Matrix::vandermonde(total_shards, data_shards);
 
         let top = vandermonde.sub_matrix(0, 0, data_shards, data_shards);
-        let top_inverted = match top.invert() {
-            Ok(inverted) => inverted,
-            Err(_) => panic!("vandermonde top matrix must be invertible for valid shard counts"),
-        };
+        let top_inverted = top.invert().map_err(|_| {
+            Error::InvalidCustomMatrix
+        })?;
 
-        vandermonde.multiply(&top_inverted)
+        vandermonde.multiply(&top_inverted).map_err(|_| Error::InvalidCustomMatrix)
     }
 
-    pub(crate) fn build_cauchy_matrix(data_shards: usize, total_shards: usize) -> Matrix<F> {
+    pub(crate) fn build_cauchy_matrix(
+        data_shards: usize,
+        total_shards: usize,
+    ) -> Result<Matrix<F>, Error> {
         let mut result = Matrix::new(total_shards, data_shards);
 
         for r in 0..total_shards {
@@ -86,15 +88,21 @@ impl<F: Field> ReedSolomon<F> {
             } else {
                 for c in 0..data_shards {
                     let denominator = F::add(F::nth(r), F::nth(c));
+                    if denominator == F::zero() {
+                        return Err(Error::InvalidCustomMatrix);
+                    }
                     result.set(r, c, F::div(F::one(), denominator));
                 }
             }
         }
 
-        result
+        Ok(result)
     }
 
-    pub(crate) fn build_jerasure_like_matrix(data_shards: usize, total_shards: usize) -> Matrix<F> {
+    pub(crate) fn build_jerasure_like_matrix(
+        data_shards: usize,
+        total_shards: usize,
+    ) -> Result<Matrix<F>, Error> {
         let mut vm = Matrix::vandermonde(total_shards, data_shards);
 
         vm.set(0, 0, F::one());
@@ -114,11 +122,18 @@ impl<F: Field> ReedSolomon<F> {
             }
             if r != i {
                 vm.swap_rows(r, i);
+            } else if vm.get(i, i) == F::zero() {
+                return Err(Error::InvalidCustomMatrix);
             }
 
-            let diagonal = vm.get(i, i);
-            if diagonal != F::one() {
-                let scale = F::div(F::one(), diagonal);
+            let scale = match vm.get(i, i) {
+                diagonal if diagonal == F::zero() => {
+                    return Err(Error::InvalidCustomMatrix);
+                }
+                diagonal if diagonal != F::one() => F::div(F::one(), diagonal),
+                _ => F::one(),
+            };
+            if scale != F::one() {
                 for row in 0..total_shards {
                     vm.set(row, i, F::mul(vm.get(row, i), scale));
                 }
@@ -140,6 +155,10 @@ impl<F: Field> ReedSolomon<F> {
 
         for j in 0..data_shards {
             let value = vm.get(data_shards, j);
+            if value == F::zero() {
+                return Err(Error::InvalidCustomMatrix);
+            }
+
             if value != F::one() {
                 let scale = F::div(F::one(), value);
                 for row in data_shards..total_shards {
@@ -150,6 +169,10 @@ impl<F: Field> ReedSolomon<F> {
 
         for row in (data_shards + 1)..total_shards {
             let value = vm.get(row, 0);
+            if value == F::zero() {
+                return Err(Error::InvalidCustomMatrix);
+            }
+
             if value != F::one() {
                 let scale = F::div(F::one(), value);
                 for col in 0..data_shards {
@@ -158,7 +181,7 @@ impl<F: Field> ReedSolomon<F> {
             }
         }
 
-        vm
+        Ok(vm)
     }
 
     pub(crate) fn build_custom_matrix(
@@ -201,10 +224,10 @@ impl<F: Field> ReedSolomon<F> {
         }
 
         match options.matrix_mode {
-            MatrixMode::Vandermonde => Ok(Self::build_matrix(data_shards, total_shards)),
-            MatrixMode::Cauchy => Ok(Self::build_cauchy_matrix(data_shards, total_shards)),
+            MatrixMode::Vandermonde => Self::build_matrix(data_shards, total_shards),
+            MatrixMode::Cauchy => Self::build_cauchy_matrix(data_shards, total_shards),
             MatrixMode::JerasureLike => {
-                Ok(Self::build_jerasure_like_matrix(data_shards, total_shards))
+                Self::build_jerasure_like_matrix(data_shards, total_shards)
             }
             MatrixMode::Custom => Err(Error::InvalidCustomMatrix),
         }
@@ -253,7 +276,7 @@ impl<F: Field> ReedSolomon<F> {
                 Self::build_matrix_with_options(data_shards, total_shards, options)?
             }
             CodecFamily::LeopardGF8 | CodecFamily::LeopardGF16 => {
-                Self::build_matrix(data_shards, total_shards)
+                Self::build_matrix(data_shards, total_shards)?
             }
         };
         let family_state = super::leopard::build_family_state(

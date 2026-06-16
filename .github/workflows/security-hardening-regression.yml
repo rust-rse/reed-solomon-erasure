@@ -1,0 +1,125 @@
+name: Security Hardening Regression
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - beta
+  workflow_dispatch:
+    inputs:
+      run_level:
+        description: 'Regression level to execute (P0, P1, P2)'
+        required: false
+        default: 'P2'
+        type: choice
+        options:
+          - P0
+          - P1
+          - P2
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-hardening-regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  QUICKCHECK_TESTS: 4
+  QUICKCHECK_GENERATOR_SIZE: 32
+  RUSTFLAGS: -C link-dead-code
+
+jobs:
+  panic-regression-p0:
+    name: P0 Panic-hardening regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2.9.1
+
+      - name: Run fmt check
+        run: cargo fmt --all -- --check
+
+      - name: Run check
+        run: cargo check --all-targets
+
+      - name: matrix regression
+        run: cargo test matrix -- --nocapture
+
+      - name: reconstruct regression
+        run: cargo test reconstruct -- --nocapture
+
+      - name: galois zero-division regression
+        run: |
+          cargo test div_a_is_0 -- --nocapture
+          cargo test div_b_is_0 -- --nocapture
+
+  panic-regression-p1:
+    name: P1 Feature-complete regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [panic-regression-p0]
+    if: ${{ github.event_name == 'pull_request' || github.event.inputs.run_level == 'P1' || github.event.inputs.run_level == 'P2' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2.9.1
+
+      - name: matrix regression (all-features)
+        run: cargo test matrix --all-features -- --nocapture
+
+      - name: reconstruct regression (all-features)
+        run: cargo test reconstruct --all-features -- --nocapture
+
+      - name: matrix-mode regression
+        run: |
+          cargo test test_codec_options_accepts_cauchy_matrix_mode -- --nocapture
+          cargo test test_jerasure_like_matrix_mode_roundtrips_and_differs_from_vandermonde -- --nocapture
+          cargo test test_with_custom_matrix_rejects_too_few_rows -- --nocapture
+
+  panic-regression-p2:
+    name: P2 Backend override regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [panic-regression-p1]
+    continue-on-error: true
+    if: ${{ github.event_name == 'pull_request' || github.event.inputs.run_level == 'P2' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        backend_override:
+          - scalar
+          - rust-gfni-avx2
+          - rust-avx2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2.9.1
+
+      - name: Backend override reconstruct regression
+        env:
+          RSE_BACKEND_OVERRIDE: ${{ matrix.backend_override }}
+        run: |
+          cargo test reconstruct -- --nocapture

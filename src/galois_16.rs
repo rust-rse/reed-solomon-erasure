@@ -238,7 +238,7 @@ impl Element {
     fn polynom_div(self, rhs: Self) -> (Element, Element) {
         let divisor_degree = rhs.degree();
         if rhs.is_zero() {
-            panic!("divide by 0");
+            return (Element::zero(), self);
         } else if self.degree() < divisor_degree {
             // If divisor's degree (len-1) is bigger, all dividend is a remainder
             (Element::zero(), self)
@@ -278,10 +278,10 @@ impl Element {
         }
     }
 
-    /// Convert the inverse of this field element. Panics if zero.
+    /// Convert the inverse of this field element. Returns zero for zero input.
     fn inverse(self) -> Element {
         if self.is_zero() {
-            panic!("Cannot invert 0");
+            return Element::zero();
         }
 
         // first step of extended euclidean algorithm.
@@ -307,7 +307,7 @@ impl Element {
             y * normalizer
         } else {
             // self is equivalent to zero.
-            panic!("Cannot invert 0");
+            Element::zero()
         }
     }
 }
@@ -397,9 +397,8 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_div_b_is_0() {
-        let _ = Element([1, 0]) / Element::zero();
+        assert_eq!(Element::zero(), Element([1, 0]) / Element::zero());
     }
 
     #[test]

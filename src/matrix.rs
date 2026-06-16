@@ -7,8 +7,12 @@ use alloc::vec::Vec;
 use crate::Field;
 use smallvec::SmallVec;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
+    EmptyInput,
+    InconsistentRowSizes,
+    IncompatibleDimensions,
+    NonSquare,
     SingularMatrix,
 }
 
@@ -60,23 +64,27 @@ impl<F: Field> Matrix<F> {
         }
     }
 
-    pub fn new_with_data(init_data: Vec<Vec<F::Elem>>) -> Matrix<F> {
+    pub fn new_with_data(init_data: Vec<Vec<F::Elem>>) -> Result<Matrix<F>, Error> {
+        if init_data.is_empty() {
+            return Err(Error::EmptyInput);
+        }
+
         let rows = init_data.len();
         let cols = init_data[0].len();
 
         for r in init_data.iter() {
             if r.len() != cols {
-                panic!("Inconsistent row sizes")
+                return Err(Error::InconsistentRowSizes);
             }
         }
 
         let data = SmallVec::from_vec(flatten(init_data));
 
-        Matrix {
+        Ok(Matrix {
             row_count: rows,
             col_count: cols,
             data,
-        }
+        })
     }
 
     #[cfg(test)]
@@ -89,7 +97,7 @@ impl<F: Field> Matrix<F> {
             crate::tests::fill_random(v);
         }
 
-        Matrix::new_with_data(vec)
+        Matrix::new_with_data(vec).unwrap()
     }
 
     pub fn identity(size: usize) -> Matrix<F> {
@@ -116,12 +124,9 @@ impl<F: Field> Matrix<F> {
         acc!(self, r, c) = val;
     }
 
-    pub fn multiply(&self, rhs: &Matrix<F>) -> Matrix<F> {
+    pub fn multiply(&self, rhs: &Matrix<F>) -> Result<Matrix<F>, Error> {
         if self.col_count != rhs.row_count {
-            panic!(
-                "Column count on left is different from row count on right, lhs: {}, rhs: {}",
-                self.col_count, rhs.row_count
-            )
+            return Err(Error::IncompatibleDimensions);
         }
         let mut result = Self::new(self.row_count, rhs.col_count);
         for r in 0..self.row_count {
@@ -135,15 +140,12 @@ impl<F: Field> Matrix<F> {
                 acc!(result, r, c) = val;
             }
         }
-        result
+        Ok(result)
     }
 
-    pub fn augment(&self, rhs: &Matrix<F>) -> Matrix<F> {
+    pub fn augment(&self, rhs: &Matrix<F>) -> Result<Matrix<F>, Error> {
         if self.row_count != rhs.row_count {
-            panic!(
-                "Matrices do not have the same row count, lhs: {}, rhs: {}",
-                self.row_count, rhs.row_count
-            )
+            return Err(Error::IncompatibleDimensions);
         }
         let mut result = Self::new(self.row_count, self.col_count + rhs.col_count);
         for r in 0..self.row_count {
@@ -156,7 +158,7 @@ impl<F: Field> Matrix<F> {
             }
         }
 
-        result
+        Ok(result)
     }
 
     pub fn sub_matrix(&self, rmin: usize, cmin: usize, rmax: usize, cmax: usize) -> Matrix<F> {
@@ -243,13 +245,13 @@ impl<F: Field> Matrix<F> {
 
     pub fn invert(&self) -> Result<Matrix<F>, Error> {
         if !self.is_square() {
-            panic!("Trying to invert a non-square matrix")
+            return Err(Error::NonSquare);
         }
 
         let row_count = self.row_count;
         let col_count = self.col_count;
 
-        let mut work = self.augment(&Self::identity(row_count));
+        let mut work = self.augment(&Self::identity(row_count))?;
         work.gaussian_elim()?;
 
         Ok(work.sub_matrix(0, row_count, col_count, col_count * 2))
@@ -277,7 +279,7 @@ mod tests {
 
     use alloc::vec;
 
-    use super::Matrix;
+    use super::{Error, Matrix};
     use crate::galois_8;
 
     macro_rules! matrix {
@@ -286,7 +288,7 @@ mod tests {
                 [ $( $x:expr ),+ ]
             ),*
         ) => (
-            Matrix::<galois_8::Field>::new_with_data(vec![ $( vec![$( $x ),*] ),* ])
+            Matrix::<galois_8::Field>::new_with_data(vec![ $( vec![$( $x ),*] ),* ]).unwrap()
         );
         ($rows:expr, $cols:expr) => (Matrix::new($rows, $cols));
     }
@@ -334,27 +336,27 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_inconsistent_row_sizes() {
-        matrix!([1, 0, 0], [0, 1], [0, 0, 1]);
+        let err =
+            Matrix::<galois_8::Field>::new_with_data(vec![vec![1, 0, 0], vec![0, 1], vec![0, 0, 1]]);
+
+        assert_eq!(err, Err(Error::InconsistentRowSizes));
     }
 
     #[test]
-    #[should_panic]
     fn test_incompatible_multiply() {
         let m1 = matrix!([0, 1], [0, 1], [0, 1]);
         let m2 = matrix!([0, 1, 2]);
 
-        m1.multiply(&m2);
+        assert_eq!(m1.multiply(&m2), Err(Error::IncompatibleDimensions));
     }
 
     #[test]
-    #[should_panic]
     fn test_incompatible_augment() {
         let m1 = matrix!([0, 1]);
         let m2 = matrix!([0, 1], [2, 3]);
 
-        m1.augment(&m2);
+        assert_eq!(m1.augment(&m2), Err(Error::IncompatibleDimensions));
     }
 
     #[test]
@@ -368,7 +370,7 @@ mod tests {
     fn test_matrix_multiply() {
         let m1 = matrix!([1, 2], [3, 4]);
         let m2 = matrix!([5, 6], [7, 8]);
-        let actual = m1.multiply(&m2);
+        let actual = m1.multiply(&m2).unwrap();
         let expect = matrix!([11, 22], [19, 42]);
         assert_eq!(actual, expect);
     }
@@ -406,15 +408,16 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_matrix_inverse_non_square() {
         // Test case with a non-square matrix.
-        matrix!([56, 23], [3, 100], [45, 201]).invert().unwrap();
+        assert_eq!(
+            matrix!([56, 23], [3, 100], [45, 201]).invert(),
+            Err(Error::NonSquare)
+        );
     }
 
     #[test]
-    #[should_panic]
     fn test_matrix_inverse_singular() {
-        matrix!([4, 2], [12, 6]).invert().unwrap();
+        assert_eq!(matrix!([4, 2], [12, 6]).invert(), Err(Error::SingularMatrix));
     }
 }

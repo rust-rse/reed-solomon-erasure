@@ -93,12 +93,12 @@ pub fn mul(a: u8, b: u8) -> u8 {
     MUL_TABLE[a as usize][b as usize]
 }
 
-/// Divide one element by another. `b`, the divisor, may not be 0.
+/// Divide one element by another. If `b` is `0`, this returns `0` instead of panicking.
 pub fn div(a: u8, b: u8) -> u8 {
     if a == 0 {
         0
     } else if b == 0 {
-        panic!("Divisor is 0")
+        0
     } else {
         let log_a = LOG_TABLE[a as usize];
         let log_b = LOG_TABLE[b as usize];

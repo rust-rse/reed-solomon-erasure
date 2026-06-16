@@ -1177,7 +1177,7 @@ fn test_jerasure_like_matrix_mode_roundtrips_and_differs_from_vandermonde() {
 #[test]
 fn test_with_custom_matrix_roundtrips_and_uses_supplied_rows() {
     let regular = ReedSolomon::new(3, 2).unwrap();
-    let classic_matrix = ReedSolomon::build_matrix(3, 5);
+    let classic_matrix = ReedSolomon::build_matrix(3, 5).unwrap();
     let custom_rows = vec![
         classic_matrix.get_row(3).to_vec(),
         classic_matrix.get_row(4).to_vec(),

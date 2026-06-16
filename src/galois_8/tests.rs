@@ -280,9 +280,8 @@ fn test_div_a_is_0() {
 }
 
 #[test]
-#[should_panic]
 fn test_div_b_is_0() {
-    div(1, 0);
+    assert_eq!(0, div(1, 0));
 }
 
 #[test]

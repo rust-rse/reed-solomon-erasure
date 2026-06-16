@@ -306,7 +306,8 @@ impl<F: Field> ReedSolomon<F> {
             false,
         );
 
-        let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
+        let data_decode_matrix = self
+            .get_data_decode_matrix(&valid_indices, &invalid_indices)?;
 
         if !missing_data_indices.is_empty() {
             #[cfg(feature = "std")]
@@ -531,7 +532,8 @@ impl<F: Field> ReedSolomon<F> {
                 return Ok(());
             }
 
-            let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
+            let data_decode_matrix = self
+                .get_data_decode_matrix(&valid_indices, &invalid_indices)?;
             let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
                 SmallVec::with_capacity(required_missing_data_indices.len());
             for &idx in &required_missing_data_indices {
@@ -709,7 +711,11 @@ impl<F: Field> ReedSolomon<F> {
         &self,
         valid_indices: &[usize],
         invalid_indices: &[usize],
-    ) -> Arc<crate::matrix::Matrix<F>> {
+    ) -> Result<Arc<crate::matrix::Matrix<F>>, Error> {
+        if valid_indices.len() != self.data_shard_count {
+            return Err(Error::TooFewShardsPresent);
+        }
+
         if self.options.inversion_cache {
             #[cfg(feature = "std")]
             self.reconstruction_cache_metrics
@@ -717,13 +723,13 @@ impl<F: Field> ReedSolomon<F> {
                 .fetch_add(1, Ordering::Relaxed);
 
             let mut cache = self.data_decode_matrix_cache.lock();
-            if let Some(entry) = cache.get(invalid_indices) {
-                #[cfg(feature = "std")]
-                self.reconstruction_cache_metrics
-                    .hits
-                    .fetch_add(1, Ordering::Relaxed);
-                return entry.clone();
-            }
+        if let Some(entry) = cache.get(invalid_indices) {
+            #[cfg(feature = "std")]
+            self.reconstruction_cache_metrics
+                .hits
+                .fetch_add(1, Ordering::Relaxed);
+                return Ok(entry.clone());
+        }
 
             #[cfg(feature = "std")]
             self.reconstruction_cache_metrics
@@ -737,12 +743,9 @@ impl<F: Field> ReedSolomon<F> {
                 sub_matrix.set(sub_matrix_row, c, self.matrix.get(valid_index, c));
             }
         }
-        let data_decode_matrix = match sub_matrix.invert() {
-            Ok(inverted) => Arc::new(inverted),
-            Err(_) => panic!(
-                "selected shard submatrix must remain invertible when enough shards are present"
-            ),
-        };
+        let data_decode_matrix = Arc::new(sub_matrix.invert().map_err(|_| {
+            Error::InvalidCustomMatrix
+        })?);
         if self.options.inversion_cache {
             let data_decode_matrix = data_decode_matrix.clone();
             let mut cache = self.data_decode_matrix_cache.lock();
@@ -762,7 +765,7 @@ impl<F: Field> ReedSolomon<F> {
                 .inserts
                 .fetch_add(1, Ordering::Relaxed);
         }
-        data_decode_matrix
+        Ok(data_decode_matrix)
     }
 
     fn reconstruct_internal<T: ReconstructShard<F>>(
@@ -865,7 +868,8 @@ impl<F: Field> ReedSolomon<F> {
             );
         }
 
-        let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
+        let data_decode_matrix = self
+            .get_data_decode_matrix(&valid_indices, &invalid_indices)?;
 
         let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
             SmallVec::with_capacity(self.parity_shard_count);

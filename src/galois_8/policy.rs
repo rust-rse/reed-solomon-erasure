@@ -381,7 +381,7 @@ impl crate::ReedSolomon<super::Field> {
             }
         }
 
-        let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
+        let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices)?;
         let required_missing_data_indices = required
             .map(|required| {
                 (0..self.data_shard_count())
@@ -879,7 +879,7 @@ impl crate::ReedSolomon<super::Field> {
                 return Ok(());
             }
 
-            let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
+            let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices)?;
             let parity_rows = self.get_parity_rows();
             let mut reduced_rows: smallvec::SmallVec<[smallvec::SmallVec<[u8; 32]>; 32]> =
                 smallvec::SmallVec::with_capacity(output_indices.len());
