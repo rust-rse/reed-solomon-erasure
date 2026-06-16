@@ -18,6 +18,8 @@ pub use aligned::{
 };
 pub use backend::{BackendId, BackendKind};
 #[cfg(feature = "std")]
+pub use policy::OptionVecReconstructWorkspace;
+#[cfg(feature = "std")]
 pub(crate) use policy::resolve_runtime_parallel_policy_cache;
 #[cfg(feature = "std")]
 pub use profile::RustNeonProfileStats;

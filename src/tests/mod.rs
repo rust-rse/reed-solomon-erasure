@@ -3266,6 +3266,27 @@ fn test_galois_8_reconstruct_opt_matches_reconstruct() {
     assert_eq!(expected, actual);
 }
 
+#[cfg(feature = "std")]
+#[test]
+fn test_galois_8_reconstruct_opt_with_workspace_matches_reconstruct() {
+    let r = ReedSolomon::new(10, 4).unwrap();
+    let mut shards = make_random_shards!(64 * 1024, 14);
+    r.encode(&mut shards).unwrap();
+
+    let mut expected = shards_to_option_shards(&shards);
+    expected[0] = None;
+    expected[12] = None;
+
+    let mut actual = expected.clone();
+    let workspace = r.prepare_reconstruct_opt_workspace(&actual).unwrap();
+
+    r.reconstruct(&mut expected).unwrap();
+    r.reconstruct_opt_with_workspace(&mut actual, &workspace)
+        .unwrap();
+
+    assert_eq!(expected, actual);
+}
+
 #[test]
 fn test_reconstruct_marks_shard_slot_present() {
     let r = ReedSolomon::new(4, 2).unwrap();

@@ -52,6 +52,15 @@ Small-file helper script:
 bash scripts/run_small_file_benchmark_matrix.sh
 ```
 
+Repeated reconstruct planning reuse:
+
+- for repeated `Option<Vec<u8>>` reconstruct workloads with a stable missing
+  pattern, prefer `prepare_reconstruct_opt_workspace(...)` once and
+  `reconstruct_opt_with_workspace(...)` inside the hot loop
+- this avoids rebuilding the option-vec reconstruct plan on every call and is
+  the preferred measurement shape when evaluating repeated serial reconstruct
+  workloads such as `10x4_64k`
+
 Throughput matrix:
 
 ```bash

@@ -30,6 +30,7 @@ WASM bindings live in [wasm/README.md](wasm/README.md).
 - `galois_16::ReedSolomon` remains available for classic `GF(2^16)` workflows.
 - `CodecOptions` controls codec family, matrix mode, inversion-cache behavior, and parallel policy.
 - `VerifyWorkspace`, `ShardSlot<T>`, and aligned-shard helpers reduce hot-path allocation churn.
+- `galois_8::OptionVecReconstructWorkspace` reuses planning for repeated `Option<Vec<u8>>` reconstruct calls with a stable missing pattern.
 - `decode_idx(...)`, `reconstruct_some(...)`, and `ShardByShard` cover progressive and selective workflows.
 - `stream::StreamOptions` provides block-based streaming on the classic `galois_8` path.
 
@@ -103,6 +104,25 @@ fn main() {
 
 For repeated verification calls, prefer `verify_with_workspace(...)` or
 `verify_with_buffer(...)` over plain `verify(...)`.
+
+For repeated `Option<Vec<u8>>` reconstruct calls that keep the same missing
+pattern, prepare a reusable reconstruct workspace once and reuse it across
+calls:
+
+```rust
+use rustfs_erasure_codec::galois_8::ReedSolomon;
+
+let rs = ReedSolomon::new(10, 4).unwrap();
+let mut shards = vec![vec![0u8; 1024]; 14];
+rs.encode(&mut shards).unwrap();
+
+let mut missing: Vec<Option<Vec<u8>>> = shards.into_iter().map(Some).collect();
+missing[0] = None;
+missing[10] = None;
+
+let workspace = rs.prepare_reconstruct_opt_workspace(&missing).unwrap();
+rs.reconstruct_opt_with_workspace(&mut missing, &workspace).unwrap();
+```
 
 ## Memory Reuse Helpers
 

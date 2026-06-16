@@ -6,7 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use rustfs_erasure_codec::galois_8::ReedSolomon;
+use rustfs_erasure_codec::{ShardSlot, galois_8::ReedSolomon};
 
 use self::bench_common::{
     ARTIFACT_SCHEMA_VERSION, BenchCase, Operation, backend, backend_id, backend_kind,
@@ -28,9 +28,22 @@ struct SmallFileResult {
 }
 
 #[derive(Clone, Copy)]
+struct SmallFileProfileSnapshot {
+    operation: &'static str,
+    case_label: &'static str,
+    iterations: usize,
+    throughput_mb_s: f64,
+    ns_per_iter: f64,
+    stats: rustfs_erasure_codec::RuntimeProfileStats,
+}
+
+#[derive(Clone, Copy)]
 enum SmallFileOp {
     Standard(Operation),
     VerifyWithBuffer,
+    ReconstructOpt,
+    ReconstructShardSlot,
+    ReconstructSomeDataOnly,
 }
 
 impl SmallFileOp {
@@ -38,8 +51,252 @@ impl SmallFileOp {
         match self {
             SmallFileOp::Standard(operation) => operation.as_str(),
             SmallFileOp::VerifyWithBuffer => "verify_with_buffer",
+            SmallFileOp::ReconstructOpt => "reconstruct_opt",
+            SmallFileOp::ReconstructShardSlot => "reconstruct_shard_slot",
+            SmallFileOp::ReconstructSomeDataOnly => "reconstruct_some_data_only",
         }
     }
+}
+
+fn shards_to_slots(original: &[Vec<u8>]) -> Vec<ShardSlot<Vec<u8>>> {
+    original
+        .iter()
+        .cloned()
+        .map(ShardSlot::new_present)
+        .collect()
+}
+
+fn mark_missing_slots(slots: &mut [ShardSlot<Vec<u8>>], missing: &[usize]) {
+    for &idx in missing {
+        slots[idx].mark_missing();
+    }
+}
+
+fn capture_reconstruct_profile_10x4_64k() {
+    let case = BenchCase {
+        data_shards: 10,
+        parity_shards: 4,
+        shard_size: 64 * 1024,
+        label: "10x4_64k",
+    };
+    let iterations = small_file_iterations();
+    let seed = derived_seed(Operation::Reconstruct, case);
+    let rs = ReedSolomon::new(case.data_shards, case.parity_shards).unwrap();
+    let logical_data_bytes = case.shard_size * case.data_shards;
+    let mut original = make_full_shards(seed, case.data_shards, case.parity_shards, case.shard_size);
+    rs.encode(&mut original).unwrap();
+
+    let mut snapshots = Vec::new();
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+        shards[0] = None;
+        shards[case.data_shards] = None;
+        rs.reconstruct(&mut shards).unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+        shards[0] = None;
+        shards[case.data_shards] = None;
+        rs.reconstruct_opt(&mut shards).unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct_opt",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+        shards[0] = None;
+        shards[case.data_shards] = None;
+        let _ = rs.plan_option_vec_reconstruct_for_bench(&shards, None).unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct_plan_only",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+        shards[0] = None;
+        shards[case.data_shards] = None;
+        rs.execute_option_vec_reconstruct_plan_serial_for_bench(&mut shards, false)
+            .unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct_execute_serial_only",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    let mut preplanned_shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+    preplanned_shards[0] = None;
+    preplanned_shards[case.data_shards] = None;
+    let preplanned = rs.prepare_reconstruct_opt_workspace(&preplanned_shards).unwrap();
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+        shards[0] = None;
+        shards[case.data_shards] = None;
+        rs.reconstruct_opt_with_workspace(&mut shards, &preplanned)
+            .unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct_execute_preplanned_serial",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards = shards_to_slots(&original);
+        mark_missing_slots(&mut shards, &[0, case.data_shards]);
+        rs.reconstruct(&mut shards).unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct_shard_slot",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    let start = Instant::now();
+    rs.reset_runtime_profile_stats();
+    for _ in 0..iterations {
+        let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+        shards[0] = None;
+        shards[case.data_shards] = None;
+        let mut required = vec![false; case.data_shards + case.parity_shards];
+        required[0] = true;
+        rs.reconstruct_some(&mut shards, &required).unwrap();
+    }
+    let elapsed = start.elapsed();
+    let ns_per_iter = elapsed.as_nanos() as f64 / iterations as f64;
+    snapshots.push(SmallFileProfileSnapshot {
+        operation: "reconstruct_some_data_only",
+        case_label: case.label,
+        iterations,
+        throughput_mb_s: logical_data_bytes as f64 / (1024.0 * 1024.0) / (ns_per_iter / 1_000_000_000.0),
+        ns_per_iter,
+        stats: rs.runtime_profile_stats(),
+    });
+
+    write_small_file_profile_snapshots(&snapshots);
+}
+
+fn write_small_file_profile_snapshots(snapshots: &[SmallFileProfileSnapshot]) {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/benchmark-smoke");
+    fs::create_dir_all(&dir).unwrap();
+    let json_path = dir.join("small-file-reconstruct-profile-10x4_64k.json");
+    let csv_path = dir.join("small-file-reconstruct-profile-10x4_64k.csv");
+
+    let mut json = String::from("[\n");
+    for (i, snapshot) in snapshots.iter().enumerate() {
+        let suffix = if i + 1 == snapshots.len() { "\n" } else { ",\n" };
+        json.push_str(&format!(
+            concat!(
+                "  {{\"operation\":\"{}\",\"case_label\":\"{}\",\"iterations\":{},",
+                "\"throughput_mb_s\":{:.4},\"ns_per_iter\":{:.2},",
+                "\"reconstruct_entry_parallel_calls\":{},\"reconstruct_entry_serial_calls\":{},",
+                "\"reconstruct_opt_fallback_serial_calls\":{},",
+                "\"reconstruct_data_stage_calls\":{},\"reconstruct_parity_stage_calls\":{},",
+                "\"code_some_serial_calls\":{},\"code_some_parallel_calls\":{},",
+                "\"parallel_policy_calls\":{},\"parallel_policy_parallel\":{},",
+                "\"parallel_policy_serial\":{}}}{}"
+            ),
+            snapshot.operation,
+            snapshot.case_label,
+            snapshot.iterations,
+            snapshot.throughput_mb_s,
+            snapshot.ns_per_iter,
+            snapshot.stats.reconstruct_entry_parallel_calls,
+            snapshot.stats.reconstruct_entry_serial_calls,
+            snapshot.stats.reconstruct_opt_fallback_serial_calls,
+            snapshot.stats.reconstruct_data_stage_calls,
+            snapshot.stats.reconstruct_parity_stage_calls,
+            snapshot.stats.code_some_serial_calls,
+            snapshot.stats.code_some_parallel_calls,
+            snapshot.stats.parallel_policy_calls,
+            snapshot.stats.parallel_policy_parallel,
+            snapshot.stats.parallel_policy_serial,
+            suffix
+        ));
+    }
+    json.push(']');
+    fs::write(&json_path, json).unwrap();
+
+    let mut csv = String::from(
+        "operation,case_label,iterations,throughput_mb_s,ns_per_iter,reconstruct_entry_parallel_calls,reconstruct_entry_serial_calls,reconstruct_opt_fallback_serial_calls,reconstruct_data_stage_calls,reconstruct_parity_stage_calls,code_some_serial_calls,code_some_parallel_calls,parallel_policy_calls,parallel_policy_parallel,parallel_policy_serial\n",
+    );
+    for snapshot in snapshots {
+        csv.push_str(&format!(
+            "{},{},{},{:.4},{:.2},{},{},{},{},{},{},{},{},{},{}\n",
+            snapshot.operation,
+            snapshot.case_label,
+            snapshot.iterations,
+            snapshot.throughput_mb_s,
+            snapshot.ns_per_iter,
+            snapshot.stats.reconstruct_entry_parallel_calls,
+            snapshot.stats.reconstruct_entry_serial_calls,
+            snapshot.stats.reconstruct_opt_fallback_serial_calls,
+            snapshot.stats.reconstruct_data_stage_calls,
+            snapshot.stats.reconstruct_parity_stage_calls,
+            snapshot.stats.code_some_serial_calls,
+            snapshot.stats.code_some_parallel_calls,
+            snapshot.stats.parallel_policy_calls,
+            snapshot.stats.parallel_policy_parallel,
+            snapshot.stats.parallel_policy_serial
+        ));
+    }
+    fs::write(&csv_path, csv).unwrap();
 }
 
 const QUICK_SMALL_FILE_CASES: &[BenchCase] = &[
@@ -296,6 +553,9 @@ fn run_operation(case: BenchCase, operation: SmallFileOp, iterations: usize) -> 
         match operation {
             SmallFileOp::Standard(op) => op,
             SmallFileOp::VerifyWithBuffer => Operation::Verify,
+            SmallFileOp::ReconstructOpt => Operation::Reconstruct,
+            SmallFileOp::ReconstructShardSlot => Operation::Reconstruct,
+            SmallFileOp::ReconstructSomeDataOnly => Operation::ReconstructData,
         },
         case,
     );
@@ -375,6 +635,40 @@ fn run_operation(case: BenchCase, operation: SmallFileOp, iterations: usize) -> 
             let mut buffer = vec![vec![0u8; case.shard_size]; case.parity_shards];
             for _ in 0..iterations {
                 rs.verify_with_buffer(&shards, &mut buffer).unwrap();
+            }
+        }
+        SmallFileOp::ReconstructOpt => {
+            let mut original =
+                make_full_shards(seed, case.data_shards, case.parity_shards, case.shard_size);
+            rs.encode(&mut original).unwrap();
+            for _ in 0..iterations {
+                let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+                shards[0] = None;
+                shards[case.data_shards] = None;
+                rs.reconstruct_opt(&mut shards).unwrap();
+            }
+        }
+        SmallFileOp::ReconstructShardSlot => {
+            let mut original =
+                make_full_shards(seed, case.data_shards, case.parity_shards, case.shard_size);
+            rs.encode(&mut original).unwrap();
+            for _ in 0..iterations {
+                let mut shards = shards_to_slots(&original);
+                mark_missing_slots(&mut shards, &[0, case.data_shards]);
+                rs.reconstruct(&mut shards).unwrap();
+            }
+        }
+        SmallFileOp::ReconstructSomeDataOnly => {
+            let mut original =
+                make_full_shards(seed, case.data_shards, case.parity_shards, case.shard_size);
+            rs.encode(&mut original).unwrap();
+            let mut required = vec![false; case.data_shards + case.parity_shards];
+            required[0] = true;
+            for _ in 0..iterations {
+                let mut shards: Vec<Option<Vec<u8>>> = original.iter().cloned().map(Some).collect();
+                shards[0] = None;
+                shards[case.data_shards] = None;
+                rs.reconstruct_some(&mut shards, &required).unwrap();
             }
         }
         SmallFileOp::Standard(Operation::Reconstruct) => {
@@ -512,6 +806,8 @@ fn benchmark_small_file_matrix_runs_and_exports_results() {
     let iterations = small_file_iterations();
     let cases = selected_small_file_cases();
 
+    let should_capture_reconstruct_profile = cases.len() == 1 && cases[0].label == "10x4_64k";
+
     for case in cases {
         results.push(run_operation(
             case,
@@ -533,6 +829,9 @@ fn benchmark_small_file_matrix_runs_and_exports_results() {
             SmallFileOp::Standard(Operation::Reconstruct),
             iterations,
         ));
+        results.push(run_operation(case, SmallFileOp::ReconstructOpt, iterations));
+        results.push(run_operation(case, SmallFileOp::ReconstructShardSlot, iterations));
+        results.push(run_operation(case, SmallFileOp::ReconstructSomeDataOnly, iterations));
         results.push(run_operation(
             case,
             SmallFileOp::Standard(Operation::ReconstructData),
@@ -547,4 +846,7 @@ fn benchmark_small_file_matrix_runs_and_exports_results() {
             .all(|result| result.throughput_mb_s.is_finite())
     );
     write_results(&results);
+    if should_capture_reconstruct_profile {
+        capture_reconstruct_profile_10x4_64k();
+    }
 }

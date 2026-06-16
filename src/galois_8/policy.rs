@@ -29,6 +29,7 @@ const RS_AARCH64_RECONSTRUCT_PARITY_MIN_BYTES_PER_JOB_ENV: &str =
     "RS_AARCH64_RECONSTRUCT_PARITY_MIN_BYTES_PER_JOB";
 
 #[cfg(feature = "std")]
+#[derive(Clone)]
 struct OptionVecReconstructPlan {
     shard_len: usize,
     valid_indices: smallvec::SmallVec<[usize; 32]>,
@@ -37,6 +38,15 @@ struct OptionVecReconstructPlan {
     data_decode_matrix: Option<std::sync::Arc<crate::matrix::Matrix<super::Field>>>,
     required_missing_data_indices: smallvec::SmallVec<[usize; 32]>,
 }
+
+#[cfg(feature = "std")]
+/// Reusable reconstruct workspace for `Option<Vec<u8>>` shard sets.
+///
+/// This workspace caches the shard-size and missing-index planning derived from a
+/// specific `Option<Vec<u8>>` shape so repeated reconstruct calls can skip the
+/// per-call plan build. It is currently intended for repeated serial classic
+/// reconstruct workloads where the missing pattern stays stable across calls.
+pub struct OptionVecReconstructWorkspace(OptionVecReconstructPlan);
 
 impl crate::ReedSolomon<super::Field> {
     #[cfg(feature = "std")]
@@ -194,7 +204,7 @@ impl crate::ReedSolomon<super::Field> {
     fn execute_option_vec_reconstruct_plan_serial(
         &self,
         shards: &mut [Option<Vec<u8>>],
-        plan: OptionVecReconstructPlan,
+        plan: &OptionVecReconstructPlan,
         data_only: bool,
     ) -> Result<(), crate::Error> {
         let data_decode_matrix = plan
@@ -228,29 +238,42 @@ impl crate::ReedSolomon<super::Field> {
                 matrix_rows.push(data_decode_matrix.get_row(idx));
             }
 
-            let mut recovered_data: Vec<Vec<u8>> = missing_data_indices
-                .iter()
-                .map(|_| vec![0u8; plan.shard_len])
-                .collect();
             {
-                let sub_shards: smallvec::SmallVec<[&[u8]; 32]> = plan
+                let sub_shard_ptrs: smallvec::SmallVec<[(*const u8, usize); 32]> = plan
                     .valid_indices
                     .iter()
                     .map(|&idx| {
-                        shards[idx]
+                        let shard = shards[idx]
                             .as_deref()
-                            .expect("valid shard index must be present")
+                            .expect("valid shard index must be present");
+                        (shard.as_ptr(), shard.len())
                     })
                     .collect();
-                let mut outputs: smallvec::SmallVec<[&mut [u8]; 32]> = recovered_data
-                    .iter_mut()
-                    .map(|shard| shard.as_mut_slice())
+                let sub_shards: smallvec::SmallVec<[&[u8]; 32]> = sub_shard_ptrs
+                    .iter()
+                    .map(|&(ptr, len)| {
+                        // SAFETY: each pointer/len pair comes from a present shard
+                        // and remains valid for the duration of this compute phase.
+                        unsafe { core::slice::from_raw_parts(ptr, len) }
+                    })
+                    .collect();
+                let mut output_ptrs: smallvec::SmallVec<[(*mut u8, usize); 32]> =
+                    smallvec::SmallVec::with_capacity(missing_data_indices.len());
+                for &idx in &missing_data_indices {
+                    let shard = shards[idx]
+                        .get_or_insert_with(|| vec![0u8; plan.shard_len])
+                        .as_mut_slice();
+                    output_ptrs.push((shard.as_mut_ptr(), shard.len()));
+                }
+                let mut outputs: smallvec::SmallVec<[&mut [u8]; 32]> = output_ptrs
+                    .iter()
+                    .map(|&(ptr, len)| {
+                        // SAFETY: each pointer/len pair was taken from a distinct
+                        // missing shard slot initialized to `plan.shard_len`.
+                        unsafe { core::slice::from_raw_parts_mut(ptr, len) }
+                    })
                     .collect();
                 self.code_some_slices_chunked(&matrix_rows, &sub_shards, &mut outputs);
-            }
-
-            for (idx, recovered) in missing_data_indices.into_iter().zip(recovered_data) {
-                shards[idx] = Some(recovered);
             }
         }
 
@@ -267,25 +290,40 @@ impl crate::ReedSolomon<super::Field> {
             matrix_rows.push(parity_rows[idx - self.data_shard_count()]);
         }
 
-        let mut recovered_parity: Vec<Vec<u8>> = missing_parity_indices
-            .iter()
-            .map(|_| vec![0u8; plan.shard_len])
-            .collect();
         {
-            let all_data: smallvec::SmallVec<[&[u8]; 32]> = shards
+            let all_data_ptrs: smallvec::SmallVec<[(*const u8, usize); 32]> = shards
                 .iter()
                 .take(self.data_shard_count())
-                .map(|shard| shard.as_deref().expect("data shard must be present"))
+                .map(|shard| {
+                    let data = shard.as_deref().expect("data shard must be present");
+                    (data.as_ptr(), data.len())
+                })
                 .collect();
-            let mut outputs: smallvec::SmallVec<[&mut [u8]; 32]> = recovered_parity
-                .iter_mut()
-                .map(|shard| shard.as_mut_slice())
+            let all_data: smallvec::SmallVec<[&[u8]; 32]> = all_data_ptrs
+                .iter()
+                .map(|&(ptr, len)| {
+                    // SAFETY: each pointer/len pair comes from a present data shard
+                    // and remains valid for the duration of this compute phase.
+                    unsafe { core::slice::from_raw_parts(ptr, len) }
+                })
+                .collect();
+            let mut output_ptrs: smallvec::SmallVec<[(*mut u8, usize); 32]> =
+                smallvec::SmallVec::with_capacity(missing_parity_indices.len());
+            for &idx in &missing_parity_indices {
+                let shard = shards[idx]
+                    .get_or_insert_with(|| vec![0u8; plan.shard_len])
+                    .as_mut_slice();
+                output_ptrs.push((shard.as_mut_ptr(), shard.len()));
+            }
+            let mut outputs: smallvec::SmallVec<[&mut [u8]; 32]> = output_ptrs
+                .iter()
+                .map(|&(ptr, len)| {
+                    // SAFETY: each pointer/len pair was taken from a distinct
+                    // missing parity shard slot initialized to `plan.shard_len`.
+                    unsafe { core::slice::from_raw_parts_mut(ptr, len) }
+                })
                 .collect();
             self.code_some_slices_chunked(&matrix_rows, &all_data, &mut outputs);
-        }
-
-        for (idx, recovered) in missing_parity_indices.into_iter().zip(recovered_parity) {
-            shards[idx] = Some(recovered);
         }
 
         Ok(())
@@ -468,6 +506,91 @@ impl crate::ReedSolomon<super::Field> {
     }
 
     #[cfg(feature = "std")]
+    #[doc(hidden)]
+    pub fn plan_option_vec_reconstruct_for_bench(
+        &self,
+        shards: &[Option<Vec<u8>>],
+        required: Option<&[bool]>,
+    ) -> Result<(usize, usize, usize, usize), crate::Error> {
+        let plan = self.plan_option_vec_reconstruct(shards, required)?;
+        Ok((
+            plan.shard_len,
+            plan.number_present,
+            plan.valid_indices.len(),
+            plan.invalid_indices.len(),
+        ))
+    }
+
+    #[cfg(feature = "std")]
+    /// Prepare a reusable reconstruct workspace for an `Option<Vec<u8>>` shard layout.
+    ///
+    /// The workspace is only valid for subsequent calls that keep the same
+    /// missing-shard pattern and shard length.
+    pub fn prepare_reconstruct_opt_workspace(
+        &self,
+        shards: &[Option<Vec<u8>>],
+    ) -> Result<OptionVecReconstructWorkspace, crate::Error> {
+        Ok(OptionVecReconstructWorkspace(
+            self.plan_option_vec_reconstruct(shards, None)?,
+        ))
+    }
+
+    #[cfg(feature = "std")]
+    /// Execute reconstruct using a previously prepared workspace.
+    ///
+    /// This skips the per-call option-vec planning pass, but the caller must
+    /// provide shards with the same missing-index layout and shard length as the
+    /// one used to prepare `workspace`.
+    pub fn reconstruct_opt_with_workspace(
+        &self,
+        shards: &mut [Option<Vec<u8>>],
+        workspace: &OptionVecReconstructWorkspace,
+    ) -> Result<(), crate::Error> {
+        let mut invalid_indices = smallvec::SmallVec::<[usize; 32]>::new();
+        let mut shard_len = None;
+        let mut number_present = 0usize;
+        for (idx, shard) in shards.iter().enumerate() {
+            if let Some(shard) = shard.as_ref() {
+                if shard.is_empty() {
+                    return Err(crate::Error::EmptyShard);
+                }
+                number_present += 1;
+                if let Some(old_len) = shard_len
+                    && shard.len() != old_len
+                {
+                    return Err(crate::Error::IncorrectShardSize);
+                }
+                shard_len = Some(shard.len());
+            } else {
+                invalid_indices.push(idx);
+            }
+        }
+
+        if invalid_indices != workspace.0.invalid_indices {
+            return Err(crate::Error::InvalidShardFlags);
+        }
+        if number_present != workspace.0.number_present {
+            return Err(crate::Error::TooFewShardsPresent);
+        }
+        if shard_len.unwrap_or(0) != workspace.0.shard_len {
+            return Err(crate::Error::IncorrectShardSize);
+        }
+
+        self.execute_option_vec_reconstruct_plan_serial(shards, &workspace.0, false)
+    }
+
+    #[cfg(feature = "std")]
+    #[doc(hidden)]
+    pub fn execute_option_vec_reconstruct_plan_serial_for_bench(
+        &self,
+        shards: &mut [Option<Vec<u8>>],
+        data_only: bool,
+    ) -> Result<(), crate::Error> {
+        let plan = self.plan_option_vec_reconstruct(shards, None)?;
+        self.execute_option_vec_reconstruct_plan_serial(shards, &plan, data_only)
+    }
+
+    #[cfg(feature = "std")]
     pub fn encode_opt<T, U>(&self, mut shards: T) -> Result<(), crate::Error>
     where
         T: AsRef<[U]> + AsMut<[U]>,
@@ -583,18 +706,23 @@ impl crate::ReedSolomon<super::Field> {
         if self.is_leopard_gf8_family() {
             return self.reconstruct(shards);
         }
-        let plan = self.plan_option_vec_reconstruct(shards, None)?;
-        if plan.shard_len == 0 {
+        let workspace = self.prepare_reconstruct_opt_workspace(shards)?;
+        if workspace.0.shard_len == 0 {
             return Ok(());
         }
-        let missing_data = plan
+        let missing_data = workspace
+            .0
             .invalid_indices
             .iter()
             .filter(|&&idx| idx < self.data_shard_count())
             .count();
-        let missing = plan.invalid_indices.len();
-        let decision =
-            self.reconstruct_parallel_decision(plan.shard_len, missing_data, missing, false);
+        let missing = workspace.0.invalid_indices.len();
+        let decision = self.reconstruct_parallel_decision(
+            workspace.0.shard_len,
+            missing_data,
+            missing,
+            false,
+        );
         self.record_reconstruct_entry_path(decision.use_parallel);
         if decision.use_parallel {
             let (data_policy, parity_policy) = self.reconstruct_stage_policies(false);
@@ -605,8 +733,7 @@ impl crate::ReedSolomon<super::Field> {
                 parity_policy,
             )
         } else {
-            self.record_reconstruct_opt_fallback_serial_path();
-            self.execute_option_vec_reconstruct_plan_serial(shards, plan, false)
+            self.reconstruct_opt_with_workspace(shards, &workspace)
         }
     }
 
@@ -632,8 +759,8 @@ impl crate::ReedSolomon<super::Field> {
             let (data_policy, _parity_policy) = self.reconstruct_stage_policies(true);
             self.reconstruct_internal_option_vec_par_with_policy(shards, true, data_policy)
         } else {
-            self.record_reconstruct_opt_fallback_serial_path();
-            self.execute_option_vec_reconstruct_plan_serial(shards, plan, true)
+            drop(plan);
+            self.reconstruct_data(shards)
         }
     }
 
