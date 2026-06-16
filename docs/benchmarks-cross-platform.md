@@ -142,13 +142,54 @@ Supplementary observations from the current artifact set:
 - `verify` on `10x4_1m` reached `6297.5276 MB/s` (`6.15 GiB/s`)
 - `reconstruct_data` on `10x4_1m` reached `4923.6896 MB/s` (`4.81 GiB/s`)
 
-Why the gap versus aarch64 is large:
+### Interpreting The Current aarch64 vs x86 Gap
 
-- This is not a same-host comparison: the x86_64 numbers come from an Ubuntu 24.04 Azure VM (`rustfs-jumpbox`) with `16` visible CPUs, while the aarch64 numbers come from an Apple Silicon MacBook Pro host.
-- The current x86_64 rerun used `rust-gfni-avx512` under `auto`, while the aarch64 sample used `rust-neon`; the backend choice is part of the result, not just the ISA label.
-- The CPU brand string says `AMD EPYC 9V45 96-Core Processor`, but this benchmark host only exposed `16` cores / parallelism to the runtime. That VM sizing difference alone can materially change Rayon scheduling, cache pressure, and sustained large-shard throughput.
-- The new current-host numbers are mixed rather than uniformly better: versus the aarch64 artifact, x86_64 is about `+93.8% / +148.6%` at `10x4_4k`, `+138.0% / -45.4%` at `10x4_64k`, and `+44.0% / -0.3%` at `10x4_1m` for `encode / reconstruct`.
-- That pattern points to host and runtime-path differences more than a simple “x86 vs ARM” conclusion. In particular, this rerun is strong on `encode`, but `reconstruct` remains workload-sensitive on the current x86_64 host, and `10x4_64k` stayed abnormally weak even after a dedicated higher-iteration rerun.
+At first glance the x86_64 rerun looks stronger on `encode`, while `reconstruct` is mixed and
+still workload-sensitive:
+
+- aarch64 `10x4_1m`: `encode 4.38 GiB/s`, `reconstruct 4.34 GiB/s`
+- x86_64 `10x4_1m`: `encode 6.30 GiB/s`, `reconstruct 4.32 GiB/s`
+
+This should still **not** be read as “x86_64 is universally faster than aarch64” or vice versa.
+The more accurate interpretation is:
+
+1. These small-file results are primarily **in-memory** measurements, not disk-I/O benchmarks.
+   The benchmark constructs shard buffers in memory, runs encode / verify / reconstruct loops,
+   and only writes JSON / CSV artifacts after timing has finished.
+
+2. The measured path includes more than raw SIMD math.
+   It also captures buffer cloning, `Vec<Option<Vec<u8>>>` reconstruction setup, cache behavior,
+   allocator behavior, and per-call orchestration overhead. That makes the result sensitive to:
+   - single-core performance
+   - memory latency / bandwidth
+   - cache hierarchy
+   - runtime backend selection
+
+3. This is not a same-host comparison.
+   The x86_64 numbers come from an Ubuntu 24.04 Azure VM (`rustfs-jumpbox`) with `16` visible
+   CPUs, while the aarch64 numbers come from an Apple Silicon MacBook Pro host. The x86 CPU brand
+   string is `AMD EPYC 9V45 96-Core Processor`, but only `16` CPUs / parallelism were exposed to
+   the runtime in this benchmark environment. That alone can materially change Rayon scheduling,
+   cache pressure, and sustained large-shard throughput.
+
+4. The backend choice is part of the result, not just the ISA label.
+   The current x86_64 rerun selected `rust-gfni-avx512` under `auto`, while the aarch64 sample
+   used `rust-neon`.
+
+5. The current numbers are mixed rather than uniformly better on one side.
+   Against the aarch64 artifact, x86_64 is roughly:
+   - `+93.8% / +148.6%` at `10x4_4k`
+   - `+138.0% / -45.4%` at `10x4_64k`
+   - `+44.0% / -0.3%` at `10x4_1m`
+   for `encode / reconstruct`.
+
+6. That pattern points to host and runtime-path differences more than a simple “x86 vs ARM” ISA
+   conclusion. In particular, this rerun is strong on `encode`, but `reconstruct` remains
+   workload-sensitive on the current x86_64 host, and `10x4_64k` stayed abnormally weak even
+   after a dedicated higher-iteration rerun.
+
+If we want a stricter architecture comparison, the next step is to rerun both hosts under the same
+commit, same profile, same iteration count, and explicit backend controls where possible.
 
 ### x86_64 (Intel with GFNI)
 
