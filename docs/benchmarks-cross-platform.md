@@ -121,6 +121,7 @@ large-block behavior.
 - Root data disk: `/data/rustfs` on `xfs`, `499.76 GB total`, `35.49 GB used`, `464.26 GB available`
 - Rust toolchain: `rustc 1.96.0 (ac68faa20 2026-05-25)`
 - Git revision in the benchmark artifact: `b338c34`
+
 | Config | Shard Size | Encode (GiB/s) | Reconstruct (GiB/s) |
 |--------|------------|----------------|---------------------|
 | 10×4 | 4 KiB | 6.39 | 7.51 |
@@ -130,6 +131,7 @@ large-block behavior.
 Data sources:
 - `benchmarks/small-file/2026-06-16-x86_64-linux-extended.csv` — current-host targeted rerun used for `10x4_4k` and `10x4_1m`
 - `benchmarks/small-file/2026-06-16-x86_64-linux-10x4_64k-rerun.csv` — dedicated higher-iteration rerun used for `10x4_64k`
+- `benchmarks/small-file/2026-06-16-x86_64-linux-10x4_64k-rerun-rust-avx2.csv` — non-GFNI backend control rerun for `10x4_64k`
 - `benchmarks/small-file/2026-05-27-x86_64-linux-extended.csv` — older archived x86_64 `auto` sample for historical comparison
 - `benchmarks/x86_64-simd/comprehensive-x86_64-benchmark.json` — broader x86_64 encode-only matrix for deeper drill-down
 
@@ -141,6 +143,7 @@ Supplementary observations from the current artifact set:
 - `verify` on `10x4_64k` reached `10244.1047 MB/s` (`10.00 GiB/s`) in the dedicated `40`-iteration rerun
 - `verify` on `10x4_1m` reached `6297.5276 MB/s` (`6.15 GiB/s`)
 - `reconstruct_data` on `10x4_1m` reached `4923.6896 MB/s` (`4.81 GiB/s`)
+- A non-`rust-gfni-avx512` control rerun with `RSE_BACKEND_OVERRIDE=rust-avx2` still produced only `1878.3423 MB/s` (`1.83 GiB/s`) for `10x4_64k reconstruct`, versus `1967.9791 MB/s` (`1.92 GiB/s`) on the auto-selected `rust-gfni-avx512` path.
 
 ### Interpreting The Current aarch64 vs x86 Gap
 
@@ -186,7 +189,7 @@ The more accurate interpretation is:
 6. That pattern points to host and runtime-path differences more than a simple “x86 vs ARM” ISA
    conclusion. In particular, this rerun is strong on `encode`, but `reconstruct` remains
    workload-sensitive on the current x86_64 host, and `10x4_64k` stayed abnormally weak even
-   after a dedicated higher-iteration rerun.
+   after both a dedicated higher-iteration rerun and a non-GFNI `rust-avx2` control rerun.
 
 If we want a stricter architecture comparison, the next step is to rerun both hosts under the same
 commit, same profile, same iteration count, and explicit backend controls where possible.

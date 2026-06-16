@@ -1,0 +1,6 @@
+schema_version,artifact_kind,git_revision,target_triple,features,benchmark_metrics_enabled,backend,backend_id,backend_kind,backend_override,override_honored,profile,iterations,operation,data_shards,parity_shards,shard_size,logical_data_bytes,case_label,seed,throughput_mb_s,ns_per_iter
+1,small-file-results,a4eee9b,x86_64-linux-unknown,std|simd-accel,false,rust-avx2,RustAvx2,RustSimd,rust-avx2,true,extended,40,encode,10,4,65536,655360,10x4_64k,64843600003269941,8775.6525,71219.77
+1,small-file-results,a4eee9b,x86_64-linux-unknown,std|simd-accel,false,rust-avx2,RustAvx2,RustSimd,rust-avx2,true,extended,40,verify,10,4,65536,655360,10x4_64k,64843600003269894,9084.8404,68795.93
+1,small-file-results,a4eee9b,x86_64-linux-unknown,std|simd-accel,false,rust-avx2,RustAvx2,RustSimd,rust-avx2,true,extended,40,verify_with_buffer,10,4,65536,655360,10x4_64k,64843600003269894,10083.2920,61983.72
+1,small-file-results,a4eee9b,x86_64-linux-unknown,std|simd-accel,false,rust-avx2,RustAvx2,RustSimd,rust-avx2,true,extended,40,reconstruct,10,4,65536,655360,10x4_64k,64843600003269911,1878.3423,332740.20
+1,small-file-results,a4eee9b,x86_64-linux-unknown,std|simd-accel,false,rust-avx2,RustAvx2,RustSimd,rust-avx2,true,extended,40,reconstruct_data,10,4,65536,655360,10x4_64k,64843600003269984,1902.6521,328488.85
