@@ -259,8 +259,8 @@ jobs:
       - name: Test std + simd
         run: cargo test --verbose --workspace --exclude rustfs-erasure-codec-fuzz --features simd-accel
 
-  publish:
-    name: Publish to crates.io
+  release-preflight:
+    name: Release preflight
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs:
@@ -273,6 +273,42 @@ jobs:
       - test-linux-aarch64
       - test-windows-native
       - test-macos-arm64
+
+    env:
+      RUN_X86_SIMD_OVERRIDE_MATRIX: 1
+      RUN_AARCH64_SIMD_OVERRIDE_MATRIX: 1
+      RSE_SMOKE_BASELINE: ${{ vars.RSE_SMOKE_BASELINE }}
+      RSE_SMALL_FILE_BASELINE: ${{ vars.RSE_SMALL_FILE_BASELINE }}
+      RSE_RECONSTRUCTION_HOTSPOT_BASELINE: ${{ vars.RSE_RECONSTRUCTION_HOTSPOT_BASELINE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6 # v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master # v1
+        with:
+          toolchain: stable
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2.9.1 # v2.9.1
+
+      - name: Release preflight checks
+        run: |
+          if [[ -n "${RSE_SMOKE_BASELINE:-}" && -n "${RSE_SMALL_FILE_BASELINE:-}" && -n "${RSE_RECONSTRUCTION_HOTSPOT_BASELINE:-}" ]]; then
+            export VALIDATION_PROFILE=release
+          else
+            echo "[ci] baseline files are not fully configured, run release preflight in extended profile"
+            export VALIDATION_PROFILE=extended
+          fi
+          bash scripts/release-check.sh
+
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - release-preflight
 
     steps:
       - name: Checkout

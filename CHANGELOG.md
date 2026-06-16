@@ -8,7 +8,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## 7.0.0 (Unreleased)
+## 7.0.0 (2026-06-16)
 
 > Maintained in [houseme/reed-solomon-erasure](https://github.com/houseme/reed-solomon-erasure)
 > Current line: Rust 2024 rewrite and runtime SIMD/Leopard work

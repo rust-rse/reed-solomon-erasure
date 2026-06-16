@@ -3,6 +3,32 @@
 set -euo pipefail
 
 VALIDATION_PROFILE="${VALIDATION_PROFILE:-fast}"
+STRICT_RELEASE=0
+
+if [[ "${VALIDATION_PROFILE}" == "release" ]]; then
+  STRICT_RELEASE=1
+  VALIDATION_PROFILE="extended"
+  RUN_BACKEND_CONSISTENCY=1
+  RUN_SMALL_FILE_GATE=1
+  RUN_RECONSTRUCTION_HOTSPOT_GATE=1
+  RUN_SIMD_ACCEL_TESTS=1
+fi
+
+require_strict_baseline() {
+  local var_name="$1"
+  local name="$2"
+
+  if [[ -z "${!var_name:-}" ]]; then
+    if [[ "${STRICT_RELEASE}" == "1" ]]; then
+      echo "[release-check] ERROR: strict release mode requires ${var_name} for ${name}"
+      return 1
+    fi
+    echo "[release-check] ${name} without baseline compare (set ${var_name}=...)"
+    return 0
+  fi
+
+  return 0
+}
 
 run() {
   echo
@@ -63,6 +89,8 @@ run_reconstruction_hotspot_gate() {
       --require-scenario reconstruct_some_required_2_of_3_missing_data \
       --require-scenario reconstruct_some_required_data_and_skip_parity \
       --require-scenario reconstruct_some_32x16_required_2_of_4_missing_data
+  elif ! require_strict_baseline "RSE_RECONSTRUCTION_HOTSPOT_BASELINE" "reconstruction hotspot gate"; then
+    return 1
   else
     echo
     echo "[release-check] hotspot results generated without baseline compare (set RSE_RECONSTRUCTION_HOTSPOT_BASELINE=/path/to/reconstruction-hotspot-results.json)"
@@ -95,6 +123,8 @@ run_small_file_gate() {
       --require-case verify_with_buffer:4:2:4096 \
       --require-case reconstruct:4:2:16384 \
       --require-case reconstruct_data:10:4:65536
+  elif ! require_strict_baseline "RSE_SMALL_FILE_BASELINE" "small-file gate"; then
+    return 1
   else
     echo
     echo "[release-check] small-file results generated without baseline compare (set RSE_SMALL_FILE_BASELINE=/path/to/small-file-results.json)"
@@ -119,6 +149,8 @@ run_extended_checks() {
       --require-case verify:10:4:1048576 \
       --require-case reconstruct:10:4:1048576 \
       --require-case reconstruct_data:10:4:1048576
+  elif ! require_strict_baseline "RSE_SMOKE_BASELINE" "smoke benchmark gate"; then
+    return 1
   else
     echo
     echo "[release-check] skipping benchmark regression gate (set RSE_SMOKE_BASELINE=/path/to/smoke-results.json)"
@@ -144,7 +176,7 @@ run_extended_checks() {
 
 run_fast_checks
 
-if [[ "${VALIDATION_PROFILE}" == "extended" ]]; then
+if [[ "${VALIDATION_PROFILE}" == "extended" || "${VALIDATION_PROFILE}" == "release" ]]; then
   run_extended_checks
 else
   echo
