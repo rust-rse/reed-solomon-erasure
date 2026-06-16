@@ -98,176 +98,57 @@ large-block behavior.
 ### x86_64 (AMD EPYC)
 
 **Hardware**: AMD EPYC 9V45 (96-core)
-**Backend**: `rust-avx2` (auto-selected in the archived cross-platform sample)
+**Backend**: `rust-gfni-avx512` (auto-selected on the current host rerun)
 **Feature**: `simd-avx2`
+**Artifact source**: `benchmarks/small-file/2026-06-16-x86_64-linux-extended.{json,csv}`
+**Profile**: `extended` (`iterations = 20` for `10x4_4k` / `10x4_1m`; dedicated `iterations = 40` rerun for `10x4_64k`)
 
 **Benchmark Environment**
-- CPU: AMD EPYC 9V45
-- Logical core note: 96-core processor
+- OS: `Linux (Ubuntu 24.04)`
+- Kernel: `Linux 6.17.0-1015-azure`
+- Hostname: `rustfs-jumpbox`
 - Target triple: `x86_64-linux-unknown`
+- Architecture: `x86_64`
 - Features: `std|simd-accel`
-- Expected default backend: `rust-avx2`
-- Backend override: `auto` in the archived small-file sample
-- Machine-level `lscpu` details: recorded in the x86 machine JSON and summary docs
-- Rust toolchain version: not summarized in this document
-- Memory size: not summarized in this document
-
-**Host Baseline**
-
-#### System Information
-
-| Property | Value |
-|----------|-------|
-| OS | ubuntu |
-| OS Version | Linux (Ubuntu 24.04) |
-| Architecture | x86_64 |
-| Hostname | rustfs-jumpbox |
-| Kernel Version | Linux 6.17.0-1015-azure |
-
-#### CPU Information
-
-| Property | Value |
-|----------|-------|
-| Cores | 16 |
-| Brand | AMD EPYC 9V45 96-Core Processor |
-| Frequency | 4115 MHz |
-| Usage | 0.0% |
-
-#### Memory Information
-
-| Property | Value |
-|----------|-------|
-| Total | 31.34 GB |
-| Used | 2.75 GB (8.8%) |
-| Available | 28.59 GB |
-| Total Swap | 0 B |
-| Used Swap | 0 B |
-
-#### Disk Information
-
-| Name | Mount Point | Type | Total | Used | Available | Usage | Removable |
-|------|-------------|------|-------|------|-----------|-------|----------|
-| /dev/root | / | ext4 | 28.02 GB | 17.99 GB | 10.03 GB | 64.2% | false |
-| /dev/nvme0n1p16 | /boot | ext4 | 880.39 MB | 178.00 MB | 702.39 MB | 20.2% | false |
-| /dev/nvme0n1p15 | /boot/efi | vfat | 104.33 MB | 6.10 MB | 98.22 MB | 5.8% | false |
-| /dev/nvme0n2 | /data/rustfs | xfs | 499.76 GB | 35.49 GB | 464.26 GB | 7.1% | false |
-
-#### Runtime Information
-
-| Property | Value |
-|----------|-------|
-| Process ID | 2584271 |
-| Memory Usage | 161.62 MB |
-| CPU Usage | 0.00% |
-| CPU Parallelism | 16 |
-
-#### Build Information
-
-| Property | Value |
-|----------|-------|
-| Version | 1.0.0-beta.8 |
-| Build Time | 2026-06-15 02:47:58 +00:00 |
-| Build Profile | release |
-| Build OS | linux-x86_64 |
-| Rust Version | rustc 1.96.0 (ac68faa20 2026-05-25) |
-| Git Branch | main |
-| Git Commit | 6508f88d3a5edb428a5d623f927ce384691f0cd4 |
-| Git Tag |  |
-| Git Status |  |
-
-#### Configuration Information
-
-| Property | Value |
-|----------|-------|
-| Server Address | :9000 |
-| Console Enable | true |
-| Console Address | :9001 |
-| Region | us-east-1 |
-| Access Key | r***n|11 |
-| Secret Key | **** |
-| OBS Endpoint | (not set) |
-| TLS Path | (not set) |
-| KMS Enabled | false |
-| KMS Backend | local |
-| Buffer Profile | GeneralPurpose |
-| Workload Profile | (disabled) |
-| FTPS | --- |
-| FTPS > Build Feature | enabled |
-| FTPS > Enabled (`RUSTFS_FTPS_ENABLE`) | false |
-| FTPS > Address (`RUSTFS_FTPS_ADDRESS`) | 0.0.0.0:8022 |
-| FTPS > TLS Enabled (`RUSTFS_FTPS_TLS_ENABLED`) | true |
-| FTPS > Certs Dir (`RUSTFS_FTPS_CERTS_DIR`) | (not set) |
-| FTPS > CA File (`RUSTFS_FTPS_CA_FILE`) | (not set) |
-| FTPS > Passive Ports (`RUSTFS_FTPS_PASSIVE_PORTS`) | 40000-50000 |
-| FTPS > External IP (`RUSTFS_FTPS_EXTERNAL_IP`) | (not set) |
-| WebDAV | --- |
-| WebDAV > Build Feature | enabled |
-| WebDAV > Enabled (`RUSTFS_WEBDAV_ENABLE`) | false |
-| WebDAV > Address (`RUSTFS_WEBDAV_ADDRESS`) | 0.0.0.0:8080 |
-| WebDAV > TLS Enabled (`RUSTFS_WEBDAV_TLS_ENABLED`) | true |
-| WebDAV > Certs Dir (`RUSTFS_WEBDAV_CERTS_DIR`) | (not set) |
-| WebDAV > CA File (`RUSTFS_WEBDAV_CA_FILE`) | (not set) |
-| WebDAV > Max Body Size (`RUSTFS_WEBDAV_MAX_BODY_SIZE`) | 5368709120 bytes |
-| WebDAV > Request Timeout (`RUSTFS_WEBDAV_REQUEST_TIMEOUT`) | 300 seconds |
-
-#### Build Features
-
-| Property | Value |
-|----------|-------|
-| Enabled Features | 2/8 |
-
-##### Feature Status
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| metrics-gpu | ✗ | Metrics GPU support |
-| ftps | ✓ | FTPS protocol support |
-| swift | ✗ | Swift storage backend |
-| webdav | ✓ | WebDAV protocol support |
-| license | ✗ | License validation |
-| io-scheduler-debug | ✗ | Enable debug information in I/O scheduler |
-| manual-test-runners | ✗ | Enable manual test binaries |
-| full | ✗ | All features enabled |
-
-##### Default Features
-
-| Feature | Note |
-|---------|------|
-| ftps | enabled by default |
-| webdav | enabled by default |
-
-##### Feature Dependencies
-
-| Feature | Dependencies |
-|---------|-------------|
-| metrics-gpu | rustfs-obs/gpu |
-| ftps | rustfs-protocols/ftps |
-| swift | rustfs-protocols/swift |
-| webdav | rustfs-protocols/webdav |
-| license | (none) |
-| io-scheduler-debug | (none) |
-| manual-test-runners | (none) |
-| full | metrics-gpu + ftps + swift + webdav |
-
+- Backend kind: `RustSimd`
+- Backend override: `auto` (`override_honored = true`)
+- Benchmark metrics feature: disabled
+- CPU / SoC: `AMD EPYC 9V45 96-Core Processor`
+- Logical CPU parallelism: `16`
+- Reported CPU frequency: `4115 MHz`
+- Memory: `31.34 GB total`, `2.75 GB used`, `28.59 GB available`
+- Swap: `0 B`
+- Root data disk: `/data/rustfs` on `xfs`, `499.76 GB total`, `35.49 GB used`, `464.26 GB available`
+- Rust toolchain: `rustc 1.96.0 (ac68faa20 2026-05-25)`
+- Git revision in the benchmark artifact: `b338c34`
 | Config | Shard Size | Encode (GiB/s) | Reconstruct (GiB/s) |
 |--------|------------|----------------|---------------------|
-| 10×4 | 4 KiB | 3.56 | 3.33 |
-| 10×4 | 64 KiB | 3.10 | 2.90 |
-| 10×4 | 1 MiB | 3.13 | 2.23 |
+| 10×4 | 4 KiB | 6.39 | 7.51 |
+| 10×4 | 64 KiB | 8.61 | 1.92 |
+| 10×4 | 1 MiB | 6.30 | 4.32 |
 
 Data sources:
-- `benchmarks/small-file/2026-05-27-x86_64-linux-extended.csv` — archived `10x4` small-file auto results used for the cross-platform table
+- `benchmarks/small-file/2026-06-16-x86_64-linux-extended.csv` — current-host targeted rerun used for `10x4_4k` and `10x4_1m`
+- `benchmarks/small-file/2026-06-16-x86_64-linux-10x4_64k-rerun.csv` — dedicated higher-iteration rerun used for `10x4_64k`
+- `benchmarks/small-file/2026-05-27-x86_64-linux-extended.csv` — older archived x86_64 `auto` sample for historical comparison
 - `benchmarks/x86_64-simd/comprehensive-x86_64-benchmark.json` — broader x86_64 encode-only matrix for deeper drill-down
 
-> **Note**: This table uses the archived auto-path sample from `2026-05-27`. For newer x86 backend-policy and host-specific validation context, see [GFNI results doc](benchmarks-gfni-results.md) and the newer x86_64 benchmark artifacts under `benchmarks/x86_64-simd/`.
+> **Note**: The x86_64 table now reflects the `2026-06-16` current-host rerun, not the older `2026-05-27` archived sample. The newer rerun selected `rust-gfni-avx512` under `auto`, so these values are not directly comparable to the earlier `rust-avx2`-based cross-platform snapshot without accounting for backend-policy drift.
+
+Supplementary observations from the current artifact set:
+
+- `verify` on `10x4_4k` reached `7834.5150 MB/s` (`7.65 GiB/s`)
+- `verify` on `10x4_64k` reached `10244.1047 MB/s` (`10.00 GiB/s`) in the dedicated `40`-iteration rerun
+- `verify` on `10x4_1m` reached `6297.5276 MB/s` (`6.15 GiB/s`)
+- `reconstruct_data` on `10x4_1m` reached `4923.6896 MB/s` (`4.81 GiB/s`)
 
 Why the gap versus aarch64 is large:
 
 - This is not a same-host comparison: the x86_64 numbers come from an Ubuntu 24.04 Azure VM (`rustfs-jumpbox`) with `16` visible CPUs, while the aarch64 numbers come from an Apple Silicon MacBook Pro host.
-- The archived x86_64 sample used the conservative auto-selected `rust-avx2` path, while the aarch64 sample used `rust-neon`; the backend choice is part of the result, not just the ISA label.
+- The current x86_64 rerun used `rust-gfni-avx512` under `auto`, while the aarch64 sample used `rust-neon`; the backend choice is part of the result, not just the ISA label.
 - The CPU brand string says `AMD EPYC 9V45 96-Core Processor`, but this benchmark host only exposed `16` cores / parallelism to the runtime. That VM sizing difference alone can materially change Rayon scheduling, cache pressure, and sustained large-shard throughput.
-- The gap grows with shard size instead of shrinking: versus the aarch64 artifact, x86_64 is about `+7.9% / +10.3%` at `10x4_4k`, then `-14.4% / -17.6%` at `10x4_64k`, and `-28.5% / -48.7%` at `10x4_1m` for `encode / reconstruct`.
-- That pattern points to host and runtime-path differences more than a simple “x86 vs ARM” conclusion. In this report, the safest reading is: these are cross-host benchmark snapshots, not a controlled architecture-only shootout.
+- The new current-host numbers are mixed rather than uniformly better: versus the aarch64 artifact, x86_64 is about `+93.8% / +148.6%` at `10x4_4k`, `+138.0% / -45.4%` at `10x4_64k`, and `+44.0% / -0.3%` at `10x4_1m` for `encode / reconstruct`.
+- That pattern points to host and runtime-path differences more than a simple “x86 vs ARM” conclusion. In particular, this rerun is strong on `encode`, but `reconstruct` remains workload-sensitive on the current x86_64 host, and `10x4_64k` stayed abnormally weak even after a dedicated higher-iteration rerun.
 
 ### x86_64 (Intel with GFNI)
 

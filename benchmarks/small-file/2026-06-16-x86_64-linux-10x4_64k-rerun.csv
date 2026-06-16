@@ -1,0 +1,6 @@
+schema_version,artifact_kind,git_revision,target_triple,features,benchmark_metrics_enabled,backend,backend_id,backend_kind,backend_override,override_honored,profile,iterations,operation,data_shards,parity_shards,shard_size,logical_data_bytes,case_label,seed,throughput_mb_s,ns_per_iter
+1,small-file-results,b338c34,x86_64-linux-unknown,std|simd-accel,false,rust-gfni-avx512,RustGfniAvx512,RustSimd,auto,true,extended,40,encode,10,4,65536,655360,10x4_64k,64843600003269941,8821.7153,70847.90
+1,small-file-results,b338c34,x86_64-linux-unknown,std|simd-accel,false,rust-gfni-avx512,RustGfniAvx512,RustSimd,auto,true,extended,40,verify,10,4,65536,655360,10x4_64k,64843600003269894,10244.1047,61010.70
+1,small-file-results,b338c34,x86_64-linux-unknown,std|simd-accel,false,rust-gfni-avx512,RustGfniAvx512,RustSimd,auto,true,extended,40,verify_with_buffer,10,4,65536,655360,10x4_64k,64843600003269894,12120.1367,51567.07
+1,small-file-results,b338c34,x86_64-linux-unknown,std|simd-accel,false,rust-gfni-avx512,RustGfniAvx512,RustSimd,auto,true,extended,40,reconstruct,10,4,65536,655360,10x4_64k,64843600003269911,1967.9791,317584.67
+1,small-file-results,b338c34,x86_64-linux-unknown,std|simd-accel,false,rust-gfni-avx512,RustGfniAvx512,RustSimd,auto,true,extended,40,reconstruct_data,10,4,65536,655360,10x4_64k,64843600003269984,1993.2424,313559.45
