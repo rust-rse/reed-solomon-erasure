@@ -158,6 +158,10 @@ fn write_tables() {
     not(any(target_os = "android", target_os = "ios"))
 ))]
 fn compile_simd_c() {
+    println!("cargo:rerun-if-changed=simd_c/reedsolomon.c");
+    println!("cargo:rerun-if-changed=simd_c/reedsolomon.h");
+    println!("cargo:rerun-if-env-changed=RUST_REED_SOLOMON_ERASURE_ARCH");
+
     let mut build = cc::Build::new();
     build.opt_level(3);
 
@@ -169,9 +173,11 @@ fn compile_simd_c() {
         Err(_error) => {
             // On x86-64 enabling Haswell architecture unlocks useful instructions and improves performance
             // dramatically while allowing it to run ony modern CPU.
-            match env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str(){
-                "x86_64"  => { build.flag(&"-march=haswell"); },
-                _         => ()
+            match env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str() {
+                "x86_64" => {
+                    build.flag(&"-march=haswell");
+                }
+                _ => (),
             }
         }
     }

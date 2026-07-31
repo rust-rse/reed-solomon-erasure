@@ -63,7 +63,7 @@
 #endif
 
 
-#if defined(__AVX512F__) && __AVX512F__
+#if defined(__AVX512F__) && __AVX512F__ && defined(__AVX512BW__) && __AVX512BW__
 # define USE_AVX512 1
 # undef VECTOR_SIZE
 # define VECTOR_SIZE 64
@@ -534,10 +534,24 @@ static ALWAYS_INLINE PROTO_RETURN reedsolomon_gal_mul_impl(
 # define STORE(addr, vec) storeu_v(addr, vec)
 #endif
 
-#if RS_HAVE_CLANG_LOOP_UNROLL
-# pragma clang loop unroll(enable)
-#endif
-        for(size_t x = 0; x < len / sizeof(v); x++) {
+        const size_t unroll = 4 * sizeof(v);
+        for (; done + unroll <= len; done += unroll) {
+                for (size_t i = 0; i < 4; i++) {
+                        const size_t offset = done + i * sizeof(v);
+                        const v in_x = LOAD(&in[offset]),
+                                old = LOAD(&out[offset]),
+                                result = reedsolomon_gal_mul_v(
+                                                low_mask_unpacked,
+                                                low_vector, high_vector,
+                                                modifier,
+                                                in_x,
+                                                old);
+
+                        STORE(&out[offset], result);
+                }
+        }
+
+        for (; done + sizeof(v) <= len; done += sizeof(v)) {
                 const v in_x = LOAD(&in[done]),
                         old = LOAD(&out[done]),
                         result = reedsolomon_gal_mul_v(
@@ -548,8 +562,6 @@ static ALWAYS_INLINE PROTO_RETURN reedsolomon_gal_mul_impl(
                                         old);
 
                 STORE(&out[done], result);
-
-                done += sizeof(v);
         }
 
         return done;
@@ -571,4 +583,325 @@ HOT_FUNCTION
 #endif
 FORCE_ALIGN_ARG_POINTER PROTO(reedsolomon_gal_mul_xor) {
         return reedsolomon_gal_mul_impl(low, high, in, out, len, xor_v);
+}
+
+static __attribute__((noinline)) size_t reedsolomon_gal_mul_row_from(
+        const uint8_t *const *restrict inputs,
+        const uint8_t *restrict coefficients,
+        const uint8_t *restrict low_tables,
+        const uint8_t *restrict high_tables,
+        const size_t input_count,
+        uint8_t *restrict const out,
+        const size_t start,
+        const size_t len) {
+        if (input_count == 0) {
+                return start;
+        }
+
+        const v low_mask_unpacked = set1_epi8_v(0x0f);
+        const size_t bytes_done = len - (len - start) % sizeof(v);
+        size_t input = 0;
+
+        for (; input + 1 < input_count; input += 2) {
+                size_t table_offset = (size_t)coefficients[input] * 16;
+                const v low0 =
+                        replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                const v high0 =
+                        replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+                table_offset = (size_t)coefficients[input + 1] * 16;
+                const v low1 =
+                        replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                const v high1 =
+                        replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+
+                for (size_t done = start; done < bytes_done; done += sizeof(v)) {
+                        const v in0 = loadu_v(&inputs[input][done]);
+                        const v low_input0 = and_v(in0, low_mask_unpacked);
+                        const v high_input0 =
+                                and_v(srli_epi64_v(in0), low_mask_unpacked);
+                        v sum = xor_v(
+                                shuffle_epi8_v(low0, low_input0),
+                                shuffle_epi8_v(high0, high_input0));
+
+                        const v in1 = loadu_v(&inputs[input + 1][done]);
+                        const v low_input1 = and_v(in1, low_mask_unpacked);
+                        const v high_input1 =
+                                and_v(srli_epi64_v(in1), low_mask_unpacked);
+                        sum = xor_v(sum, xor_v(
+                                shuffle_epi8_v(low1, low_input1),
+                                shuffle_epi8_v(high1, high_input1)));
+
+                        if (input != 0) {
+                                sum = xor_v(sum, loadu_v(&out[done]));
+                        }
+                        storeu_v(&out[done], sum);
+                }
+        }
+
+        if (input < input_count) {
+                const size_t table_offset = (size_t)coefficients[input] * 16;
+                if (input == 0) {
+                        reedsolomon_gal_mul_impl(
+                                &low_tables[table_offset],
+                                &high_tables[table_offset],
+                                inputs[input] + start,
+                                out + start,
+                                len - start,
+                                noop);
+                } else {
+                        reedsolomon_gal_mul_impl(
+                                &low_tables[table_offset],
+                                &high_tables[table_offset],
+                                inputs[input] + start,
+                                out + start,
+                                len - start,
+                                xor_v);
+                }
+        }
+
+        return bytes_done;
+}
+
+#ifdef HOT
+HOT_FUNCTION
+#endif
+FORCE_ALIGN_ARG_POINTER PROTO_MATRIX(reedsolomon_gal_mul_matrix) {
+        const v low_mask_unpacked = set1_epi8_v(0x0f);
+        size_t bytes_done = len - len % sizeof(v);
+        size_t output = 0;
+
+        for (; output + 3 < output_count && len < 2048; output += 4) {
+                const uint8_t *coefficients0 = coefficient_rows[output];
+                const uint8_t *coefficients1 = coefficient_rows[output + 1];
+                const uint8_t *coefficients2 = coefficient_rows[output + 2];
+                const uint8_t *coefficients3 = coefficient_rows[output + 3];
+                size_t done = 0;
+
+                for (; done + 2 * sizeof(v) <= len; done += 2 * sizeof(v)) {
+                        v sum00 = { 0 };
+                        v sum01 = { 0 };
+                        v sum10 = { 0 };
+                        v sum11 = { 0 };
+                        v sum20 = { 0 };
+                        v sum21 = { 0 };
+                        v sum30 = { 0 };
+                        v sum31 = { 0 };
+
+                        for (size_t input = 0; input < input_count; input++) {
+                                const v in0 = loadu_v(&inputs[input][done]);
+                                const v in1 =
+                                        loadu_v(&inputs[input][done + sizeof(v)]);
+                                const v low_input0 =
+                                        and_v(in0, low_mask_unpacked);
+                                const v high_input0 =
+                                        and_v(srli_epi64_v(in0), low_mask_unpacked);
+                                const v low_input1 =
+                                        and_v(in1, low_mask_unpacked);
+                                const v high_input1 =
+                                        and_v(srli_epi64_v(in1), low_mask_unpacked);
+
+#define ACCUMULATE_ROW(coefficients, sum0, sum1) do {                    \
+                                        const size_t table_offset =      \
+                                                (size_t)(coefficients)[input] * 16; \
+                                        const v low = replicate_v128_v(  \
+                                                loadu_v128(&low_tables[table_offset])); \
+                                        const v high = replicate_v128_v( \
+                                                loadu_v128(&high_tables[table_offset])); \
+                                        sum0 = xor_v(                    \
+                                                sum0,                    \
+                                                shuffle_epi8_v(low, low_input0)); \
+                                        sum1 = xor_v(                    \
+                                                sum1,                    \
+                                                shuffle_epi8_v(low, low_input1)); \
+                                        AVX2_REGISTER_BARRIER(sum0);     \
+                                        AVX2_REGISTER_BARRIER(sum1);     \
+                                        sum0 = xor_v(                    \
+                                                sum0,                    \
+                                                shuffle_epi8_v(high, high_input0)); \
+                                        sum1 = xor_v(                    \
+                                                sum1,                    \
+                                                shuffle_epi8_v(high, high_input1)); \
+                                } while (0)
+
+#if USE_AVX2 && !USE_AVX512
+#define AVX2_REGISTER_BARRIER(sum) \
+                                __asm__ __volatile__("" : "+x"((sum).m256i))
+#else
+#define AVX2_REGISTER_BARRIER(sum) do { } while (0)
+#endif
+
+                                ACCUMULATE_ROW(coefficients0, sum00, sum01);
+                                ACCUMULATE_ROW(coefficients1, sum10, sum11);
+                                ACCUMULATE_ROW(coefficients2, sum20, sum21);
+                                ACCUMULATE_ROW(coefficients3, sum30, sum31);
+#undef AVX2_REGISTER_BARRIER
+#undef ACCUMULATE_ROW
+                        }
+
+                        storeu_v(&outputs[output][done], sum00);
+                        storeu_v(&outputs[output][done + sizeof(v)], sum01);
+                        storeu_v(&outputs[output + 1][done], sum10);
+                        storeu_v(&outputs[output + 1][done + sizeof(v)], sum11);
+                        storeu_v(&outputs[output + 2][done], sum20);
+                        storeu_v(&outputs[output + 2][done + sizeof(v)], sum21);
+                        storeu_v(&outputs[output + 3][done], sum30);
+                        storeu_v(&outputs[output + 3][done + sizeof(v)], sum31);
+                }
+
+                if (done < bytes_done) {
+                        reedsolomon_gal_mul_row_from(
+                                inputs,
+                                coefficients0,
+                                low_tables,
+                                high_tables,
+                                input_count,
+                                outputs[output],
+                                done,
+                                len);
+                        reedsolomon_gal_mul_row_from(
+                                inputs,
+                                coefficients1,
+                                low_tables,
+                                high_tables,
+                                input_count,
+                                outputs[output + 1],
+                                done,
+                                len);
+                        reedsolomon_gal_mul_row_from(
+                                inputs,
+                                coefficients2,
+                                low_tables,
+                                high_tables,
+                                input_count,
+                                outputs[output + 2],
+                                done,
+                                len);
+                        reedsolomon_gal_mul_row_from(
+                                inputs,
+                                coefficients3,
+                                low_tables,
+                                high_tables,
+                                input_count,
+                                outputs[output + 3],
+                                done,
+                                len);
+                }
+        }
+
+        for (; output + 1 < output_count; output += 2) {
+                const uint8_t *coefficients0 = coefficient_rows[output];
+                const uint8_t *coefficients1 = coefficient_rows[output + 1];
+                size_t input = 0;
+
+                for (; input + 1 < input_count; input += 2) {
+                        size_t table_offset = (size_t)coefficients0[input] * 16;
+                        const v low00 =
+                                replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                        const v high00 =
+                                replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+                        table_offset = (size_t)coefficients1[input] * 16;
+                        const v low10 =
+                                replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                        const v high10 =
+                                replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+                        table_offset = (size_t)coefficients0[input + 1] * 16;
+                        const v low01 =
+                                replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                        const v high01 =
+                                replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+                        table_offset = (size_t)coefficients1[input + 1] * 16;
+                        const v low11 =
+                                replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                        const v high11 =
+                                replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+
+                        for (size_t done = 0; done < bytes_done; done += sizeof(v)) {
+                                const v in0 = loadu_v(&inputs[input][done]);
+                                const v low_input0 = and_v(in0, low_mask_unpacked);
+                                const v high_input0 =
+                                        and_v(srli_epi64_v(in0), low_mask_unpacked);
+                                v sum0 = xor_v(
+                                        shuffle_epi8_v(low00, low_input0),
+                                        shuffle_epi8_v(high00, high_input0));
+                                v sum1 = xor_v(
+                                        shuffle_epi8_v(low10, low_input0),
+                                        shuffle_epi8_v(high10, high_input0));
+
+                                const v in1 = loadu_v(&inputs[input + 1][done]);
+                                const v low_input1 = and_v(in1, low_mask_unpacked);
+                                const v high_input1 =
+                                        and_v(srli_epi64_v(in1), low_mask_unpacked);
+                                sum0 = xor_v(sum0, xor_v(
+                                        shuffle_epi8_v(low01, low_input1),
+                                        shuffle_epi8_v(high01, high_input1)));
+                                sum1 = xor_v(sum1, xor_v(
+                                        shuffle_epi8_v(low11, low_input1),
+                                        shuffle_epi8_v(high11, high_input1)));
+
+                                if (input != 0) {
+                                        sum0 = xor_v(
+                                                sum0,
+                                                loadu_v(&outputs[output][done]));
+                                        sum1 = xor_v(
+                                                sum1,
+                                                loadu_v(&outputs[output + 1][done]));
+                                }
+
+                                storeu_v(&outputs[output][done], sum0);
+                                storeu_v(&outputs[output + 1][done], sum1);
+                        }
+                }
+
+                if (input < input_count) {
+                        size_t table_offset = (size_t)coefficients0[input] * 16;
+                        const v low0 =
+                                replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                        const v high0 =
+                                replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+                        table_offset = (size_t)coefficients1[input] * 16;
+                        const v low1 =
+                                replicate_v128_v(loadu_v128(&low_tables[table_offset]));
+                        const v high1 =
+                                replicate_v128_v(loadu_v128(&high_tables[table_offset]));
+
+                        for (size_t done = 0; done < bytes_done; done += sizeof(v)) {
+                                const v in_x = loadu_v(&inputs[input][done]);
+                                const v low_input = and_v(in_x, low_mask_unpacked);
+                                const v high_input =
+                                        and_v(srli_epi64_v(in_x), low_mask_unpacked);
+                                v sum0 = xor_v(
+                                        shuffle_epi8_v(low0, low_input),
+                                        shuffle_epi8_v(high0, high_input));
+                                v sum1 = xor_v(
+                                        shuffle_epi8_v(low1, low_input),
+                                        shuffle_epi8_v(high1, high_input));
+
+                                if (input != 0) {
+                                        sum0 = xor_v(
+                                                sum0,
+                                                loadu_v(&outputs[output][done]));
+                                        sum1 = xor_v(
+                                                sum1,
+                                                loadu_v(&outputs[output + 1][done]));
+                                }
+
+                                storeu_v(&outputs[output][done], sum0);
+                                storeu_v(&outputs[output + 1][done], sum1);
+                        }
+                }
+        }
+
+        if (output < output_count) {
+                reedsolomon_gal_mul_row_from(
+                        inputs,
+                        coefficient_rows[output],
+                        low_tables,
+                        high_tables,
+                        input_count,
+                        outputs[output],
+                        0,
+                        len);
+        }
+
+        return bytes_done;
 }

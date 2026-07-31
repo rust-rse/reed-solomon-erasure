@@ -41,6 +41,21 @@
 PROTO(reedsolomon_gal_mul);
 PROTO(reedsolomon_gal_mul_xor);
 
+#define PROTO_MATRIX_ARGS                                \
+        const uint8_t *const *restrict inputs,           \
+        const uint8_t *const *restrict coefficient_rows, \
+        const uint8_t *restrict low_tables,              \
+        const uint8_t *restrict high_tables,             \
+        const size_t input_count,                        \
+        uint8_t *const *restrict outputs,                 \
+        const size_t output_count,                       \
+        const size_t len
+#define PROTO_MATRIX(name)               \
+        PROTO_RETURN                     \
+        name (PROTO_MATRIX_ARGS)
+
+PROTO_MATRIX(reedsolomon_gal_mul_matrix);
+
 typedef enum {
         REEDSOLOMON_CPU_GENERIC = 0,
         REEDSOLOMON_CPU_SSE2 = 1,

@@ -116,6 +116,28 @@ pub trait Field: Sized {
             *o = Self::add(o.clone(), Self::mul(elem.clone(), i.clone()))
         }
     }
+
+    /// Apply several matrix rows to the same set of input slices.
+    fn mul_slices<T: AsRef<[Self::Elem]>, U: AsMut<[Self::Elem]>>(
+        matrix_rows: &[&[Self::Elem]],
+        inputs: &[T],
+        outputs: &mut [U],
+    ) {
+        assert_eq!(matrix_rows.len(), outputs.len());
+
+        for (matrix_row, output) in matrix_rows.iter().zip(outputs) {
+            assert_eq!(matrix_row.len(), inputs.len());
+            let output = output.as_mut();
+
+            for (i, (elem, input)) in matrix_row.iter().zip(inputs).enumerate() {
+                if i == 0 {
+                    Self::mul_slice(*elem, input.as_ref(), output);
+                } else {
+                    Self::mul_slice_add(*elem, input.as_ref(), output);
+                }
+            }
+        }
+    }
 }
 
 /// Something which might hold a shard.

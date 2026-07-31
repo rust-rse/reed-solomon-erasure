@@ -346,6 +346,7 @@ pub struct ReedSolomon<F: Field> {
     parity_shard_count: usize,
     total_shard_count: usize,
     matrix: Matrix<F>,
+    single_data_decode_rows: Matrix<F>,
     data_decode_matrix_cache: Mutex<LruCache<Vec<usize>, Arc<Matrix<F>>>>,
 }
 
@@ -435,6 +436,31 @@ impl<F: Field> ReedSolomon<F> {
         vandermonde.multiply(&top.invert().unwrap())
     }
 
+    fn build_single_data_decode_rows(matrix: &Matrix<F>, data_shards: usize) -> Matrix<F> {
+        let mut rows = Matrix::new(data_shards, data_shards);
+        let parity_row = data_shards;
+
+        for missing in 0..data_shards {
+            let divisor = matrix.get(parity_row, missing);
+            let mut column = 0;
+
+            for data in 0..data_shards {
+                if data != missing {
+                    rows.set(
+                        missing,
+                        column,
+                        F::div(matrix.get(parity_row, data), divisor),
+                    );
+                    column += 1;
+                }
+            }
+
+            rows.set(missing, column, F::div(F::one(), divisor));
+        }
+
+        rows
+    }
+
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
     ///
     /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
@@ -456,12 +482,14 @@ impl<F: Field> ReedSolomon<F> {
         let total_shards = data_shards + parity_shards;
 
         let matrix = Self::build_matrix(data_shards, total_shards);
+        let single_data_decode_rows = Self::build_single_data_decode_rows(&matrix, data_shards);
 
         Ok(ReedSolomon {
             data_shard_count: data_shards,
             parity_shard_count: parity_shards,
             total_shard_count: total_shards,
             matrix,
+            single_data_decode_rows,
             data_decode_matrix_cache: Mutex::new(LruCache::new(DATA_DECODE_MATRIX_CACHE_CAPACITY)),
         })
     }
@@ -484,9 +512,7 @@ impl<F: Field> ReedSolomon<F> {
         inputs: &[T],
         outputs: &mut [U],
     ) {
-        for i_input in 0..self.data_shard_count {
-            self.code_single_slice(matrix_rows, i_input, inputs[i_input].as_ref(), outputs);
-        }
+        F::mul_slices(matrix_rows, inputs, outputs);
     }
 
     fn code_single_slice<U: AsMut<[F::Elem]>>(
@@ -694,11 +720,7 @@ impl<F: Field> ReedSolomon<F> {
         self.reconstruct_internal(slices, true)
     }
 
-    fn get_data_decode_matrix(
-        &self,
-        valid_indices: &[usize],
-        invalid_indices: &[usize],
-    ) -> Arc<Matrix<F>> {
+    fn get_data_decode_matrix(&self, invalid_indices: &[usize]) -> Arc<Matrix<F>> {
         {
             let mut cache = self.data_decode_matrix_cache.lock();
             if let Some(entry) = cache.get(invalid_indices) {
@@ -709,11 +731,26 @@ impl<F: Field> ReedSolomon<F> {
         // we have and build a square matrix. This matrix could be used to
         // generate the shards that we have from the original data.
         let mut sub_matrix = Matrix::new(self.data_shard_count, self.data_shard_count);
-        for (sub_matrix_row, &valid_index) in valid_indices.iter().enumerate() {
+        let mut invalid_pos = 0;
+        let mut sub_matrix_row = 0;
+
+        for valid_index in 0..self.total_shard_count {
+            if invalid_indices.get(invalid_pos) == Some(&valid_index) {
+                invalid_pos += 1;
+                continue;
+            }
+
             for c in 0..self.data_shard_count {
                 sub_matrix.set(sub_matrix_row, c, self.matrix.get(valid_index, c));
             }
+
+            sub_matrix_row += 1;
+            if sub_matrix_row == self.data_shard_count {
+                break;
+            }
         }
+        debug_assert_eq!(sub_matrix_row, self.data_shard_count);
+
         // Invert the matrix, so we can go from the encoded shards back to the
         // original data. Then pull out the row that generates the shard that
         // we want to decode. Note that since this matrix maps back to the
@@ -738,6 +775,29 @@ impl<F: Field> ReedSolomon<F> {
         check_piece_count!(all => self, shards);
 
         let data_shard_count = self.data_shard_count;
+
+        if let Some(first_len) = shards[0].len() {
+            if first_len == 0 {
+                return Err(Error::EmptyShard);
+            }
+
+            let mut all_present = true;
+            for shard in &shards[1..] {
+                match shard.len() {
+                    Some(len) if len == first_len => {}
+                    Some(0) => return Err(Error::EmptyShard),
+                    Some(_) => return Err(Error::IncorrectShardSize),
+                    None => {
+                        all_present = false;
+                        break;
+                    }
+                }
+            }
+
+            if all_present {
+                return Ok(());
+            }
+        }
 
         // Quick check: are all of the shards present?  If so, there's
         // nothing to do.
@@ -772,6 +832,76 @@ impl<F: Field> ReedSolomon<F> {
         }
 
         let shard_len = shard_len.expect("at least one shard present; qed");
+        self.reconstruct_missing(shards, data_only, number_present, shard_len)
+    }
+
+    #[inline(never)]
+    fn reconstruct_data_prefix<T: ReconstructShard<F>>(
+        &self,
+        shards: &mut [T],
+        missing_count: usize,
+        shard_len: usize,
+    ) -> Result<(), Error> {
+        debug_assert!(missing_count > 0);
+        debug_assert!(missing_count <= self.parity_shard_count);
+
+        let (missing_shards, available_shards) = shards.split_at_mut(missing_count);
+        let mut missing_slices: SmallVec<[&mut [F::Elem]; 32]> =
+            SmallVec::with_capacity(missing_count);
+        for shard in missing_shards {
+            match shard.get_or_initialize(shard_len) {
+                Err(Ok(shard)) => missing_slices.push(shard),
+                Err(Err(error)) => return Err(error),
+                Ok(_) => unreachable!("prefix shard was already present"),
+            }
+        }
+
+        let mut sub_shards: SmallVec<[&[F::Elem]; 32]> =
+            SmallVec::with_capacity(self.data_shard_count);
+        for shard in available_shards.iter_mut().take(self.data_shard_count) {
+            sub_shards.push(shard.get().expect("non-prefix shard is present; qed"));
+        }
+
+        if missing_count == 1 {
+            let matrix_rows = [self.single_data_decode_rows.get_row(0)];
+            self.code_some_slices(&matrix_rows, &sub_shards, &mut missing_slices);
+        } else {
+            let invalid_indices: SmallVec<[usize; 32]> = (0..missing_count).collect();
+            let data_decode_matrix = self.get_data_decode_matrix(&invalid_indices);
+            let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
+                SmallVec::with_capacity(missing_count);
+            for missing in 0..missing_count {
+                matrix_rows.push(data_decode_matrix.get_row(missing));
+            }
+            self.code_some_slices(&matrix_rows, &sub_shards, &mut missing_slices);
+        }
+
+        Ok(())
+    }
+
+    #[inline(never)]
+    fn reconstruct_missing<T: ReconstructShard<F>>(
+        &self,
+        shards: &mut [T],
+        data_only: bool,
+        number_present: usize,
+        shard_len: usize,
+    ) -> Result<(), Error> {
+        let data_shard_count = self.data_shard_count;
+        let number_missing = self.total_shard_count - number_present;
+        if number_missing <= data_shard_count
+            && shards[..number_missing]
+                .iter()
+                .all(|shard| shard.len().is_none())
+        {
+            return self.reconstruct_data_prefix(shards, number_missing, shard_len);
+        }
+
+        let number_missing_data = shards[..data_shard_count]
+            .iter()
+            .filter(|shard| shard.len().is_none())
+            .count();
+        let number_missing_parity = number_missing - number_missing_data;
 
         // Pull out an array holding just the shards that
         // correspond to the rows of the submatrix.  These shards
@@ -791,11 +921,10 @@ impl<F: Field> ReedSolomon<F> {
         // `self.matrix`.
         let mut sub_shards: SmallVec<[&[F::Elem]; 32]> = SmallVec::with_capacity(data_shard_count);
         let mut missing_data_slices: SmallVec<[&mut [F::Elem]; 32]> =
-            SmallVec::with_capacity(self.parity_shard_count);
+            SmallVec::with_capacity(number_missing_data);
         let mut missing_parity_slices: SmallVec<[&mut [F::Elem]; 32]> =
-            SmallVec::with_capacity(self.parity_shard_count);
-        let mut valid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
-        let mut invalid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(data_shard_count);
+            SmallVec::with_capacity(if data_only { 0 } else { number_missing_parity });
+        let mut invalid_indices: SmallVec<[usize; 32]> = SmallVec::with_capacity(number_missing);
 
         // Separate the shards into groups
         for (matrix_row, shard) in shards.iter_mut().enumerate() {
@@ -812,7 +941,6 @@ impl<F: Field> ReedSolomon<F> {
                 Ok(shard) => {
                     if sub_shards.len() < data_shard_count {
                         sub_shards.push(shard);
-                        valid_indices.push(matrix_row);
                     } else {
                         // Already have enough shards in `sub_shards`
                         // as we only need N shards, where N = `data_shard_count`,
@@ -840,7 +968,12 @@ impl<F: Field> ReedSolomon<F> {
             }
         }
 
-        let data_decode_matrix = self.get_data_decode_matrix(&valid_indices, &invalid_indices);
+        let single_missing_data = number_missing == 1 && number_missing_data == 1;
+        let data_decode_matrix = if number_missing_data == 0 || single_missing_data {
+            None
+        } else {
+            Some(self.get_data_decode_matrix(&invalid_indices))
+        };
 
         // Re-create any data shards that were missing.
         //
@@ -848,19 +981,19 @@ impl<F: Field> ReedSolomon<F> {
         // have, and the output is the missing data shards. The computation
         // is done using the special decode matrix we just built.
         let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
-            SmallVec::with_capacity(self.parity_shard_count);
+            SmallVec::with_capacity(number_missing_data);
 
-        for i_slice in invalid_indices
-            .iter()
-            .cloned()
-            .take_while(|i| i < &data_shard_count)
-        {
-            matrix_rows.push(data_decode_matrix.get_row(i_slice));
+        if single_missing_data {
+            matrix_rows.push(self.single_data_decode_rows.get_row(invalid_indices[0]));
+        } else if let Some(data_decode_matrix) = data_decode_matrix.as_ref() {
+            for &i_slice in &invalid_indices[..number_missing_data] {
+                matrix_rows.push(data_decode_matrix.get_row(i_slice));
+            }
         }
 
         self.code_some_slices(&matrix_rows, &sub_shards, &mut missing_data_slices);
 
-        if data_only {
+        if data_only || missing_parity_slices.is_empty() {
             Ok(())
         } else {
             // Now that we have all of the data shards intact, we can
@@ -870,15 +1003,10 @@ impl<F: Field> ReedSolomon<F> {
             // any that we just calculated.  The output is whichever of the
             // parity shards were missing.
             let mut matrix_rows: SmallVec<[&[F::Elem]; 32]> =
-                SmallVec::with_capacity(self.parity_shard_count);
-            let parity_rows = self.get_parity_rows();
+                SmallVec::with_capacity(number_missing_parity);
 
-            for i_slice in invalid_indices
-                .iter()
-                .cloned()
-                .skip_while(|i| i < &data_shard_count)
-            {
-                matrix_rows.push(parity_rows[i_slice - data_shard_count]);
+            for &i_slice in &invalid_indices[number_missing_data..] {
+                matrix_rows.push(self.matrix.get_row(i_slice));
             }
             {
                 // Gather up all the data shards.
@@ -902,11 +1030,7 @@ impl<F: Field> ReedSolomon<F> {
                     next_maybe_good = up_to + 1;
                 };
 
-                for i_slice in invalid_indices
-                    .iter()
-                    .cloned()
-                    .take_while(|i| i < &data_shard_count)
-                {
+                for &i_slice in &invalid_indices[..number_missing_data] {
                     push_good_up_to(&mut all_data_slices, i_slice);
                     all_data_slices.push(missing_data_slices[i_new_data_slice]);
                     i_new_data_slice += 1;

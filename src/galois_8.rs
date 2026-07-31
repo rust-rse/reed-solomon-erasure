@@ -45,6 +45,21 @@ impl crate::Field for Field {
     fn mul_slice_add(c: u8, input: &[u8], out: &mut [u8]) {
         mul_slice_xor(c, input, out)
     }
+
+    #[cfg(all(
+        feature = "simd-accel",
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(target_env = "msvc"),
+        not(any(target_os = "android", target_os = "ios"))
+    ))]
+    #[inline]
+    fn mul_slices<T: AsRef<[u8]>, U: AsMut<[u8]>>(
+        matrix_rows: &[&[u8]],
+        inputs: &[T],
+        outputs: &mut [U],
+    ) {
+        mul_slices(matrix_rows, inputs, outputs)
+    }
 }
 
 /// Type alias of ReedSolomon over GF(2^8).
@@ -280,6 +295,114 @@ extern "C" {
         out: *mut u8,
         len: libc::size_t,
     ) -> libc::size_t;
+
+    fn reedsolomon_gal_mul_matrix(
+        inputs: *const *const u8,
+        coefficient_rows: *const *const u8,
+        low_tables: *const u8,
+        high_tables: *const u8,
+        input_count: libc::size_t,
+        outputs: *const *mut u8,
+        output_count: libc::size_t,
+        len: libc::size_t,
+    ) -> libc::size_t;
+}
+
+#[cfg(all(
+    feature = "simd-accel",
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    not(target_env = "msvc"),
+    not(any(target_os = "android", target_os = "ios"))
+))]
+#[inline]
+fn mul_slices<T: AsRef<[u8]>, U: AsMut<[u8]>>(
+    matrix_rows: &[&[u8]],
+    inputs: &[T],
+    outputs: &mut [U],
+) {
+    assert_eq!(matrix_rows.len(), outputs.len());
+    assert!(inputs.len() <= 256);
+    assert!(outputs.len() <= 256);
+
+    if outputs.is_empty() {
+        return;
+    }
+
+    if inputs.is_empty() {
+        for row in matrix_rows {
+            assert_eq!(row.len(), 0);
+        }
+        return;
+    }
+
+    let output_len = outputs[0].as_mut().len();
+    for input in inputs {
+        assert_eq!(input.as_ref().len(), output_len);
+    }
+    for row in matrix_rows {
+        assert_eq!(row.len(), inputs.len());
+    }
+    for output in outputs.iter_mut() {
+        assert_eq!(output.as_mut().len(), output_len);
+    }
+
+    if output_len == 0 {
+        return;
+    }
+
+    if outputs.len() == 1 {
+        let output = outputs[0].as_mut();
+
+        for (i, (elem, input)) in matrix_rows[0].iter().zip(inputs).enumerate() {
+            if i == 0 {
+                mul_slice(*elem, input.as_ref(), output);
+            } else {
+                mul_slice_xor(*elem, input.as_ref(), output);
+            }
+        }
+        return;
+    }
+
+    let mut input_ptrs = [::core::mem::MaybeUninit::<*const u8>::uninit(); 256];
+    let mut coefficient_ptrs = [::core::mem::MaybeUninit::<*const u8>::uninit(); 256];
+    let mut output_ptrs = [::core::mem::MaybeUninit::<*mut u8>::uninit(); 256];
+
+    for (ptr, input) in input_ptrs.iter_mut().zip(inputs) {
+        let input = input.as_ref();
+        ptr.write(input.as_ptr());
+    }
+    for (ptr, row) in coefficient_ptrs.iter_mut().zip(matrix_rows) {
+        ptr.write(row.as_ptr());
+    }
+    for (ptr, output) in output_ptrs.iter_mut().zip(outputs.iter_mut()) {
+        let output = output.as_mut();
+        ptr.write(output.as_mut_ptr());
+    }
+
+    let bytes_done = unsafe {
+        reedsolomon_gal_mul_matrix(
+            input_ptrs.as_ptr() as *const *const u8,
+            coefficient_ptrs.as_ptr() as *const *const u8,
+            MUL_TABLE_LOW.as_ptr() as *const u8,
+            MUL_TABLE_HIGH.as_ptr() as *const u8,
+            inputs.len(),
+            output_ptrs.as_ptr() as *const *mut u8,
+            outputs.len(),
+            output_len,
+        ) as usize
+    };
+
+    for (row, output) in matrix_rows.iter().zip(outputs) {
+        let output = output.as_mut();
+        for (i, (elem, input)) in row.iter().zip(inputs).enumerate() {
+            let input = input.as_ref();
+            if i == 0 {
+                mul_slice_pure_rust(*elem, &input[bytes_done..], &mut output[bytes_done..]);
+            } else {
+                mul_slice_xor_pure_rust(*elem, &input[bytes_done..], &mut output[bytes_done..]);
+            }
+        }
+    }
 }
 
 #[cfg(all(
@@ -331,6 +454,13 @@ mod tests {
     extern crate alloc;
 
     use alloc::vec;
+    #[cfg(all(
+        feature = "simd-accel",
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(target_env = "msvc"),
+        not(any(target_os = "android", target_os = "ios"))
+    ))]
+    use alloc::vec::Vec;
 
     use super::*;
     use crate::tests::fill_random;
@@ -615,6 +745,69 @@ mod tests {
                 mul_slice_xor(c, &input, &mut output_copy);
 
                 assert_eq!(output, output_copy);
+            }
+        }
+    }
+
+    #[cfg(all(
+        feature = "simd-accel",
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        not(target_env = "msvc"),
+        not(any(target_os = "android", target_os = "ios"))
+    ))]
+    #[test]
+    fn test_simd_matrix_kernel_boundaries() {
+        const LENGTHS: &[usize] = &[
+            0, 1, 15, 16, 17, 31, 32, 33, 63, 64, 65, 95, 96, 97, 127, 128, 129, 191, 192, 193,
+            255, 256, 257, 1_024, 2_047, 2_048, 2_049, 10_003,
+        ];
+
+        for &len in LENGTHS {
+            for &input_count in &[0, 1, 2, 3, 4, 7, 8, 16] {
+                let inputs: Vec<Vec<u8>> = (0..input_count)
+                    .map(|input| {
+                        (0..len)
+                            .map(|offset| offset.wrapping_mul(17).wrapping_add(input * 29) as u8)
+                            .collect()
+                    })
+                    .collect();
+
+                for output_count in 0..=9 {
+                    let rows: Vec<Vec<u8>> = (0..output_count)
+                        .map(|output| {
+                            (0..input_count)
+                                .map(|input| {
+                                    if output == 0 {
+                                        [0, 1, 255][input % 3]
+                                    } else if output == 1 {
+                                        1
+                                    } else {
+                                        (output * 47 + input * 31 + 1) as u8
+                                    }
+                                })
+                                .collect()
+                        })
+                        .collect();
+                    let row_refs: Vec<&[u8]> = rows.iter().map(Vec::as_slice).collect();
+                    let initial_output = if input_count == 0 { 0 } else { 0xA5 };
+                    let mut actual = vec![vec![initial_output; len]; output_count];
+                    let mut expected = vec![vec![0; len]; output_count];
+
+                    for output in 0..output_count {
+                        for offset in 0..len {
+                            expected[output][offset] = (0..input_count).fold(0, |sum, input| {
+                                sum ^ mul(rows[output][input], inputs[input][offset])
+                            });
+                        }
+                    }
+
+                    mul_slices(&row_refs, &inputs, &mut actual);
+                    assert_eq!(
+                        actual, expected,
+                        "len={}, inputs={}, outputs={}",
+                        len, input_count, output_count
+                    );
+                }
             }
         }
     }
