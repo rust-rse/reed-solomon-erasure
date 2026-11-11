@@ -1,3 +1,11 @@
+## Unreleased
+- Dependencies update
+  - Updated `lru` from `0.7.8` to `0.19`. `lru` < 0.18.2 is unsound
+    ([RUSTSEC-2026-0253](https://rustsec.org/advisories/RUSTSEC-2026-0253.html)).
+  - Updated `parking_lot` from `0.11.2` to `0.12`, which drops the unmaintained
+    `instant` crate ([RUSTSEC-2024-0384](https://rustsec.org/advisories/RUSTSEC-2024-0384.html)).
+  - Updated `spin` from `0.9.2` to `0.10`
+
 ## 6.0.0
 - Use LruCache instead of InversionTree for caching data decode matrices
   - See [PR #104](https://github.com/rust-rse/reed-solomon-erasure/pull/104)
